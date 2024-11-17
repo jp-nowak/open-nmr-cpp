@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
 
 #include "file_io/general.h"
 #include "processing/general.h"
@@ -72,8 +73,9 @@ ActionsWidget::~ActionsWidget()
 {}
 
 MainWindow::MainWindow(QWidget* parent)
-    : QWidget(parent)
+    : QWidget(parent), ui(new Ui::MainWindow)
 {
+    ui->setupUi(this);
     actionsFrame = new ActionsWidget();
     spectrumStack = new QStackedWidget();
 
@@ -88,7 +90,9 @@ MainWindow::MainWindow(QWidget* parent)
 
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+    delete ui;
+}
 
 void MainWindow::createActions()
 {

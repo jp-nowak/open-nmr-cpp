@@ -12,6 +12,11 @@ class QFrame;
 class QStackedWidget;
 class QPushButton;
 
+namespace Ui {
+class MainWindow;
+}
+
+
 class ActionsWidget : public QFrame
 {
     Q_OBJECT
@@ -42,6 +47,8 @@ public:
     ~MainWindow();
 
 private:
+    Ui::MainWindow* ui;
+
     ActionsWidget* actionsFrame;
     QStackedWidget* spectrumStack;
 
@@ -59,7 +66,6 @@ private slots:
 
 
 };
-
 
 
 
