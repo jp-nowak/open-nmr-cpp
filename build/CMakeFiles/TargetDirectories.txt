@@ -1,0 +1,9 @@
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/nmr_program.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/edit_cache.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/rebuild_cache.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/list_install_components.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/install.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/install/local.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/install/strip.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/nmr_program_autogen_timestamp_deps.dir
+/home/jan/Documents/open-nmr-cpp/build/CMakeFiles/nmr_program_autogen.dir

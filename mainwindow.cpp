@@ -6,7 +6,6 @@
 
 #include <filesystem>
 
-#include <QMenuBar>
 #include <QMenu>
 #include <QPushButton>
 #include <QFrame>
@@ -19,13 +18,74 @@
 #include <QFileDialog>
 #include <QString>
 #include <QDebug>
+#include <QStackedWidget>
+#include <QFrame>
+#include <QLabel>
+
+ActionsWidget::ActionsWidget(QFrame *parent) :
+    QFrame(parent)
+{
+   // Viewing buttons
+   QPushButton *fileButton = new QPushButton(tr("Open File"), this);
+   QPushButton *zoomButton = new QPushButton(tr("Zoom"), this);
+   QPushButton *zoomResetButton = new QPushButton(tr("Reset Zoom"), this);
+
+   // Integration buttons
+   QPushButton *manualIntegButton = new QPushButton(tr("Manual Integration"), this);
+   QPushButton *removeButton = new QPushButton(tr("Remove Integral"), this);
+   QPushButton *resetIntegralsButton = new QPushButton(tr("Reset Integrals"), this);
+
+   // Other buttons
+   QPushButton *manualPeakButton = new QPushButton(tr("Manual Peaks"), this);
+   QPushButton *autoPeakButton = new QPushButton(tr("Auto Signal"), this);
+
+   // Set checkable properties
+   zoomButton->setCheckable(true);
+   manualIntegButton->setCheckable(true);
+   removeButton->setCheckable(true);
+   manualPeakButton->setCheckable(true);
+   autoPeakButton->setCheckable(true);
+
+   // Layout setup
+   QVBoxLayout *actionsLayout = new QVBoxLayout;
+   actionsLayout->addWidget(new QLabel(tr("Viewing")));
+   actionsLayout->addWidget(fileButton);
+   actionsLayout->addWidget(zoomButton);
+   actionsLayout->addWidget(zoomResetButton);
+
+   actionsLayout->addWidget(new QLabel(tr("Integration")));
+   actionsLayout->addWidget(manualIntegButton);
+   actionsLayout->addWidget(removeButton);
+   actionsLayout->addWidget(resetIntegralsButton);
+
+   actionsLayout->addWidget(new QLabel(tr("Other")));
+   actionsLayout->addWidget(manualPeakButton);
+   actionsLayout->addWidget(autoPeakButton);
+   actionsLayout->setAlignment(Qt::AlignTop);
+
+   // Set layout
+   setLayout(actionsLayout);
+}
+
+// Destructor
+ActionsWidget::~ActionsWidget()
+{}
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent)
+    : QWidget(parent)
 {
+    actionsFrame = new ActionsWidget();
+    spectrumStack = new QStackedWidget();
+
+    QHBoxLayout *mainLayout = new QHBoxLayout;
+    mainLayout->addWidget(spectrumStack);
+    mainLayout->addWidget(actionsFrame);
+
+    setLayout(mainLayout);
     setWindowTitle(tr("Open NMR"));
     createActions();
     createTopMenuBar();
+
 }
 
 MainWindow::~MainWindow() {}
@@ -40,7 +100,7 @@ void MainWindow::createActions()
 
 void MainWindow::createTopMenuBar()
 {
-    topMenuBar = menuBar();
+    topMenuBar = new QMenuBar(this);
 
     fileMenu = topMenuBar->addMenu(tr("File"));
     fileMenu->addAction(openFileAction);
