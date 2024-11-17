@@ -1,7 +1,7 @@
 #ifndef PGENERAL_H
 #define PGENERAL_H
 
-#include "../3rd_party/kissfft-master/kiss_fft.h"
+#include "../3rd_party/kissfft/kiss_fft.h"
 
 #include <vector>
 #include <complex>

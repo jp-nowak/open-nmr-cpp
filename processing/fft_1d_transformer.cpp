@@ -1,6 +1,6 @@
 #include "fft_1d_transformer.h"
 
-#include "../3rd_party/kissfft-master/kiss_fft.h"
+#include "../3rd_party/kissfft/kiss_fft.h"
 
 Processing::FFT_1D_Transformer::FFT_1D_Transformer(const std::vector<std::complex<double>>& fid)
 : fft_in{}

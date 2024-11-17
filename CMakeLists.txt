@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(nmr_program VERSION 0.1 LANGUAGES CXX)
+project(nmr_program VERSION 0.1 LANGUAGES CXX C)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -12,7 +12,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-configure_file(3rd_party/kissfft/kiss_fft.c 3rd_party/kissfft/kiss_fft.cpp COPYONLY)
 
 add_compile_definitions(kiss_fft_scalar=double)
 
@@ -39,7 +38,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         spectrum/spectrum.h spectrum/spectrum.cpp
         file_io/string_operations.cpp
         file_io/string_operations.h
-        3rd_party/kissfft/_kiss_fft_guts.h 3rd_party/kissfft/kiss_fft.cpp 3rd_party/kissfft/kiss_fft.h 3rd_party/kissfft/kiss_fft_log.h
+        3rd_party/kissfft/_kiss_fft_guts.h 3rd_party/kissfft/kiss_fft.c 3rd_party/kissfft/kiss_fft.h 3rd_party/kissfft/kiss_fft_log.h
         processing/fft_1d_transformer.h processing/fft_1d_transformer.cpp
         processing/general.h
         processing/general.cpp
