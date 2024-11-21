@@ -22,6 +22,27 @@
 #include <QStackedWidget>
 #include <QFrame>
 #include <QLabel>
+#include <QPainterWidget>
+
+SpectrumPainter::SpectrumPainter(const QColor& palette2, QWidget* parent)
+    : QWidget(parent), 
+      palette2(palette2), drawstatus(false), textfont("Times New Roman", 10), pen(QColor("black")), width_vis{0, 1} {
+
+    // Initializing properties
+    initializeProperties();
+    qDebug() << "SpectrumPainter object created:" << this;
+}
+
+void SpectrumPainter::initializeProperties() {
+    // Actions status and info initialization
+    current_action = "";
+    sel_region = {{0, 0}, {0, 0}};
+    presspos = QPoint();
+    currentpos = QPoint();
+    actions_range = {"integ_man", "zooming", "peak_man"};
+    actions_box = {"removing"};
+    actions_pick_element = {"signal_auto"};
+}
 
 ActionsWidget::ActionsWidget(QFrame *parent) :
     QFrame(parent)
@@ -46,6 +67,10 @@ ActionsWidget::ActionsWidget(QFrame *parent) :
    removeButton->setCheckable(true);
    manualPeakButton->setCheckable(true);
    autoPeakButton->setCheckable(true);
+
+   // Actions
+
+   connect(openFileAction, &QAction::triggered, this, &MainWindow::openFileSlot);
 
    // Layout setup
    QVBoxLayout *actionsLayout = new QVBoxLayout;
@@ -111,6 +136,12 @@ void MainWindow::createTopMenuBar()
     fileMenu->addAction(closeAppAction);
 }
 
+void MainWindow::addToStack() 
+{
+    SpectrumPainter *painterwidget = new SpectrumPainter();
+    stackedWidget->addWidget(painterwidget);
+}
+
 void MainWindow::openFileSlot()
 {    
     QFileDialog fileDialog(this, tr("Open File"));
@@ -129,4 +160,6 @@ void MainWindow::openFileSlot()
 
     qDebug() << file_read_result.info.obs_nucleus_freq;
     qDebug() << "koniec";
+
+    addToStack(experiment);
 }

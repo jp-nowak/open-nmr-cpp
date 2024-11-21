@@ -12,6 +12,38 @@ class QFrame;
 class QStackedWidget;
 class QPushButton;
 
+class SpectrumPainter : public QWidget {
+    Q_OBJECT
+
+public:
+    SpectrumPainter(const QColor& palette2, QWidget* parent = nullptr);
+
+    // there should be buttons here or sth
+
+    // Member variables
+    bool drawstatus;
+    QFont textfont;
+    QPen pen;
+    QColor palette2;
+    std::vector<int> width_vis;
+
+    // Actions status and info
+    QString current_action;
+    std::vector<std::vector<int>> sel_region;
+    QPoint presspos;
+    QPoint currentpos;
+    std::vector<QString> actions_range;
+    std::vector<QString> actions_box;
+    std::vector<QString> actions_pick_element;
+
+protected:
+    // Add your custom paintEvent or other event handlers here if needed
+    // For example, paintEvent(QPaintEvent *event) override;
+
+private:
+    void initializeProperties();
+};
+
 namespace Ui {
 class MainWindow;
 }
