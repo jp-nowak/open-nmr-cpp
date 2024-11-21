@@ -9,8 +9,15 @@
 
 namespace FileIO
 {
-    enum class FileReadStatus{success_1D, success_2D, unknown_format, invalid_fid, invalid_procpar};
-    enum class FileType{Ag, Br, U};
+    /*!
+     * \brief The FileReadStatus enum contains possible results of attempt of opening experiment
+     */
+    enum class FileReadStatus{unknown_failure, success_1D, success_2D, unknown_format, invalid_fid, invalid_procpar};
+
+    /*!
+     * \brief The FileType enum: types of experiment files
+     */
+    enum class FileType{U, Ag, Br};
 
     struct FileReadResult
     {

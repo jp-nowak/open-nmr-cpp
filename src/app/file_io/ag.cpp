@@ -96,8 +96,17 @@ namespace
         };
     }
 
+    /*!
+     * \brief parse_procpar parses procpar file present in folder of Ag experiments
+     * \param procpar_file std::ifstream& corresponding to procpar file from experiment folder, function does not check if it is in correct state
+     * \return std::optional<SpectrumInfo>, containing SpectrumInfo or empty if any problems arouse
+     */
     std::optional<SpectrumInfo> parse_procpar(std::ifstream& procpar_file)
     {
+        //!
+        //! \brief map containing as keys params which are to be extracted from procpar file,
+        //! their values are placed as items of corresponding keys
+        //!
         std::unordered_map<std::string, std::string> params{
             {"solvent", {}},
             {"samplename", {}},
@@ -134,6 +143,7 @@ namespace
         double elements_number{};
         double acquisition_time{};
 
+        // if conversions fail file is assumed to be corrupt and empty optional is returned
         try{
             zero_freq = std::stod(params["reffrq"]);
             obs_nucleus_freq = std::stod(params["sfrq"]);
@@ -166,11 +176,19 @@ namespace
         return info;
     }
 
+    /*!
+     * \brief read_fid_file reads fid file and returns fids present in it
+     * \param fid_file  std::ifstream& corresponding to fid file from experiment folder, function does not check if it is in correct state
+     * \return vector of fids (vector of complex<double>) as 2D spectrum contains more then one
+     */
     std::vector<std::vector<std::complex<double>>> read_fid_file(std::ifstream& fid_file)
     {
+        // reading of file header, which contains information necessary for further processing
         std::vector<std::byte> buffer(FILE_HEADER_SIZE, std::byte{0});
         fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE);
         FileHeader file_header = read_file_header(buffer, 0);
+
+        // extracting information about data type, there are only three options
         enum class DataType {short16, int32, float32};
         DataType data_type{};
         if (file_header.status[3]){
@@ -185,15 +203,19 @@ namespace
 
         const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
 
-        for (size_t i = 0; i < file_header.nblocks; i++) {
+        // reading of remaining part of file
+
+        for (size_t i = 0; i < file_header.nblocks; i++) { // loop over blocks
             buffer.resize(BLOCK_HEADER_SIZE);
             fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE);
             BlockHeader block_header = read_block_header(buffer, 0);
-            if (file_header.nbheaders == 2) {
+            if (file_header.nbheaders == 2) { // there may exist second block header in more complicated experiments
                 buffer.resize(BLOCK_HEADER_SIZE);
                 fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE);
                 BlockHeader additional_block_header = read_block_header(buffer, 0);
             }
+
+            // reading fid from current block
             std::vector<std::complex<double>> fid{};
             buffer.resize(fid_array_byte_size);
             fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size);
@@ -217,6 +239,13 @@ namespace
 
 } // end of namespace
 
+/*!
+ * \brief FileIO::ag_parse_experiment_folder function that handles opening and reading of Ag experiment folder
+ * containing fid and procpar files
+ * \param folder_path
+ * \return FileReadResult, containing extracted informations. If error occured FileReadResult.file_read_status is set to
+ * corresponding error enum.
+ */
 FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem::path& folder_path)
 {
     std::ifstream fid_file{folder_path / "fid", std::ios::in | std::ios::binary};
@@ -226,7 +255,10 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
 
     if (fid_file) {
         result.fids = read_fid_file(fid_file);
+    } else {
+        result.file_read_status = FileReadStatus::invalid_fid;
     }
+
     if (procpar_file) {
         std::optional<SpectrumInfo> info = parse_procpar(procpar_file);
         if (info) {
@@ -234,7 +266,11 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
         } else {
             result.file_read_status = FileReadStatus::invalid_procpar;
         }
+    } else {
+        result.file_read_status = FileReadStatus::invalid_procpar;
     }
+
+
     result.file_read_status = FileReadStatus::success_1D;
 
     return result;
