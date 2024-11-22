@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <complex>
-
+#include <string>
 
 struct SpectrumInfo
 {
@@ -14,9 +14,11 @@ struct SpectrumInfo
     double spectral_width; // [Hz] width of x axis
     double acquisition_time; // [s] time of acquisition, x axis of fid starts at 0 and ends at this value
     double obs_nucleus_freq; // [MHz] Larmor frequency of measured nucleus
-    double dwell_time;
+    double dwell_time; // [s] time between two data points of fid
     double group_delay;
     double trimmed;
+    std::string samplename;
+
 };
 
 class Spectrum

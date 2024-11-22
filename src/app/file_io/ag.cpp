@@ -98,7 +98,7 @@ namespace
 
     /*!
      * \brief parse_procpar parses procpar file present in folder of Ag experiments
-     * \param procpar_file std::ifstream& corresponding to procpar file from experiment folder, function does not check if it is in correct state
+     * \param procpar_file std::ifstream& (text) corresponding to procpar file from experiment folder, function does not check if it is in correct state
      * \return std::optional<SpectrumInfo>, containing SpectrumInfo or empty if any problems arouse
      */
     std::optional<SpectrumInfo> parse_procpar(std::ifstream& procpar_file)
@@ -115,7 +115,8 @@ namespace
             {"sfrq", {}},
             {"at", {}},
             {"reffrq", {}},
-            {"np", {}}
+            {"np", {}},
+            {"samplename", {}}
         };
 
         std::string current_line{};
@@ -136,6 +137,12 @@ namespace
             }
 
         }
+
+        // checks whether any key remained empty
+        if (params.contains(std::string{})) {
+            return {};
+        }
+
 
         double zero_freq{};
         double obs_nucleus_freq{};
@@ -171,6 +178,7 @@ namespace
         .dwell_time = acquisition_time / elements_number,
         .group_delay = 0.0,
         .trimmed = 0.0,
+        .samplename = params["samplename"]
         };
 
         return info;
@@ -178,14 +186,16 @@ namespace
 
     /*!
      * \brief read_fid_file reads fid file and returns fids present in it
-     * \param fid_file  std::ifstream& corresponding to fid file from experiment folder, function does not check if it is in correct state
-     * \return vector of fids (vector of complex<double>) as 2D spectrum contains more then one
+     * \param fid_file  std::ifstream& (binary) corresponding to fid file from experiment folder, function does not check if it is in correct state
+     * \return optional vector of fids (vector of complex<double>) as 2D spectrum contains more then one. If any error occured empty optional is returned
      */
-    std::vector<std::vector<std::complex<double>>> read_fid_file(std::ifstream& fid_file)
+    std::optional<std::vector<std::vector<std::complex<double>>>> read_fid_file(std::ifstream& fid_file)
     {
         // reading of file header, which contains information necessary for further processing
         std::vector<std::byte> buffer(FILE_HEADER_SIZE, std::byte{0});
-        fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE);
+        if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE)) {
+            return {};
+        }
         FileHeader file_header = read_file_header(buffer, 0);
 
         // extracting information about data type, there are only three options
@@ -203,22 +213,38 @@ namespace
 
         const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
 
+        if (fid_array_byte_size != file_header.tbytes) {
+            return {};
+        }
+
         // reading of remaining part of file
 
         for (size_t i = 0; i < file_header.nblocks; i++) { // loop over blocks
             buffer.resize(BLOCK_HEADER_SIZE);
-            fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE);
+
+            if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
+                return {};
+            }
+
             BlockHeader block_header = read_block_header(buffer, 0);
+
             if (file_header.nbheaders == 2) { // there may exist second block header in more complicated experiments
                 buffer.resize(BLOCK_HEADER_SIZE);
-                fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE);
+
+                if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
+                    return {};
+                }
+
                 BlockHeader additional_block_header = read_block_header(buffer, 0);
             }
 
             // reading fid from current block
             std::vector<std::complex<double>> fid{};
             buffer.resize(fid_array_byte_size);
-            fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size);
+
+            if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size)) {
+                return {};
+            }
 
             switch (data_type) {
             case DataType::float32:
@@ -254,7 +280,12 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
     FileReadResult result{};
 
     if (fid_file) {
-        result.fids = read_fid_file(fid_file);
+        std::optional<std::vector<std::vector<std::complex<double>>>> fids = read_fid_file(fid_file);
+        if (fids) {
+            result.fids = fids.value();
+        } else {
+            result.file_read_status = FileReadStatus::invalid_fid;
+        }
     } else {
         result.file_read_status = FileReadStatus::invalid_fid;
     }
