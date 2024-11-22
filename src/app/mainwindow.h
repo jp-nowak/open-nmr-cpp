@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include <QWidget>
 #include <QFrame>
+#include <QPen>
+#include <QList>
+#include "spectrum/spectrum.h"
 
 class QMenuBar;
 class Qmenu;
@@ -11,21 +14,24 @@ class QAction;
 class QFrame;
 class QStackedWidget;
 class QPushButton;
+class QPen;
 
-class SpectrumPainter : public QWidget {
+class SpectrumPainter : public QWidget
+{
     Q_OBJECT
 
 public:
-    SpectrumPainter(const QColor& palette2, QWidget* parent = nullptr);
+    SpectrumPainter(QWidget *parent = nullptr);
 
-    // there should be buttons here or sth
+    // there should be some button statuses
 
     // Member variables
     bool drawstatus;
     QFont textfont;
     QPen pen;
-    QColor palette2;
     std::vector<int> width_vis;
+
+    void setExperiment(const Spectrum &experiment);
 
     // Actions status and info
     QString current_action;
@@ -44,30 +50,32 @@ private:
     void initializeProperties();
 };
 
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
-
 
 class ActionsWidget : public QFrame
 {
     Q_OBJECT
 
 public:
-    explicit ActionsWidget(QFrame *parent = 0); //Constructor
-    ~ActionsWidget(); // Destructor
+    explicit ActionsWidget(QFrame *parent = 0); // Constructor
+    ~ActionsWidget();                           // Destructor
 
-private:
-    QPushButton* fileButton;
-    QPushButton* zoomButton;
-    QPushButton* zoomResetButton;
+    QPushButton *fileButton;
+    QPushButton *zoomButton;
+    QPushButton *zoomResetButton;
 
-    QPushButton* manualIntegButton;
-    QPushButton* removeButton;
-    QPushButton* resetIntegralsButton;
+    QPushButton *manualIntegButton;
+    QPushButton *removeButton;
+    QPushButton *resetIntegralsButton;
 
-    QPushButton* manualPeakButton;
-    QPushButton* autoPeakButton;
+    QPushButton *manualPeakButton;
+    QPushButton *autoPeakButton;
+
+signals:
+    void openFileClicked();
 };
 
 class MainWindow : public QWidget
@@ -78,27 +86,28 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
-    Ui::MainWindow* ui;
+    QList<QColor> additional_palette;
 
-    ActionsWidget* actionsFrame;
-    QStackedWidget* spectrumStack;
+private:
+    Ui::MainWindow *ui;
+
+    ActionsWidget *actionsFrame;
+    QStackedWidget *spectrumStack;
 
     // helper functions for constructor
     void createActions();
     void createTopMenuBar();
 
-    QMenuBar* topMenuBar;
-    QMenu* fileMenu;
+    void addToStack(const Spectrum &experiment);
 
-    QAction* openFileAction;
-    QAction* closeAppAction;
+    QMenuBar *topMenuBar;
+    QMenu *fileMenu;
+
+    QAction *openFileAction;
+    QAction *closeAppAction;
+
 private slots:
     void openFileSlot();
-
-
 };
-
-
 
 #endif // MAINWINDOW_H
