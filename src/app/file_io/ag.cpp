@@ -87,7 +87,7 @@ namespace
         using namespace BigEndian;
         return BlockHeader{
         .scale   = to_short(buffer, begin + 0),
-        .status  = to_short(buffer, begin + 2),
+        .status  = std::bitset<16>(to_short(buffer, begin + 2)),
         .index   = to_short(buffer, begin + 4),
         .mode    = to_short(buffer, begin + 6),
         .ctcount = to_int(buffer, begin + 8),

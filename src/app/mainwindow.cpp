@@ -171,8 +171,7 @@ void MainWindow::openFileSlot()
     std::filesystem::path input_path{selectedFile.toStdString()};
     FileIO::FileReadResult file_read_result = FileIO::open_experiment(input_path);
 
-    std::vector<std::complex<double>> spectrum = Processing::generate_spectrum_from_fid(file_read_result.fids[0]);
-    Spectrum experiment{file_read_result.info, file_read_result.fids[0], spectrum};
+    Spectrum experiment = Spectrum::from_file_read_result(file_read_result);
 
     qDebug() << file_read_result.info.obs_nucleus_freq;
     qDebug() << "koniec";

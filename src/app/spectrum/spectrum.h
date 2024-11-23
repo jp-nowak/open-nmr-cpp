@@ -14,14 +14,14 @@ class Spectrum
 {
 public:
     Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid, const std::vector<std::complex<double>>& spectrum);
+    static Spectrum from_file_read_result(FileIO::FileReadResult result);
 
-    const SpectrumInfo info;
+    SpectrumInfo info;
 
 private:
     std::vector<std::complex<double>> fid;
     std::vector<std::complex<double>> spectrum;
 };
 
-Spectrum create_spectrum_from_file_read_result(FileIO::FileReadResult result);
 
 #endif // SPECTRUM_H
