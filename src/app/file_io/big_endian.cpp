@@ -31,7 +31,7 @@ std::vector<std::complex<double>> BigEndian::read_fid_array_float(const std::vec
     size_t number_of_complex_elements = buffer.size()/8;
     fid.resize(number_of_complex_elements);
 
-    for (int b_i = 0, f_i = 0; ((b_i + 7) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=8, f_i++) {
+    for (size_t b_i = 0, f_i = 0; ((b_i + 7) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=8, f_i++) {
         float real = 0;
         std::byte real_bytes[] {buffer[b_i+7], buffer[b_i+6], buffer[b_i+5], buffer[b_i+4]};
         std::memcpy(&real, &real_bytes, 4);
@@ -50,7 +50,7 @@ std::vector<std::complex<double>> BigEndian::read_fid_array_int(const std::vecto
     size_t number_of_complex_elements = buffer.size()/8;
     fid.resize(number_of_complex_elements);
 
-    for (int b_i = 0, f_i = 0; ((b_i + 7) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=8, f_i++) {
+    for (size_t b_i = 0, f_i = 0; ((b_i + 7) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=8, f_i++) {
         int real = 0;
         std::byte real_bytes[] {buffer[b_i+7], buffer[b_i+6], buffer[b_i+5], buffer[b_i+4]};
         std::memcpy(&real, &real_bytes, 4);
@@ -69,7 +69,7 @@ std::vector<std::complex<double>> BigEndian::read_fid_array_short(const std::vec
     size_t number_of_complex_elements = buffer.size()/4;
     fid.resize(number_of_complex_elements);
 
-    for (int b_i = 0, f_i = 0; ((b_i + 3) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=4, f_i++) {
+    for (size_t b_i = 0, f_i = 0; ((b_i + 3) <= buffer.size() - 1) & (f_i < number_of_complex_elements); b_i+=4, f_i++) {
         short real = 0;
         std::byte real_bytes[] {buffer[b_i+3], buffer[b_i+2]};
         std::memcpy(&real, &real_bytes, 2);

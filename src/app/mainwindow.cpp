@@ -105,6 +105,10 @@ ActionsWidget::~ActionsWidget()
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent), ui(new Ui::MainWindow)
 {
+    #ifdef DEBUG__
+        qDebug() << "debug";
+    #endif
+
     QList<QColor> additional_palette = {
         QColor("#558B6E"), // accent
         QColor("#3B614D"), // accent-dark
@@ -172,6 +176,10 @@ void MainWindow::openFileSlot()
     FileIO::FileReadResult file_read_result = FileIO::open_experiment(input_path);
 
     Spectrum experiment = Spectrum::from_file_read_result(file_read_result);
+
+    #ifdef DEBUG__
+    qDebug() << experiment.info;
+    #endif
 
     qDebug() << file_read_result.info.obs_nucleus_freq;
     qDebug() << "koniec";

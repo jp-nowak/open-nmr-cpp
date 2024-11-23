@@ -14,4 +14,11 @@ qt_standard_project_setup()
 
 add_compile_definitions(kiss_fft_scalar=double)
 
+#add_compile_definitions(DEBUG__)
+
+
+add_compile_options(
+  "-Wall" "-Wpedantic" "-Wextra" "-Wno-unused"
+)
+
 add_subdirectory(src/app)

@@ -3,6 +3,10 @@
 
 #include <string>
 
+#ifdef DEBUG__
+#include <iostream>
+#include <QDebug>
+#endif
 
 struct SpectrumInfo
 {
@@ -20,6 +24,47 @@ struct SpectrumInfo
     std::string nucleus; // measured nucleus of format XXNN X-nucleus symbol NN-mass
     std::string solvent; // solvent in which sample was solubilized
 
+    #ifdef DEBUG__
+    friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& m)
+    {
+        return os
+        << "plot_begin_Hz: " << m.plot_begin_Hz << "\n"
+        << "plot_end_Hz: " << m.plot_end_Hz << "\n"
+        << "plot_begin_ppm: " << m.plot_begin_ppm << "\n"
+        << "plot_end_ppm: " << m.plot_end_ppm << "\n"
+        << "spectral_width: " << m.spectral_width << "\n"
+        << "acquisition_time: " << m.acquisition_time << "\n"
+        << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
+        << "dwell_time: " << m.dwell_time << "\n"
+        << "group_delay: " << m.group_delay << "\n"
+        << "trimmed: " << m.trimmed << "\n"
+        << "samplename: " << m.samplename << "\n"
+        << "nucleus: " << m.nucleus << "\n"
+        << "solvent: " << m.solvent << "\n";
+    }
+
+    friend QDebug operator<<(QDebug os, SpectrumInfo const& m)
+    {
+        return os
+        << "plot_begin_Hz: " << m.plot_begin_Hz << "\n"
+        << "plot_end_Hz: " << m.plot_end_Hz << "\n"
+        << "plot_begin_ppm: " << m.plot_begin_ppm << "\n"
+        << "plot_end_ppm: " << m.plot_end_ppm << "\n"
+        << "spectral_width: " << m.spectral_width << "\n"
+        << "acquisition_time: " << m.acquisition_time << "\n"
+        << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
+        << "dwell_time: " << m.dwell_time << "\n"
+        << "group_delay: " << m.group_delay << "\n"
+        << "trimmed: " << m.trimmed << "\n"
+        << "samplename: " << m.samplename << "\n"
+        << "nucleus: " << m.nucleus << "\n"
+        << "solvent: " << m.solvent << "\n";
+    }
+    #endif
+
 };
+
+
+
 
 #endif // SPECTRUM_INFO_H

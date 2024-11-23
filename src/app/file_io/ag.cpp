@@ -39,6 +39,7 @@ namespace
         int nbheaders; // number of block headers per block, 1 in case of simple experiments, 2 in 2D hypercomplex
     };
 
+    #ifdef DEBUG__
     //! data from block header; seems not really relevant, will be cut off in release versions
     struct BlockHeader
     {
@@ -52,6 +53,7 @@ namespace
         float lvl;
         float tlt;
     };
+    #endif
 
     /*!
      * @brief read_file_header creates FileHeader out of vector of big endian bytes
@@ -75,6 +77,7 @@ namespace
         };
     }
 
+    #ifdef DEBUG__
     /*!
      * @brief read_block_header creates BlockHeader out of vector of big endian bytes, will be cut off in release
      * version as those informations doesnt seem important
@@ -97,6 +100,7 @@ namespace
         .tlt     = to_float(buffer, begin + 24)
         };
     }
+    #endif
 
     /*!
      * \brief parse_procpar parses procpar file present in folder of Ag experiments
@@ -219,22 +223,29 @@ namespace
 
         const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
 
-        if (fid_array_byte_size != file_header.tbytes) {
+        if (fid_array_byte_size != static_cast<size_t>(file_header.tbytes)) {
             return {};
         }
 
         // reading of remaining part of file
 
-        for (size_t i = 0; i < file_header.nblocks; i++) { // loop over blocks
+        for (size_t i = 0; i < static_cast<size_t>(file_header.nblocks); i++) { // loop over blocks
+
+            #ifdef DEBUG__
             buffer.resize(BLOCK_HEADER_SIZE);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
                 return {};
             }
-
             BlockHeader block_header = read_block_header(buffer, 0);
+            #endif // DEBUG__
+            #ifndef DEBUG__
+                fid_file.ignore(BLOCK_HEADER_SIZE);
+            #endif
 
             if (file_header.nbheaders == 2) { // there may exist second block header in more complicated experiments
+
+                #ifdef DEBUG__
                 buffer.resize(BLOCK_HEADER_SIZE);
 
                 if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
@@ -242,6 +253,10 @@ namespace
                 }
 
                 BlockHeader additional_block_header = read_block_header(buffer, 0);
+                #endif // DEBUG__
+                #ifndef DEBUG__
+                fid_file.ignore(BLOCK_HEADER_SIZE);
+                #endif
             }
 
             // reading fid from current block
