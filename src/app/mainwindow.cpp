@@ -50,7 +50,7 @@ void SpectrumPainter::initializeProperties()
     actions_pick_element = {"signal_auto"};
 }
 
-ActionsWidget::ActionsWidget(QFrame *parent) : QFrame(parent)
+ActionsWidget::ActionsWidget(QWidget *parent) : QFrame(parent)
 {
     // Viewing buttons
     QPushButton *fileButton = new QPushButton(tr("Open File"), this);
@@ -112,7 +112,7 @@ MainWindow::MainWindow(QWidget *parent)
     };
 
     ui->setupUi(this);
-    actionsFrame = new ActionsWidget();
+    actionsFrame = new ActionsWidget(this);
     spectrumStack = new QStackedWidget();
 
     QHBoxLayout *mainLayout = new QHBoxLayout;

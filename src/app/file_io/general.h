@@ -1,7 +1,7 @@
 #ifndef FGENERAL_H
 #define FGENERAL_H
 
-#include "../spectrum/spectrum.h"
+#include "../spectrum/spectrum_info.h"
 
 #include <vector>
 #include <complex>

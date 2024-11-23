@@ -3,7 +3,7 @@
 #include "big_endian.h"
 #include "string_operations.h"
 #include "general.h"
-#include "../spectrum/spectrum.h"
+#include "../spectrum/spectrum_info.h"
 
 #include <fstream>
 #include <vector>
@@ -22,6 +22,8 @@ namespace
 {
     constexpr size_t FILE_HEADER_SIZE = 32;
     constexpr size_t BLOCK_HEADER_SIZE = 28;
+
+
 
     //! data from file headers in Ag fid file
     struct FileHeader
@@ -116,7 +118,9 @@ namespace
             {"at", {}},
             {"reffrq", {}},
             {"np", {}},
-            {"samplename", {}}
+            {"samplename", {}},
+            {"tn", {}},
+            {"solvent", {}}
         };
 
         std::string current_line{};
@@ -178,7 +182,9 @@ namespace
         .dwell_time = acquisition_time / elements_number,
         .group_delay = 0.0,
         .trimmed = 0.0,
-        .samplename = params["samplename"]
+        .samplename = params["samplename"],
+        .nucleus = params["tn"],
+        .solvent = params["solvent"]
         };
 
         return info;

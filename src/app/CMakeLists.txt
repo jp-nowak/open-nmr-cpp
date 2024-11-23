@@ -16,6 +16,7 @@ qt_add_executable(open-nmr
     processing/general.h
     processing/general.cpp
     mainwindow.ui
+    spectrum/spectrum_info.h
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

@@ -60,7 +60,7 @@ class ActionsWidget : public QFrame
     Q_OBJECT
 
 public:
-    explicit ActionsWidget(QFrame *parent = 0); // Constructor
+    explicit ActionsWidget(QWidget *parent = 0); // Constructor
     ~ActionsWidget();                           // Destructor
 
     QPushButton *fileButton;
