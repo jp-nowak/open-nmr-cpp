@@ -25,6 +25,8 @@
 #include <QPen>
 #include <QList>
 
+// .
+
 SpectrumPainter::SpectrumPainter(QWidget *parent)
     : QWidget(parent), drawstatus(false), textfont("Times New Roman", 10), pen(QColor("black")), width_vis{0, 1}
 {
