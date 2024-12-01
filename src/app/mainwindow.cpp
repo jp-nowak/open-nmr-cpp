@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
     createTopMenuBar();
 
     setCentralWidget(mainStackedWidget);
-    // actions
+    // actions .
 
 }
 
