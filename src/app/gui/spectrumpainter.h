@@ -19,13 +19,11 @@ public:
 
     void paintEvent(QPaintEvent* e);
 
+    std::unique_ptr<Spectrum> experiment;
 private:
 
-    std::unique_ptr<Spectrum> experiment;
 
-    QTransform currentTransform;
 
-    QPen baselinePen;
     QPen spectrumPen;
 
     double baselinePosition;
@@ -33,6 +31,8 @@ private:
     double scalingFactor;
 
     size_t maxSpectrumElemIndex;
+    size_t displayBegin;
+    size_t displayEnd;
 };
 
 #endif // SPECTRUMPAINTER_H

@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
+
 SpectrumDisplayer::SpectrumDisplayer(SpectrumPainter* spainter, QWidget* parent)
     : QWidget{parent}
     , spainter{spainter}
@@ -11,8 +12,21 @@ SpectrumDisplayer::SpectrumDisplayer(SpectrumPainter* spainter, QWidget* parent)
         spainter->setParent(this);
 
         QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
-        QLabel* xAxis = new QLabel(tr("x axis to be done"), this);
-        xAxis->setAlignment(Qt::AlignHCenter);
+
+        auto& info = spainter->experiment->info;
+
+
+        xAxis = new XAxis{
+            XAxisProperties{
+                .left = info.plot_left_ppm,
+                .right = info.plot_right_ppm,
+                .primaryTicksInterval = 1,
+                .secondaryTicksInterval = 0.5,
+                .secTickProp = 0.25,
+                .relLenghtTickLine = 0.25,
+                .lineHeight = 50,
+            }
+            , this};
 
         spectrumAndXAxis->addWidget(spainter);
         spectrumAndXAxis->addWidget(xAxis);

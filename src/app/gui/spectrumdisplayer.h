@@ -2,6 +2,7 @@
 #define SPECTRUMDISPLAYER_H
 
 #include "spectrumpainter.h"
+#include "xaxis.h"
 
 #include <QObject>
 #include <QWidget>
@@ -17,7 +18,7 @@ public:
 
 private:
     SpectrumPainter* spainter;
-
+    XAxis* xAxis;
 
 
 };

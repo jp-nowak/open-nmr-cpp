@@ -10,10 +10,10 @@
 
 struct SpectrumInfo
 {
-    double plot_begin_Hz; // [Hz] value of x axis at right edge of spectrum
-    double plot_end_Hz; // [Hz] value of x axis at left edge of spectrum
-    double plot_begin_ppm; // [ppm] value of x axis at right edge of spectrum
-    double plot_end_ppm; // [ppm] value of x axis at left edge of spectrum
+    double plot_right_Hz; // [Hz] value of x axis at right edge of spectrum
+    double plot_left_Hz; // [Hz] value of x axis at left edge of spectrum
+    double plot_right_ppm; // [ppm] value of x axis at right edge of spectrum
+    double plot_left_ppm; // [ppm] value of x axis at left edge of spectrum
     double spectral_width; // [Hz] width of x axis
     double acquisition_time; // [s] time of acquisition, x axis of fid starts at 0 and ends at this value
     double obs_nucleus_freq; // [MHz] Larmor frequency of measured nucleus
@@ -28,10 +28,10 @@ struct SpectrumInfo
     friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& m)
     {
         return os
-        << "plot_begin_Hz: " << m.plot_begin_Hz << "\n"
-        << "plot_end_Hz: " << m.plot_end_Hz << "\n"
-        << "plot_begin_ppm: " << m.plot_begin_ppm << "\n"
-        << "plot_end_ppm: " << m.plot_end_ppm << "\n"
+        << "plot_right_Hz: " << m.plot_right_Hz << "\n"
+        << "plot_left_Hz: " << m.plot_left_Hz << "\n"
+        << "plot_right_ppm: " << m.plot_right_ppm << "\n"
+        << "plot_left_ppm: " << m.plot_left_ppm << "\n"
         << "spectral_width: " << m.spectral_width << "\n"
         << "acquisition_time: " << m.acquisition_time << "\n"
         << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
@@ -46,10 +46,10 @@ struct SpectrumInfo
     friend QDebug operator<<(QDebug os, SpectrumInfo const& m)
     {
         return os
-        << "plot_begin_Hz: " << m.plot_begin_Hz << "\n"
-        << "plot_end_Hz: " << m.plot_end_Hz << "\n"
-        << "plot_begin_ppm: " << m.plot_begin_ppm << "\n"
-        << "plot_end_ppm: " << m.plot_end_ppm << "\n"
+        << "plot_right_Hz: " << m.plot_right_Hz << "\n"
+        << "plot_left_Hz: " << m.plot_left_Hz << "\n"
+        << "plot_right_ppm: " << m.plot_right_ppm << "\n"
+        << "plot_left_ppm: " << m.plot_left_ppm << "\n"
         << "spectral_width: " << m.spectral_width << "\n"
         << "acquisition_time: " << m.acquisition_time << "\n"
         << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
