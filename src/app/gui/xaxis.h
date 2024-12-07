@@ -27,6 +27,7 @@ public:
 
 private:
     XAxisProperties p;
+    int displayPrecision;
 };
 
 #endif // XAXIS_H
