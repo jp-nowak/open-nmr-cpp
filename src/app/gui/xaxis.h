@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QWidget>
+#include <QPen>
 
 struct XAxisProperties
 {
@@ -13,11 +14,8 @@ struct XAxisProperties
     double secTickProp;
     double relLenghtTickLine;
     double lineHeight;
+    double labelAdditionalSpacing;
 };
-
-
-
-
 
 class XAxis : public QWidget
 {
@@ -25,7 +23,7 @@ class XAxis : public QWidget
 public:
     XAxis(XAxisProperties properties, QWidget* parent);
 
-    void paintEvent(QPaintEvent* e);
+    void paintEvent(QPaintEvent*);
 
 private:
     XAxisProperties p;

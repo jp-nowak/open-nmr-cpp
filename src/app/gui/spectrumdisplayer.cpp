@@ -20,11 +20,12 @@ SpectrumDisplayer::SpectrumDisplayer(SpectrumPainter* spainter, QWidget* parent)
             XAxisProperties{
                 .left = info.plot_left_ppm,
                 .right = info.plot_right_ppm,
-                .primaryTicksInterval = 1,
-                .secondaryTicksInterval = 0.5,
+                .primaryTicksInterval = 0.5,
+                .secondaryTicksInterval = 0.25,
                 .secTickProp = 0.25,
-                .relLenghtTickLine = 0.25,
-                .lineHeight = 50,
+                .relLenghtTickLine = 0.15,
+                .lineHeight = 0.3,
+                .labelAdditionalSpacing = 0.25
             }
             , this};
 

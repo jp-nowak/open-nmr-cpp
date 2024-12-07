@@ -14,6 +14,8 @@ qt_add_executable(open-nmr
     gui/spectrumpainter.h gui/spectrumpainter.cpp
     gui/spectrumdisplayer.h gui/spectrumdisplayer.cpp
     gui/xaxis.h gui/xaxis.cpp
+    gui/gui_utilities.h
+    gui/gui_utilities.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)
