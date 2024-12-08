@@ -176,10 +176,10 @@ namespace
         double plot_end = irradiation_freq + spectral_width / 2;
 
         SpectrumInfo info{
-        .plot_begin_Hz = plot_begin,
-        .plot_end_Hz = plot_end,
-        .plot_begin_ppm = plot_begin / obs_nucleus_freq,
-        .plot_end_ppm = plot_end / obs_nucleus_freq,
+        .plot_right_Hz = plot_begin,
+        .plot_left_Hz = plot_end,
+        .plot_right_ppm = plot_begin / obs_nucleus_freq,
+        .plot_left_ppm = plot_end / obs_nucleus_freq,
         .spectral_width = spectral_width,
         .acquisition_time = acquisition_time,
         .obs_nucleus_freq = obs_nucleus_freq,
