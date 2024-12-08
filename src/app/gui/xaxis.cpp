@@ -152,7 +152,10 @@ void XAxis::paintEvent(QPaintEvent* e)
 
     alignment = (pTickPos - p.right < 1) ? Qt::AlignRight : Qt::AlignHCenter;
 
-    drawText(painter, QPointF(-pTickPos * multiplier, newHeight * multiplier * (p.lineHeight + p.relLenghtTickLine + p.labelAdditionalSpacing)),
+    if (pTickPos > p.right) {
+        drawText(painter, QPointF(-pTickPos * multiplier, newHeight * multiplier * (p.lineHeight + p.relLenghtTickLine + p.labelAdditionalSpacing)),
                     alignment | Qt::AlignTop, QString::number(pTickPos, 'f', displayPrecision));
+    }
+
 
 }
