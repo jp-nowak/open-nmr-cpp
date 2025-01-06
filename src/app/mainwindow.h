@@ -8,9 +8,6 @@
 #include <QList>
 #include <QStackedWidget>
 
-#include "spectrum/spectrum.h"
-#include "gui/spectrumpainter.h"
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -25,12 +22,14 @@ private:
     // helper functions for constructor
     void createActions();
     void createTopMenuBar();
+    void createActionsFrame();
 
-    QMenuBar *topMenuBar;
-    QMenu *fileMenu;
+    QFrame* actionsFrame;
+    QMenuBar* topMenuBar;
+    QMenu* fileMenu;
 
-    QAction *openFileAction;
-    QAction *closeAppAction;
+    QAction* openFileAction;
+    QAction* closeAppAction;
 
     QStackedWidget* mainStackedWidget;
 

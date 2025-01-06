@@ -1,6 +1,7 @@
 #include"gui_utilities.h"
 
 #include <QPainter>
+#include <QDebug>
 
 // https://github.com/KubaO/stackoverflown/tree/master/questions/alignments-24831484
 void drawText(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,

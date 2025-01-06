@@ -31,7 +31,6 @@ SpectrumPainter::SpectrumPainter(std::unique_ptr<Spectrum>&& new_experiment, QWi
 
     const std::vector<std::complex<double>>& spectrum = experiment->get_spectrum();
 
-
     displayEnd = spectrum.size();
     maxSpectrumElemIndex = std::max_element(spectrum.begin(), spectrum.end(),
     [](const std::complex<double>& a, const std::complex<double>& b){return a.real() < b.real();})
@@ -50,16 +49,12 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
                  << QPointF(e->rect().width(), e->rect().height() * (1 - baselinePosition));
         painter.drawPolyline(baseLine);
 
-
         const std::vector<std::complex<double>>& spectrum = experiment->get_spectrum();
 
         double maximum = spectrum[maxSpectrumElemIndex].real();
 
-
-
         painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
         painter.scale(1, -1);
-
 
         QPolygonF spectrumPolygon{};
 

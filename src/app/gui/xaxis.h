@@ -28,6 +28,8 @@ public:
 private:
     XAxisProperties p;
     int displayPrecision;
+
+    double xPosition(double x);
 };
 
 #endif // XAXIS_H

@@ -9,10 +9,7 @@
 
 #include <filesystem>
 
-#include <vector>
-#include <complex>
-#include <algorithm>
-
+#include <QScreen>
 #include <QMenu>
 #include <QPushButton>
 #include <QFrame>
@@ -36,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mainStackedWidget(new QStackedWidget())
 {
+    resize(screen()->availableGeometry().size() * 0.7);
     #ifdef DEBUG__
         qDebug() << "debug";
     #endif
@@ -43,15 +41,30 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle(tr("Open NMR"));
     createActions();
     createTopMenuBar();
+    createActionsFrame();
 
-    setCentralWidget(mainStackedWidget);
+    QWidget* mainWidget = new QWidget(this);
+    QHBoxLayout* mainLayout = new QHBoxLayout();
+
+    QVBoxLayout* rightSideLayout = new QVBoxLayout();
+
+    rightSideLayout->addWidget(actionsFrame);
+    rightSideLayout->addWidget(new QLabel(tr("TODO"), this));
+
+    mainLayout->addWidget(mainStackedWidget);
+    mainLayout->addLayout(rightSideLayout);
+    mainWidget->setLayout(mainLayout);
+
+    mainLayout->setStretchFactor(mainStackedWidget, 12);
+    mainLayout->setStretchFactor(rightSideLayout, 1);
+
+    setCentralWidget(mainWidget);
     // actions ..
 
 }
 
 MainWindow::~MainWindow()
 {
-    setGeometry(200, 200, 800, 400);
 }
 
 void MainWindow::createActions()
@@ -71,7 +84,23 @@ void MainWindow::createTopMenuBar()
     fileMenu->addAction(closeAppAction);
 }
 
+void MainWindow::createActionsFrame()
+{
+    actionsFrame = new QFrame(this);
+    QVBoxLayout* actionsLayout = new QVBoxLayout(actionsFrame);
 
+    QPushButton* openFileButton = new QPushButton(tr("Open File"), this);
+    QPushButton* zoomButton = new QPushButton(tr("Zoom"), this);
+    QPushButton* zoomResetButton = new QPushButton(tr("Reset Zoom"), this);
+    QPushButton* integrateButton = new QPushButton(tr("Integrate"), this);
+
+    actionsLayout->addWidget(openFileButton);
+    actionsLayout->addWidget(zoomButton);
+    actionsLayout->addWidget(zoomResetButton);
+    actionsLayout->addWidget(integrateButton);
+
+    actionsFrame->setLayout(actionsLayout);
+}
 
 void MainWindow::openFileSlot()
 {
