@@ -12,6 +12,7 @@
 
 class Spectrum
 {
+
 public:
     Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid, const std::vector<std::complex<double>>& spectrum);
     static Spectrum from_file_read_result(FileIO::FileReadResult result);
@@ -20,11 +21,11 @@ public:
     const std::vector<std::complex<double>>& get_spectrum();
 
     SpectrumInfo info;
-
+    std::vector<std::complex<double>> spectrum;
 
 private:
     std::vector<std::complex<double>> fid;
-    std::vector<std::complex<double>> spectrum;
+
 };
 
 

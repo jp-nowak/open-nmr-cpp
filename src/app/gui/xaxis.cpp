@@ -128,6 +128,11 @@ XAxis::XAxis(XAxisProperties properties, QWidget* parent)
 : QWidget{parent}
 , p{properties}
 {
+    initialize();
+}
+
+void XAxis::initialize()
+{
     if (p.primaryTicksInterval == 0.0) {
         p.primaryTicksInterval = findInterval(std::fabs(p.left - p.right));
         qDebug() << p.primaryTicksInterval << "p.primaryTicksInterval";
@@ -139,7 +144,21 @@ XAxis::XAxis(XAxisProperties properties, QWidget* parent)
     displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
 }
 
+void XAxis::setRange(double left, double right)
+{
+    if (left < right) {
+        double c = left;
+        left = right;
+        right = c;
+    }
+    p.left = left;
+    p.right = right;
 
+    p.primaryTicksInterval = 0.0;
+    p.secondaryTicksInterval = 0.0;
+    initialize();
+    update();
+}
 
 
 void XAxis::paintEvent(QPaintEvent* e)
@@ -182,7 +201,6 @@ void XAxis::paintEvent(QPaintEvent* e)
         int stepNumber = std::floor(std::fabs(spectralWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
         for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval)
         {
-            qDebug() << xPos(tickPos) << tickPos;
             QPolygonF tick;
             tick << QPointF(xPos(tickPos), lineHeight * (1 - p.relLenghtTickLine))
                  << QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine));

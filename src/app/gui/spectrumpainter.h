@@ -9,20 +9,24 @@
 #include <QPen>
 
 #include <memory>
+#include "../spectrum/spectrum_view.h"
 
 
 class SpectrumPainter : public QWidget
 {
     Q_OBJECT
 public:
-    SpectrumPainter(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent = nullptr);
+    SpectrumPainter(std::vector<std::complex<double>>* spectrum, QWidget* parent = nullptr);
 
     void paintEvent(QPaintEvent* e);
 
-    std::unique_ptr<Spectrum> experiment;
+    void zoom(QPointF startPos, QPointF endPos);
+    void resetZoom();
+
+    SpectrumView spectrum;
 private:
 
-
+    void initialize();
 
     QPen spectrumPen;
 
@@ -30,9 +34,7 @@ private:
     double multiplier;
     double scalingFactor;
 
-    size_t maxSpectrumElemIndex;
-    size_t displayBegin;
-    size_t displayEnd;
+
 };
 
 #endif // SPECTRUMPAINTER_H

@@ -36,6 +36,8 @@ private:
 
 private slots:
     void openFileSlot();
+    void zoomSlot();
+    void resetZoomSlot();
 };
 
 #endif // MAINWINDOW_H

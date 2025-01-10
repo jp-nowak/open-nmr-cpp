@@ -18,7 +18,7 @@ add_compile_definitions(kiss_fft_scalar=double)
 #
 
 add_compile_options(
-  "-Wall" "-Wpedantic" "-Wextra" "-Wno-unused"
+  "-Wall" "-Wpedantic" "-Wextra"
 )
 
 add_subdirectory(src/app)

@@ -24,12 +24,18 @@ public:
     XAxis(XAxisProperties properties, QWidget* parent);
 
     void paintEvent(QPaintEvent*);
+    void setRange(double left, double right);
+
+
+
 
 private:
+    void initialize();
+
     XAxisProperties p;
     int displayPrecision;
 
-    double xPosition(double x);
+
 };
 
 #endif // XAXIS_H

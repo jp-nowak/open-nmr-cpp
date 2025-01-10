@@ -1,6 +1,7 @@
 #include "spectrumpainter.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <QPainter>
 #include <QPolygon>
@@ -15,13 +16,12 @@
 #include <QList>
 #include <QTransform>
 
-SpectrumPainter::SpectrumPainter(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
+SpectrumPainter::SpectrumPainter(std::vector<std::complex<double>>* spectrum, QWidget* parent)
     : QWidget{parent}
-    , experiment{std::move(new_experiment)}
+    , spectrum{spectrum}
     , baselinePosition{0.125}
     , multiplier{1}
     , scalingFactor{1}
-    , displayBegin{0}
 
 {
     spectrumPen.setCosmetic(true);
@@ -29,14 +29,41 @@ SpectrumPainter::SpectrumPainter(std::unique_ptr<Spectrum>&& new_experiment, QWi
     spectrumPen.setColor(QColor(255, 0, 0));
     spectrumPen.setCapStyle(Qt::RoundCap);
 
-    const std::vector<std::complex<double>>& spectrum = experiment->get_spectrum();
 
-    displayEnd = spectrum.size();
-    maxSpectrumElemIndex = std::max_element(spectrum.begin(), spectrum.end(),
-    [](const std::complex<double>& a, const std::complex<double>& b){return a.real() < b.real();})
-    - spectrum.begin();
+
 
 }
+
+void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
+{
+    double start = mapFromGlobal(startPos).x();
+    double end = mapFromGlobal(endPos).x();
+
+
+    if (start > end) {
+        std::swap(start, end);
+    }
+
+    if ((start < 0) or (end > width())) {
+        return;
+    }
+
+    size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
+    size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
+    qDebug() << "zoom" << startPoint << endPoint;
+    spectrum.setRange(startPoint, endPoint);
+    update();
+
+}
+
+void SpectrumPainter::resetZoom()
+{
+    spectrum.reset();
+    update();
+}
+
+
+
 
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
@@ -49,16 +76,14 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
                  << QPointF(e->rect().width(), e->rect().height() * (1 - baselinePosition));
         painter.drawPolyline(baseLine);
 
-        const std::vector<std::complex<double>>& spectrum = experiment->get_spectrum();
-
-        double maximum = spectrum[maxSpectrumElemIndex].real();
+        double maximum = spectrum[spectrum.maxElemIndex].real();
 
         painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
         painter.scale(1, -1);
 
         QPolygonF spectrumPolygon{};
 
-        for (size_t i = displayBegin; (i < spectrum.size()) and (i < displayEnd); i++) {
+        for (size_t i = 0; i < spectrum.size(); i++) {
             spectrumPolygon << QPointF(i * multiplier, spectrum[i].real() * multiplier * scalingFactor);
         }
 

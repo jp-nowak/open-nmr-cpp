@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 
 #include "file_io/general.h"
 #include "processing/general.h"
@@ -89,10 +88,16 @@ void MainWindow::createActionsFrame()
     actionsFrame = new QFrame(this);
     QVBoxLayout* actionsLayout = new QVBoxLayout(actionsFrame);
 
-    QPushButton* openFileButton = new QPushButton(tr("Open File"), this);
-    QPushButton* zoomButton = new QPushButton(tr("Zoom"), this);
-    QPushButton* zoomResetButton = new QPushButton(tr("Reset Zoom"), this);
-    QPushButton* integrateButton = new QPushButton(tr("Integrate"), this);
+    QPushButton* openFileButton = new QPushButton(tr("Open File"), actionsFrame);
+    connect(openFileButton, &QPushButton::clicked, this, &MainWindow::openFileSlot);
+
+    QPushButton* zoomButton = new QPushButton(tr("Zoom"), actionsFrame);
+    connect(zoomButton, &QPushButton::clicked, this, &MainWindow::zoomSlot);
+
+    QPushButton* zoomResetButton = new QPushButton(tr("Reset Zoom"), actionsFrame);
+    connect(zoomResetButton, &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
+
+    QPushButton* integrateButton = new QPushButton(tr("Integrate"), actionsFrame);
 
     actionsLayout->addWidget(openFileButton);
     actionsLayout->addWidget(zoomButton);
@@ -117,8 +122,8 @@ void MainWindow::openFileSlot()
     FileIO::FileReadResult file_read_result = FileIO::open_experiment(input_path);
 
     std::unique_ptr<Spectrum> experiment = Spectrum::pointer_from_file_read_result(file_read_result);
-    SpectrumPainter* spectrumPainter = new SpectrumPainter{std::move(experiment)};
-    SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(spectrumPainter);
+
+    SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(std::move(experiment));
 
 
     qDebug() << "painter created";
@@ -132,4 +137,16 @@ void MainWindow::openFileSlot()
     qDebug() << "koniec";
 
 
+}
+
+void MainWindow::zoomSlot()
+{
+    if (not mainStackedWidget->count()) {return;}
+    qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->currentAction = DisplayerAction::Zoom;
+}
+
+void MainWindow::resetZoomSlot()
+{
+    if (not mainStackedWidget->count()) {return;}
+    qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
 }

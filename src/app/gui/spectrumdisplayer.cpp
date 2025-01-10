@@ -3,17 +3,19 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QMouseEvent>
 
-
-SpectrumDisplayer::SpectrumDisplayer(SpectrumPainter* spainter, QWidget* parent)
+SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
     : QWidget{parent}
-    , spainter{spainter}
+    , currentAction{DisplayerAction::None}
+    , experiment{std::move(new_experiment)}
+    , spainter{new SpectrumPainter{&(experiment->spectrum)}}
+    , mouseMoveStartPoint{0, 0}
 {
-        spainter->setParent(this);
 
         QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
 
-        auto& info = spainter->experiment->info;
+        auto& info = experiment->info;
 
 
         xAxis = new XAxis{
@@ -48,4 +50,26 @@ SpectrumDisplayer::SpectrumDisplayer(SpectrumPainter* spainter, QWidget* parent)
 
         setLayout(spectrumWithXAxisAndYAxis);
 
+}
+
+void SpectrumDisplayer::mousePressEvent(QMouseEvent* e)
+{
+    mouseMoveStartPoint = e->pos();
+}
+
+void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
+{
+    mouseMoveEndPoint = e->pos();
+
+    if (currentAction == DisplayerAction::Zoom)
+    {
+        qDebug() << "displayer zoom";
+        spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+        currentAction = DisplayerAction::None;
+    }
+}
+
+void SpectrumDisplayer::resetZoom()
+{
+    spainter->resetZoom();
 }
