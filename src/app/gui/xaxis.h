@@ -5,6 +5,8 @@
 #include <QWidget>
 #include <QPen>
 
+class SpectrumDisplayer;
+
 struct XAxisProperties
 {
     double left;
@@ -21,11 +23,14 @@ class XAxis : public QWidget
 {
     Q_OBJECT
 public:
+
+    friend SpectrumDisplayer;
+
     XAxis(XAxisProperties properties, QWidget* parent);
 
     void paintEvent(QPaintEvent*);
     void setRange(double left, double right);
-
+    void setRangePoints(QPointF left, QPointF right);
 
 
 

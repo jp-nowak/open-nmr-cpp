@@ -61,7 +61,6 @@ namespace {
             if (inRange(0.70, 0.80)) return 0.08;
             if (inRange(0.80, 0.90)) return 0.09;
             if (inRange(0.90, 1.00)) return 0.10;
-
         }
 
         return [](double x){
@@ -160,6 +159,17 @@ void XAxis::setRange(double left, double right)
     update();
 }
 
+void XAxis::setRangePoints(QPointF left, QPointF right)
+{
+    double newLeft = (1 - static_cast<double>(mapFromGlobal(left).x()) / width())
+                         * (p.left - p.right) + p.right;
+    double newRight = (1 - static_cast<double>(mapFromGlobal(right).x()) / width())
+                         * (p.left - p.right) + p.right;
+    setRange(newLeft, newRight);
+}
+
+
+
 
 void XAxis::paintEvent(QPaintEvent* e)
 {
@@ -198,7 +208,7 @@ void XAxis::paintEvent(QPaintEvent* e)
     double firstTickPosition = findFirstDivisibleNumber(p.left, p.primaryTicksInterval);
     double tickPos = firstTickPosition - p.primaryTicksInterval;
     {
-        int stepNumber = std::floor(std::fabs(spectralWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
+        int stepNumber = std::round(std::fabs(spectralWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
         for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval)
         {
             QPolygonF tick;

@@ -1,12 +1,17 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "gui/spectrum_displayer_actions.h"
+
 #include <QMainWindow>
 #include <QWidget>
 #include <QFrame>
 #include <QPen>
 #include <QList>
 #include <QStackedWidget>
+
+class QPushButton;
+
 
 class MainWindow : public QMainWindow
 {
@@ -15,8 +20,11 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void setCurrentAction(DisplayerAction action);
 
 private:
+
+    DisplayerAction currentAction_;
 
 
     // helper functions for constructor
@@ -32,6 +40,31 @@ private:
     QAction* closeAppAction;
 
     QStackedWidget* mainStackedWidget;
+
+    QPushButton* openFileButton;
+    QPushButton* zoomButton;
+    QPushButton* zoomResetButton;
+    QPushButton* integrateButton;
+
+
+
+
+
+ public:
+    DisplayerAction const& currentAction;
+
+    static MainWindow* findFrom(QWidget* widget) {
+        while (widget) {
+            MainWindow* foo = qobject_cast<MainWindow*>(widget);
+            if (foo) {
+                return foo; // found a Foo parent
+            }
+            widget = widget->parentWidget();
+        }
+        return nullptr; // no Foo parent found
+    }
+
+
 
 
 private slots:

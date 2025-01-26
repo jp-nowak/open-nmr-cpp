@@ -11,6 +11,7 @@
 #include <memory>
 #include "../spectrum/spectrum_view.h"
 
+class SpectrumDisplayer;
 
 class SpectrumPainter : public QWidget
 {
@@ -18,9 +19,17 @@ class SpectrumPainter : public QWidget
 public:
     SpectrumPainter(std::vector<std::complex<double>>* spectrum, QWidget* parent = nullptr);
 
-    void paintEvent(QPaintEvent* e);
+    friend SpectrumDisplayer;
+
+    void paintEvent(QPaintEvent* e) override;
+
 
     void zoom(QPointF startPos, QPointF endPos);
+
+    void changeSelectionWidth(QPointF x, QPointF origin);
+    void setSelectionStart(QPointF x);
+    void resetSelection();
+
     void resetZoom();
 
     SpectrumView spectrum;
@@ -29,11 +38,11 @@ private:
     void initialize();
 
     QPen spectrumPen;
-
+    QRectF selectedRegion;
     double baselinePosition;
     double multiplier;
     double scalingFactor;
-
+    bool displaySelection;
 
 };
 

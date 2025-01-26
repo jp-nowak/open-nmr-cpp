@@ -3,12 +3,13 @@
 
 #include "spectrumpainter.h"
 #include "xaxis.h"
-#include "spectrum_displayer_actions.h"
 
 
 #include <QObject>
 #include <QWidget>
 #include <QPointF>
+
+class MainWindow;
 
 
 class SpectrumDisplayer : public QWidget
@@ -17,10 +18,10 @@ class SpectrumDisplayer : public QWidget
 public:
     SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent = nullptr);
 
-    void mousePressEvent(QMouseEvent* e);
-    void mouseReleaseEvent(QMouseEvent* e);
+    void mousePressEvent(QMouseEvent* e) override;
+    void mouseReleaseEvent(QMouseEvent* e) override;
+    void mouseMoveEvent(QMouseEvent* e) override;
 
-    DisplayerAction currentAction;
     std::unique_ptr<Spectrum> experiment;
     void resetZoom();
 private:
@@ -30,7 +31,7 @@ private:
     QPointF mouseMoveStartPoint;
     QPointF mouseMoveEndPoint;
 
-
+    MainWindow* const mainWindow;
 
 
 };

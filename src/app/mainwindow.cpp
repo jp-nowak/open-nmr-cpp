@@ -1,10 +1,9 @@
 #include "mainwindow.h"
 
 #include "file_io/general.h"
-#include "processing/general.h"
 #include "spectrum/spectrum.h"
 #include "gui/spectrumdisplayer.h"
-#include "gui/spectrumpainter.h"
+
 
 #include <filesystem>
 
@@ -20,6 +19,7 @@
 #include <QApplication>
 #include <QFileDialog>
 #include <QString>
+
 #include <QDebug>
 #include <QStackedWidget>
 #include <QFrame>
@@ -30,8 +30,12 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , currentAction_{DisplayerAction::None}
     , mainStackedWidget(new QStackedWidget())
+    , currentAction{currentAction_}
+
 {
+
     resize(screen()->availableGeometry().size() * 0.7);
     #ifdef DEBUG__
         qDebug() << "debug";
@@ -88,16 +92,17 @@ void MainWindow::createActionsFrame()
     actionsFrame = new QFrame(this);
     QVBoxLayout* actionsLayout = new QVBoxLayout(actionsFrame);
 
-    QPushButton* openFileButton = new QPushButton(tr("Open File"), actionsFrame);
+    openFileButton = new QPushButton(tr("Open File"), actionsFrame);
     connect(openFileButton, &QPushButton::clicked, this, &MainWindow::openFileSlot);
 
-    QPushButton* zoomButton = new QPushButton(tr("Zoom"), actionsFrame);
+    zoomButton = new QPushButton(tr("Zoom"), actionsFrame);
+    zoomButton->setCheckable(true);
     connect(zoomButton, &QPushButton::clicked, this, &MainWindow::zoomSlot);
 
-    QPushButton* zoomResetButton = new QPushButton(tr("Reset Zoom"), actionsFrame);
+    zoomResetButton = new QPushButton(tr("Reset Zoom"), actionsFrame);
     connect(zoomResetButton, &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
 
-    QPushButton* integrateButton = new QPushButton(tr("Integrate"), actionsFrame);
+    integrateButton = new QPushButton(tr("Integrate"), actionsFrame);
 
     actionsLayout->addWidget(openFileButton);
     actionsLayout->addWidget(zoomButton);
@@ -123,26 +128,29 @@ void MainWindow::openFileSlot()
 
     std::unique_ptr<Spectrum> experiment = Spectrum::pointer_from_file_read_result(file_read_result);
 
-    SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(std::move(experiment));
+    SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(std::move(experiment), this);
 
 
-    qDebug() << "painter created";
     mainStackedWidget->addWidget(spectrumDisplayer);
     #ifdef DEBUG__
     qDebug() << experiment.info;
     #endif
 
+}
 
-    qDebug() << file_read_result.info.obs_nucleus_freq;
-    qDebug() << "koniec";
-
-
+void MainWindow::setCurrentAction(DisplayerAction action)
+{
+    if (currentAction_ == action) {return;}
+    if (currentAction_ == DisplayerAction::Zoom) {
+        zoomButton->setChecked(false);
+    }
+    currentAction_ = action;
 }
 
 void MainWindow::zoomSlot()
 {
     if (not mainStackedWidget->count()) {return;}
-    qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->currentAction = DisplayerAction::Zoom;
+    setCurrentAction(DisplayerAction::Zoom);
 }
 
 void MainWindow::resetZoomSlot()
