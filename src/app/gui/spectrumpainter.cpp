@@ -37,10 +37,8 @@ void SpectrumPainter::changeSelectionWidth(QPointF x, QPointF origin)
     double newWidth = mapFromGlobal(origin).x() - mapFromGlobal(x).x();
 
     if (newWidth < 0) { // mouse moves to the right
-        qDebug() << "1" << newWidth;
         selectedRegion.setWidth(-newWidth);
     }  else { // mouse moves to the left
-        qDebug() << "2" << newWidth;
         selectedRegion.setX(mapFromGlobal(x).x());
         selectedRegion.setWidth(newWidth);
     }
@@ -64,7 +62,6 @@ void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     double start = mapFromGlobal(startPos).x();
     double end = mapFromGlobal(endPos).x();
 
-
     if (start > end) {
         std::swap(start, end);
     }
@@ -76,9 +73,8 @@ void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
     size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
 
-    if (startPoint + 5 > endPoint) {return;}
+    if (startPoint + 5 > endPoint) {return;} // stops user from zooming to close
 
-    qDebug() << "zoom" << startPoint << endPoint;
     spectrum.setRange(startPoint, endPoint);
     update();
 
@@ -90,13 +86,8 @@ void SpectrumPainter::resetZoom()
     update();
 }
 
-
-
-
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
-
-
         QPainter painter(this);
         painter.drawPolygon(e->rect().adjusted(1,1,-1,-1));
         QPolygonF baseLine;
@@ -110,10 +101,10 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
             painter.fillRect(selectedRegion, QColor(255, 0, 0, 100));
         }
 
-        // highest value that will be displayed on y axis, scrolling with mouse wheel will depend on changing it
+        // highest value that will be displayed on y axis
         double maximum = spectrum[spectrum.maxElemIndex].real() * 1.05;
 
-        // setting coordinate system in such way that points from spectrum can be displayed without transformations
+        // setting coordinate system in such way that points from spectrum can be displayed without many transformations
         painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
         painter.scale(1, -1);
 
@@ -124,5 +115,15 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
         }
         painter.setPen(spectrumPen);
         painter.drawPolyline(spectrumPolygon);
+}
+
+void SpectrumPainter::wheelEvent(QWheelEvent* e)
+{
+    if (e->angleDelta().y() > 0) { // mouse wheel is turned from user, spectrum values are scaled up
+        scalingFactor *= 1.1;
+    } else { // mouse wheel is turned towards user, spectrum values are scaled down
+        scalingFactor /= 1.1;
+    }
+    update();
 }
 

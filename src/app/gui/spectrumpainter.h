@@ -22,7 +22,7 @@ public:
     friend SpectrumDisplayer;
 
     void paintEvent(QPaintEvent* e) override;
-
+    void wheelEvent(QWheelEvent* e) override;
 
     void zoom(QPointF startPos, QPointF endPos);
 
