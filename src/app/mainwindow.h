@@ -2,16 +2,14 @@
 #define MAINWINDOW_H
 
 #include "gui/spectrum_displayer_actions.h"
+#include "gui/tabwidget.h"
 
 #include <QMainWindow>
-#include <QWidget>
-#include <QFrame>
-#include <QPen>
-#include <QList>
-#include <QStackedWidget>
 
 class QPushButton;
-
+class TabWidget;
+class QStackedWidget;
+class QFrame;
 
 class MainWindow : public QMainWindow
 {
@@ -46,7 +44,7 @@ private:
     QPushButton* zoomResetButton;
     QPushButton* integrateButton;
 
-
+    TabWidget* tabWidget;
 
 
 

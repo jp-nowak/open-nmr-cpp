@@ -4,7 +4,6 @@
 #include "spectrum/spectrum.h"
 #include "gui/spectrumdisplayer.h"
 
-
 #include <filesystem>
 
 #include <QScreen>
@@ -19,7 +18,6 @@
 #include <QApplication>
 #include <QFileDialog>
 #include <QString>
-
 #include <QDebug>
 #include <QStackedWidget>
 #include <QFrame>
@@ -28,10 +26,16 @@
 #include <QList>
 
 
+
+
+
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , currentAction_{DisplayerAction::None}
-    , mainStackedWidget(new QStackedWidget())
+    , mainStackedWidget(new QStackedWidget())    
+    , tabWidget(new TabWidget(mainStackedWidget, this))
     , currentAction{currentAction_}
 
 {
@@ -52,8 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout* rightSideLayout = new QVBoxLayout();
 
     rightSideLayout->addWidget(actionsFrame);
-    rightSideLayout->addWidget(new QLabel(tr("TODO"), this));
-
+    rightSideLayout->addWidget(tabWidget);
     mainLayout->addWidget(mainStackedWidget);
     mainLayout->addLayout(rightSideLayout);
     mainWidget->setLayout(mainLayout);
@@ -131,7 +134,11 @@ void MainWindow::openFileSlot()
     SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(std::move(experiment), this);
 
 
-    mainStackedWidget->addWidget(spectrumDisplayer);
+    size_t i = mainStackedWidget->addWidget(spectrumDisplayer);
+    mainStackedWidget->setCurrentIndex(i);
+    tabWidget->addTab(spectrumDisplayer);
+
+
     #ifdef DEBUG__
     qDebug() << experiment.info;
     #endif
@@ -158,3 +165,8 @@ void MainWindow::resetZoomSlot()
     if (not mainStackedWidget->count()) {return;}
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
 }
+
+
+
+
+
