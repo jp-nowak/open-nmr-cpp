@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QPushButton>
+#include <QStyleOptionButton>
+
 
 TabWidget::TabWidget(QStackedWidget* stackedSpectra, QWidget* parent)
     : QWidget{parent}
@@ -19,6 +21,9 @@ TabWidget::TabWidget(QStackedWidget* stackedSpectra, QWidget* parent)
     layout->addLayout(grid);
     layout->setAlignment(Qt::AlignTop);
     grid->setAlignment(Qt::AlignTop);
+    grid->setHorizontalSpacing(0);
+    grid->setColumnStretch(0, 10);
+    grid->setColumnStretch(1, 0);
 }
 
 void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
@@ -33,6 +38,20 @@ void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
     );
 
     QPushButton* delButton = new QPushButton(QString("x"), this);
+
+    // sets minimal size of button to size of text in it
+    auto textSize = delButton->fontMetrics().size(Qt::TextShowMnemonic, delButton->text());
+    QStyleOptionButton opt;
+    opt.initFrom(delButton);
+    opt.rect.setSize(textSize);
+    delButton->setMinimumSize(
+        delButton->style()->sizeFromContents(QStyle::CT_PushButton,
+                                          &opt,
+                                          textSize,
+                                          delButton));
+
+
+
 
     connect(delButton, &QPushButton::clicked, this,
             [newSpectrum, newButton, delButton, this]()

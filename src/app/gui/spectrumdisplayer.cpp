@@ -89,6 +89,8 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
 
 void SpectrumDisplayer::mouseMoveEvent(QMouseEvent* e)
 {
+
+    // not working, need to resolve problem of crossing the border of widget
     if (e->pos().x() == 0
         or e->pos().x() == width()) {
         qDebug() << "border crossed";

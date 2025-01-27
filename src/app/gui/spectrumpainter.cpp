@@ -74,6 +74,7 @@ void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
 
     if (startPoint + 5 > endPoint) {return;} // stops user from zooming to close
+    // need to impose this restriction in spectrum displayer instead so it also works on axis
 
     spectrum.setRange(startPoint, endPoint);
     update();
