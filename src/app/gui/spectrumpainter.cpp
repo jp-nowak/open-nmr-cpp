@@ -55,9 +55,10 @@ void SpectrumPainter::resetSelection()
 {
     selectedRegion.setWidth(0.0);
     displaySelection = false;
+    update();
 }
 
-void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
+bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
 {
     double start = mapFromGlobal(startPos).x();
     double end = mapFromGlobal(endPos).x();
@@ -66,18 +67,17 @@ void SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
         std::swap(start, end);
     }
 
-    if ((start < 0) or (end > width())) {
-        return;
-    }
+    start = (start < 0) ? 0 : start;
+    end = (end > width()) ? width() : end;
 
     size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
     size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
 
-    if (startPoint + 5 > endPoint) {return;} // stops user from zooming to close
-    // need to impose this restriction in spectrum displayer instead so it also works on axis
+    if (startPoint + 5 > endPoint) {return false;} // stops user from zooming to close
 
     spectrum.setRange(startPoint, endPoint);
     update();
+    return true;
 
 }
 

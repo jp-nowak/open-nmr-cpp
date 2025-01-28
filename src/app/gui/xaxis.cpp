@@ -134,11 +134,9 @@ void XAxis::initialize()
 {
     if (p.primaryTicksInterval == 0.0) {
         p.primaryTicksInterval = findInterval(std::fabs(p.left - p.right));
-        qDebug() << p.primaryTicksInterval << "p.primaryTicksInterval";
     }
     if (p.secondaryTicksInterval == 0.0) {
         p.secondaryTicksInterval = p.primaryTicksInterval / 2;
-        qDebug() << p.secondaryTicksInterval;
     }
     displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
 }
@@ -161,10 +159,16 @@ void XAxis::setRange(double left, double right)
 
 void XAxis::setRangePoints(QPointF left, QPointF right)
 {
-    double newLeft = (1 - static_cast<double>(mapFromGlobal(left).x()) / width())
-                         * (p.left - p.right) + p.right;
-    double newRight = (1 - static_cast<double>(mapFromGlobal(right).x()) / width())
-                         * (p.left - p.right) + p.right;
+    left = mapFromGlobal(left);
+    right = mapFromGlobal(right);
+
+    double newLeft = (left.x() < 0) ? p.left
+                                    : (1 - static_cast<double>(left.x()) / width())
+                                        * (p.left - p.right) + p.right;
+
+    double newRight = (right.x() > width()) ? p.right
+                                            : (1 - static_cast<double>(right.x()) / width())
+                                        * (p.left - p.right) + p.right;
     setRange(newLeft, newRight);
 }
 

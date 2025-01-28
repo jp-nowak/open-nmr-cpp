@@ -81,24 +81,15 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
     if (mainWindow->currentAction == DisplayerAction::Zoom)
     {
         spainter->resetSelection();
-        spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
-        xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+        if (spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint))) {
+            xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+        }
         mainWindow->setCurrentAction(DisplayerAction::None);
     }
 }
 
 void SpectrumDisplayer::mouseMoveEvent(QMouseEvent* e)
 {
-
-    // not working, need to resolve problem of crossing the border of widget
-    if (e->pos().x() == 0
-        or e->pos().x() == width()) {
-        qDebug() << "border crossed";
-        mouseReleaseEvent(e);
-        return;
-    }
-
-
     if (mainWindow->currentAction == DisplayerAction::Zoom)
     {
         spainter->changeSelectionWidth(mapToGlobal(e->pos()), mapToGlobal(mouseMoveStartPoint));
