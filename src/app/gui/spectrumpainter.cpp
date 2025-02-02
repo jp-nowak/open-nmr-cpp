@@ -34,7 +34,7 @@ SpectrumPainter::SpectrumPainter(std::vector<std::complex<double>>* spectrum, QW
 
 void SpectrumPainter::changeSelectionWidth(QPointF x, QPointF origin)
 {
-    double newWidth = mapFromGlobal(origin).x() - mapFromGlobal(x).x();
+    const double newWidth = mapFromGlobal(origin).x() - mapFromGlobal(x).x();
 
     if (newWidth < 0) { // mouse moves to the right
         selectedRegion.setWidth(-newWidth);
@@ -70,8 +70,8 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     start = (start < 0) ? 0 : start;
     end = (end > width()) ? width() : end;
 
-    size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
-    size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
+    const size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
+    const size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
 
     if (startPoint + 5 > endPoint) {return false;} // stops user from zooming to close
 
@@ -103,8 +103,8 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
         }
 
         // highest value that will be displayed on y axis
-        double maximum = spectrum[spectrum.maxElemIndex].real() * 1.05;
-
+        // const double maximum = spectrum[spectrum.maxElemIndex].real() * 1.05;
+        const double maximum = spectrum.trueRealMaximum * 1.05;
         // setting coordinate system in such way that points from spectrum can be displayed without many transformations
         painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
         painter.scale(1, -1);

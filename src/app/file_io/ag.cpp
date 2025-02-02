@@ -15,7 +15,6 @@
 #include <string>
 #include <stdexcept>
 #include <optional>
-
 #include <unordered_map>
 
 namespace
@@ -151,12 +150,7 @@ namespace
             return {};
         }
 
-
-        double zero_freq{};
-        double obs_nucleus_freq{};
-        double spectral_width{};
-        double elements_number{};
-        double acquisition_time{};
+        double zero_freq{}, obs_nucleus_freq{}, spectral_width{}, elements_number{}, acquisition_time{};
 
         // if conversions fail file is assumed to be corrupt and empty optional is returned
         try{
@@ -201,15 +195,16 @@ namespace
      */
     std::optional<std::vector<std::vector<std::complex<double>>>> read_fid_file(std::ifstream& fid_file)
     {
+        using namespace FileIO;
         // reading of file header, which contains information necessary for further processing
         std::vector<std::byte> buffer(FILE_HEADER_SIZE, std::byte{0});
         if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE)) {
+            qDebug() << __LINE__;
             return {};
         }
         FileHeader file_header = read_file_header(buffer, 0);
 
         // extracting information about data type, there are only three options
-        enum class DataType {short16, int32, float32};
         DataType data_type{};
         if (file_header.status[3]){
             data_type = DataType::float32;
@@ -223,7 +218,15 @@ namespace
 
         const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
 
+        if (file_header.ebytes != static_cast<int>(dataTypeSize(data_type))) {
+            qDebug() << __LINE__;
+
+            return {};
+        }
+
         if (fid_array_byte_size != static_cast<size_t>(file_header.tbytes)) {
+            qDebug() << __LINE__;
+
             return {};
         }
 
@@ -235,6 +238,8 @@ namespace
             buffer.resize(BLOCK_HEADER_SIZE);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
+                qDebug() << __LINE__;
+
                 return {};
             }
             BlockHeader block_header = read_block_header(buffer, 0);
@@ -249,6 +254,8 @@ namespace
                 buffer.resize(BLOCK_HEADER_SIZE);
 
                 if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
+                    qDebug() << __LINE__;
+
                     return {};
                 }
 
@@ -264,6 +271,8 @@ namespace
             buffer.resize(fid_array_byte_size);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size)) {
+                qDebug() << __LINE__;
+
                 return {};
             }
 
@@ -277,6 +286,8 @@ namespace
             case DataType::short16:
                 fid = BigEndian::read_fid_array_short(buffer);
                 break;
+            default:
+                return {};
             }
             fids.push_back(fid);
         }
@@ -299,6 +310,7 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
     std::ifstream procpar_file{folder_path / "procpar", std::ios::in};
 
     FileReadResult result{};
+    result.file_read_status = FileReadStatus::success_1D;
 
     if (fid_file) {
         std::optional<std::vector<std::vector<std::complex<double>>>> fids = read_fid_file(fid_file);
@@ -323,7 +335,6 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
     }
 
 
-    result.file_read_status = FileReadStatus::success_1D;
 
     return result;
 }

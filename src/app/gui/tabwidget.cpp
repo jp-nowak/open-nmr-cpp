@@ -45,10 +45,7 @@ void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
     opt.initFrom(delButton);
     opt.rect.setSize(textSize);
     delButton->setMinimumSize(
-        delButton->style()->sizeFromContents(QStyle::CT_PushButton,
-                                          &opt,
-                                          textSize,
-                                          delButton));
+        delButton->style()->sizeFromContents(QStyle::CT_PushButton, &opt, textSize, delButton));
 
 
 

@@ -11,6 +11,7 @@ SpectrumView::SpectrumView(std::vector<std::complex<double>>* spectrum)
 
 {
     initialize();
+    trueRealMaximum = (*spectrum)[maxElemIndex].real();
 }
 
 void SpectrumView::initialize()
@@ -22,12 +23,10 @@ void SpectrumView::initialize()
 
 void SpectrumView::setRange(size_t begin, size_t end)
 {
-    qDebug() << "setRange";
     if ((begin < size()) and (end <= size()) and (begin < end)) {
         this->end = this->begin + end;
         this->begin += begin;
         initialize();
-        qDebug() << "to real spectrum" << this->begin << this->end;
     }
 }
 

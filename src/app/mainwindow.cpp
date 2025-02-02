@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     resize(screen()->availableGeometry().size() * 0.7);
     #ifdef DEBUG__
-        qDebug() << "debug";
+        qDebug() << "DEBUG__";
     #endif
 
     setWindowTitle(tr("Open NMR"));
@@ -52,7 +52,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     QWidget* mainWidget = new QWidget(this);
     QHBoxLayout* mainLayout = new QHBoxLayout();
-
     QVBoxLayout* rightSideLayout = new QVBoxLayout();
 
     rightSideLayout->addWidget(actionsFrame);
@@ -124,10 +123,12 @@ void MainWindow::openFileSlot()
         return;
     }
     QString selectedFile = fileDialog.selectedFiles().at(0);
-    qDebug() << selectedFile << "\n";
-    qDebug() << selectedFile.toStdString() << "\n";
     std::filesystem::path input_path{selectedFile.toStdString()};
     FileIO::FileReadResult file_read_result = FileIO::open_experiment(input_path);
+
+    if (not (file_read_result.file_read_status == FileIO::FileReadStatus::success_1D)) {
+        return;
+    }
 
     std::unique_ptr<Spectrum> experiment = Spectrum::pointer_from_file_read_result(file_read_result);
 
@@ -139,9 +140,7 @@ void MainWindow::openFileSlot()
     tabWidget->addTab(spectrumDisplayer);
 
 
-    #ifdef DEBUG__
-    qDebug() << experiment.info;
-    #endif
+
 
 }
 

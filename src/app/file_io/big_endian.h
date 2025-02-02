@@ -32,6 +32,8 @@ namespace BigEndian
      */
     float to_float(std::vector<std::byte> buffer, size_t begin);
 
+    std::vector<std::complex<double>> read_fid_array_double(const std::vector<std::byte>& buffer);
+
     /*!
      * \brief read_fid_array_float reads array of complex numbers from big endian bytes, they are promoted to double
      * it is assumed that array structure is:

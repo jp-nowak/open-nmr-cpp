@@ -14,6 +14,7 @@ public:
     void reset();
     size_t maxElemIndex;
     const size_t trueSize;
+    double trueRealMaximum;
 private:
     void initialize();
     std::vector<std::complex<double>>* const spectrum;

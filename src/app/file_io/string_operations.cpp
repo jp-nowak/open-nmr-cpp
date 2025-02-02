@@ -17,6 +17,7 @@ std::vector<std::string> StringOperations::split(std::string s, std::string deli
     return res;
 }
 
+// https://stackoverflow.com/questions/5891610/how-to-remove-certain-characters-from-a-string-in-c
 std::string StringOperations::remove_chars(std::string s, const std::string& chars) {
     s.erase(std::remove_if(s.begin(), s.end(), [&chars](const char& c) {
         return chars.find(c) != std::string::npos;
