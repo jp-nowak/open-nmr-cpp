@@ -199,7 +199,6 @@ namespace
         // reading of file header, which contains information necessary for further processing
         std::vector<std::byte> buffer(FILE_HEADER_SIZE, std::byte{0});
         if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE)) {
-            qDebug() << __LINE__;
             return {};
         }
         FileHeader file_header = read_file_header(buffer, 0);
@@ -219,14 +218,10 @@ namespace
         const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
 
         if (file_header.ebytes != static_cast<int>(dataTypeSize(data_type))) {
-            qDebug() << __LINE__;
-
             return {};
         }
 
         if (fid_array_byte_size != static_cast<size_t>(file_header.tbytes)) {
-            qDebug() << __LINE__;
-
             return {};
         }
 
@@ -238,8 +233,6 @@ namespace
             buffer.resize(BLOCK_HEADER_SIZE);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
-                qDebug() << __LINE__;
-
                 return {};
             }
             BlockHeader block_header = read_block_header(buffer, 0);
@@ -254,8 +247,6 @@ namespace
                 buffer.resize(BLOCK_HEADER_SIZE);
 
                 if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
-                    qDebug() << __LINE__;
-
                     return {};
                 }
 
@@ -271,8 +262,6 @@ namespace
             buffer.resize(fid_array_byte_size);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size)) {
-                qDebug() << __LINE__;
-
                 return {};
             }
 

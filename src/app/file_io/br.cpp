@@ -62,12 +62,11 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
 
     // checks whether any key remained empty
     if (params.contains(std::string{})) {
-        qDebug() << "1";
         return {};
     }
 
     double spectrumCenter{}, spectralWidthHz{}, spectralWidthPpm{}, observedNucleusFreq{},
-        plotBegin{}, plotEnd{}, irradiationFreq{}, dwellTime{}, groupDelay{};
+        irradiationFreq{}, dwellTime{}, groupDelay{};
     int elementsNumber;
     bool bigEndian;
 
@@ -82,10 +81,8 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         bigEndian = static_cast<bool>(std::stoi(params["$BYTORDA"]));
         groupDelay = std::stod(params["$GRPDLY"]);
     } catch (const std::invalid_argument& e) {
-        qDebug() << "2";
         return {};
     } catch(const std::out_of_range& e) {
-        qDebug() << "3";
         return {};
     }
 
@@ -96,7 +93,6 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
     if (elementsNumber > 0) {
         elemN = static_cast<size_t>(elementsNumber);
     } else {
-        qDebug() << "4";
         return {};
     }
 
@@ -116,8 +112,8 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
     SpectrumInfo info{
         .plot_right_Hz = plotBeginHz,
         .plot_left_Hz = plotEndHz,
-        .plot_right_ppm = plotBegin,
-        .plot_left_ppm = plotEnd,
+        .plot_right_ppm = plotBeginHz / observedNucleusFreq,
+        .plot_left_ppm = plotEndHz / observedNucleusFreq,
         .spectral_width = spectralWidthHz,
         .acquisition_time = elementsNumber * dwellTime,
         .obs_nucleus_freq = observedNucleusFreq,

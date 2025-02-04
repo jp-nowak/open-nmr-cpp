@@ -6,10 +6,7 @@
 
 #include <vector>
 #include <complex>
-#include <string>
 #include <memory>
-
-typedef std::vector<std::complex<double>> Fid;
 
 class Spectrum
 {

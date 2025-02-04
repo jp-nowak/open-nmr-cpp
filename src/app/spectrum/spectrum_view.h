@@ -4,6 +4,8 @@
 #include <vector>
 #include <complex>
 
+// NOT USED ANYMORE
+
 class SpectrumView
 {
 public:

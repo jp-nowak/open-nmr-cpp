@@ -8,8 +8,8 @@
 #include <QWidget>
 #include <QPen>
 
+#include <span>
 #include <memory>
-#include "../spectrum/spectrum_view.h"
 
 class SpectrumDisplayer;
 
@@ -17,7 +17,7 @@ class SpectrumPainter : public QWidget
 {
     Q_OBJECT
 public:
-    SpectrumPainter(std::vector<std::complex<double>>* spectrum, QWidget* parent = nullptr);
+    SpectrumPainter(std::vector<std::complex<double>>& spectrum, QWidget* parent = nullptr);
 
     friend SpectrumDisplayer;
 
@@ -32,7 +32,9 @@ public:
 
     void resetZoom();
 
-    SpectrumView spectrum;
+    std::span<std::complex<double> const> spectrum;
+    const std::span<std::complex<double> const> spectrumFullSpan;
+
 private:
 
     void initialize();
@@ -43,7 +45,7 @@ private:
     double multiplier;
     double scalingFactor;
     bool displaySelection;
-
+    const double maximum;
 };
 
 #endif // SPECTRUMPAINTER_H

@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <QDebug>
 
+
+// NOT USED ANYMORE
+
+
 SpectrumView::SpectrumView(std::vector<std::complex<double>>* spectrum)
     : spectrum{spectrum}
     , begin{0}

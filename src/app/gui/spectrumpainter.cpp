@@ -16,14 +16,24 @@
 #include <QList>
 #include <QTransform>
 
-SpectrumPainter::SpectrumPainter(std::vector<std::complex<double>>* spectrum, QWidget* parent)
+SpectrumPainter::SpectrumPainter(std::vector<std::complex<double>>& spectrum, QWidget* parent)
     : QWidget{parent}
     , spectrum{spectrum}
+    , spectrumFullSpan{spectrum}
     , selectedRegion{0, 0, 0, static_cast<qreal>(height())}
     , baselinePosition{0.125}
     , multiplier{1}
     , scalingFactor{1}
     , displaySelection{false}
+    , maximum
+            {
+              spectrum[std::max_element(spectrum.begin(), spectrum.end(),
+              [](const std::complex<double>& a, const std::complex<double>& b)
+                                    {
+                                        return a.real() < b.real();
+                                    })
+              - spectrum.begin()].real() * 1.05
+            }
 
 {
     spectrumPen.setCosmetic(true);
@@ -75,15 +85,16 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
 
     if (startPoint + 5 > endPoint) {return false;} // stops user from zooming to close
 
-    spectrum.setRange(startPoint, endPoint);
-    update();
-    return true;
+    spectrum = spectrum.subspan(startPoint, endPoint - startPoint);
 
+    update();
+
+    return true;
 }
 
 void SpectrumPainter::resetZoom()
 {
-    spectrum.reset();
+    spectrum = spectrumFullSpan;
     update();
 }
 
@@ -102,9 +113,6 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
             painter.fillRect(selectedRegion, QColor(255, 0, 0, 100));
         }
 
-        // highest value that will be displayed on y axis
-        // const double maximum = spectrum[spectrum.maxElemIndex].real() * 1.05;
-        const double maximum = spectrum.trueRealMaximum * 1.05;
         // setting coordinate system in such way that points from spectrum can be displayed without many transformations
         painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
         painter.scale(1, -1);
