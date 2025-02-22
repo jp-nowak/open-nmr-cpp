@@ -8,6 +8,8 @@
 #include <complex>
 #include <memory>
 
+
+
 class Spectrum
 {
 

@@ -7,7 +7,7 @@
 void drawText(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
               const QString & text, QRectF * boundingRect)
 {
-   const qreal size = 32767.0;
+   constexpr qreal size = 32767.0;
    QPointF corner(x, y - size);
    if (flags & Qt::AlignHCenter) corner.rx() -= size/2.0;
    else if (flags & Qt::AlignRight) corner.rx() -= size;

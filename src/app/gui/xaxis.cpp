@@ -1,8 +1,6 @@
 #include "xaxis.h"
 #include "gui_utilities.h"
 
-#include <cmath>
-
 #include <QPainter>
 #include <QPen>
 #include <QPolygonF>
@@ -13,10 +11,13 @@
 #include <QRectF>
 #include <QString>
 
+#include <cmath>
+#include <functional>
 // to be rewritten in more sensible way
 
 namespace {
 
+    // symetric
     double findInterval(double span)
     {
         auto inRange = [span](double low, double high){return !(span < low) && (span < high);};
@@ -90,6 +91,7 @@ namespace {
 
     }
 
+    // symetric
     int calcDisplayPrecision(double x)
     {
         double divisor = 1;
@@ -98,8 +100,9 @@ namespace {
         return precision;
     }
 
-    double findFirstDivisibleNumber(double x, double y)
+    double findFirstDivisibleNumber(double x, double y, bool decreasing = true)
     {
+        int r = (decreasing) ? 1 : -1;
         if (x == 0.0) {return x;}
         int xpower10 = std::floor(std::log10(std::fabs(x)));
         int ypower10 = std::floor(std::log10(std::fabs(y)));
@@ -115,7 +118,7 @@ namespace {
         int leftInteger = std::floor(x * multiplier);
         int tickInterval = y * multiplier;
         int firstPosition = leftInteger;
-        for (; firstPosition % tickInterval; firstPosition--) {continue;} // empty body
+        for (; firstPosition % tickInterval; firstPosition -= r) {continue;} // empty body
         return static_cast<double>(firstPosition) / multiplier;
     }
 
@@ -124,8 +127,9 @@ namespace {
 
 
 XAxis::XAxis(XAxisProperties properties, QWidget* parent)
-: QWidget{parent}
-, p{properties}
+    : QWidget{parent}
+    , p{properties}
+    , r{(p.decreasingToRight) ? 1 : -1}
 {
     initialize();
 }
@@ -143,14 +147,15 @@ void XAxis::initialize()
 
 void XAxis::setRange(double left, double right)
 {
-    if (left < right) {
-        double c = left;
-        left = right;
-        right = c;
+    if (p.decreasingToRight and (left < right)) {
+        std::swap(left, right);
     }
+    if (not p.decreasingToRight and (left > right)) {
+        std::swap(left, right);
+    }
+
     p.left = left;
     p.right = right;
-
     p.primaryTicksInterval = 0.0;
     p.secondaryTicksInterval = 0.0;
     initialize();
@@ -159,6 +164,8 @@ void XAxis::setRange(double left, double right)
 
 void XAxis::setRangePoints(QPointF left, QPointF right)
 {
+    if (not p.decreasingToRight) return; // TODO version for increasing axis
+
     left = mapFromGlobal(left);
     right = mapFromGlobal(right);
 
@@ -182,7 +189,13 @@ void XAxis::paintEvent(QPaintEvent* e)
     const double spectralWidth = std::fabs(p.left - p.right);
     const double lineHeight = p.lineHeight * height;
 
-    auto xPos = [width, spectralWidth, this](double x){return (1 - ((x - p.right) / spectralWidth)) * width;};
+    std::function<double(double)> xPos; // converts value in ppm to x coordinate in widget
+
+    if (p.decreasingToRight) { // would be good to put it in initialize for future!!!
+        xPos = [width, spectralWidth, this](double x) -> double {return (1 - ((x - p.right) / spectralWidth)) * width;};
+    } else {
+        xPos = [width, spectralWidth, this](double x) -> double {return ((x - p.left) / spectralWidth) * width;};
+    }
 
     QPainter painter(this);
     QPen pen;
@@ -194,13 +207,8 @@ void XAxis::paintEvent(QPaintEvent* e)
     double diameterProportion = std::sqrt(std::pow(e->rect().width(), 2) + std::pow(e->rect().height(), 2))
                               / std::sqrt(std::pow(screen()->availableGeometry().size().width(), 2)
                               + std::pow(screen()->availableGeometry().size().height(), 2));
-    font.setPixelSize(15 * diameterProportion);
+    font.setPixelSize(15 * diameterProportion); // add font size to properties
     painter.setFont(font);
-
-
-
-
-
 
     painter.setWindow(0, 0, width, height);
 
@@ -209,11 +217,11 @@ void XAxis::paintEvent(QPaintEvent* e)
              << QPointF(width, lineHeight);
     painter.drawPolyline(baseline);
 
-    double firstTickPosition = findFirstDivisibleNumber(p.left, p.primaryTicksInterval);
-    double tickPos = firstTickPosition - p.primaryTicksInterval;
+    double firstTickPosition = findFirstDivisibleNumber(p.left, p.primaryTicksInterval, p.decreasingToRight);
+    double tickPos = firstTickPosition - p.primaryTicksInterval * r;
     {
         int stepNumber = std::round(std::fabs(spectralWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
-        for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval)
+        for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval * r)
         {
             QPolygonF tick;
             tick << QPointF(xPos(tickPos), lineHeight * (1 - p.relLenghtTickLine))

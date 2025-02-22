@@ -17,6 +17,7 @@ struct XAxisProperties
     double relLenghtTickLine;
     double lineHeight;
     double labelAdditionalSpacing;
+    bool decreasingToRight{true};
 };
 
 class XAxis : public QWidget
@@ -39,7 +40,7 @@ private:
 
     XAxisProperties p;
     int displayPrecision;
-
+    int r;
 
 };
 

@@ -2,9 +2,9 @@
 
 #include "file_io/general.h"
 #include "spectrum/spectrum.h"
-#include "gui/spectrumdisplayer.h"
 
-#include <filesystem>
+#include "gui/spectrumdisplayer.h"
+#include "gui/phasecorrectionwidget.h"
 
 #include <QScreen>
 #include <QMenu>
@@ -25,17 +25,14 @@
 #include <QPen>
 #include <QList>
 
-
-
-
-
-
+#include <filesystem>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , currentAction_{DisplayerAction::None}
     , mainStackedWidget(new QStackedWidget())    
     , tabWidget(new TabWidget(mainStackedWidget, this))
+    , phaseCorrectionWidget{nullptr}
     , currentAction{currentAction_}
 
 {
@@ -64,8 +61,8 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->setStretchFactor(rightSideLayout, 1);
 
     setCentralWidget(mainWidget);
-    // actions ..
 
+    connect(mainStackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::spectrumChangedSlot);
 }
 
 MainWindow::~MainWindow()
@@ -78,15 +75,22 @@ void MainWindow::createActions()
     connect(openFileAction, &QAction::triggered, this, &MainWindow::openFileSlot);
     closeAppAction = new QAction(tr("Close App"), this);
     connect(closeAppAction, &QAction::triggered, this, &MainWindow::close);
+    phaseCorrectionAction = new QAction(tr("Phase Correction"), this);
+    connect(phaseCorrectionAction, &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
+
+
 }
 
 void MainWindow::createTopMenuBar()
 {
     topMenuBar = menuBar();
 
-    fileMenu = topMenuBar->addMenu(tr("File"));
+    QMenu* fileMenu = topMenuBar->addMenu(tr("File"));
     fileMenu->addAction(openFileAction);
     fileMenu->addAction(closeAppAction);
+
+    QMenu* processingMenu = topMenuBar->addMenu(tr("Processing"));
+    processingMenu->addAction(phaseCorrectionAction);
 }
 
 void MainWindow::createActionsFrame()
@@ -139,9 +143,6 @@ void MainWindow::openFileSlot()
     mainStackedWidget->setCurrentIndex(i);
     tabWidget->addTab(spectrumDisplayer);
 
-
-
-
 }
 
 void MainWindow::setCurrentAction(DisplayerAction action)
@@ -165,6 +166,21 @@ void MainWindow::resetZoomSlot()
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
 }
 
+void MainWindow::spectrumChangedSlot(int i)
+{
+    qDebug() << "changed to" << i;
+}
+
+void MainWindow::phaseCorrectionSlot()
+{
+    qDebug() << "phase correction";
+    // if (not mainStackedWidget->count()) {return;}
+    qDebug() << "phase correction";
+    if (phaseCorrectionWidget) {return;}
+    qDebug() << "phase correction";
+    phaseCorrectionWidget = new PhaseCorrectionWidget(this);
+    phaseCorrectionWidget->show();
+}
 
 
 

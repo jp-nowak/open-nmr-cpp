@@ -18,6 +18,10 @@ qt_add_executable(open-nmr
     gui/tabwidget.h gui/tabwidget.cpp
     file_io/br.h file_io/br.cpp
     file_io/little_endian.h file_io/little_endian.cpp
+    processing/phase_correction.cpp
+    processing/phase_correction.h
+    gui/labeledslider.h gui/labeledslider.cpp
+    gui/phasecorrectionwidget.h gui/phasecorrectionwidget.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

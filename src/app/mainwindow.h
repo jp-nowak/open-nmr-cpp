@@ -11,6 +11,10 @@ class TabWidget;
 class QStackedWidget;
 class QFrame;
 
+class PhaseCorrectionWidget;
+
+
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -32,10 +36,10 @@ private:
 
     QFrame* actionsFrame;
     QMenuBar* topMenuBar;
-    QMenu* fileMenu;
 
     QAction* openFileAction;
     QAction* closeAppAction;
+    QAction* phaseCorrectionAction;
 
     QStackedWidget* mainStackedWidget;
 
@@ -45,6 +49,12 @@ private:
     QPushButton* integrateButton;
 
     TabWidget* tabWidget;
+
+    // processing widgets
+
+    PhaseCorrectionWidget* phaseCorrectionWidget;
+
+
 
 
 
@@ -62,13 +72,12 @@ private:
         return nullptr; // no Foo parent found
     }
 
-
-
-
 private slots:
     void openFileSlot();
     void zoomSlot();
     void resetZoomSlot();
+    void spectrumChangedSlot(int i);
+    void phaseCorrectionSlot();
 };
 
 #endif // MAINWINDOW_H
