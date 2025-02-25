@@ -5,6 +5,8 @@
 #include <QWidget>
 #include <QPen>
 
+#include <optional>
+
 class SpectrumDisplayer;
 
 struct XAxisProperties
@@ -18,6 +20,9 @@ struct XAxisProperties
     double lineHeight;
     double labelAdditionalSpacing;
     bool decreasingToRight{true};
+    int fontSize{15}; // size of text in ticks labels, 15 is default for spectrum
+    std::optional<int> fixedDisplayPrecision{}; // should only be set when setRange wont be used
+    bool showLine{true};
 };
 
 class XAxis : public QWidget

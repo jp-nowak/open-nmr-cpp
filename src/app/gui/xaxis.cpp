@@ -85,13 +85,9 @@ namespace {
             }
 
             return (power10 < 0) ? result / std::pow(10, -power10) : result;
-
-
         }(span);
-
     }
 
-    // symetric
     int calcDisplayPrecision(double x)
     {
         double divisor = 1;
@@ -125,7 +121,6 @@ namespace {
 }
 
 
-
 XAxis::XAxis(XAxisProperties properties, QWidget* parent)
     : QWidget{parent}
     , p{properties}
@@ -142,7 +137,11 @@ void XAxis::initialize()
     if (p.secondaryTicksInterval == 0.0) {
         p.secondaryTicksInterval = p.primaryTicksInterval / 2;
     }
-    displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
+    if (p.fixedDisplayPrecision) {
+        displayPrecision = *p.fixedDisplayPrecision;
+    } else {
+        displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
+    }
 }
 
 void XAxis::setRange(double left, double right)
@@ -206,16 +205,18 @@ void XAxis::paintEvent(QPaintEvent* e)
     QFont font = painter.font();
     double diameterProportion = std::sqrt(std::pow(e->rect().width(), 2) + std::pow(e->rect().height(), 2))
                               / std::sqrt(std::pow(screen()->availableGeometry().size().width(), 2)
-                              + std::pow(screen()->availableGeometry().size().height(), 2));
-    font.setPixelSize(15 * diameterProportion); // add font size to properties
+                              + std::pow(screen()->availableGeometry().size().height(), 2)); // to be put elsewhere not in paintevent?
+    font.setPixelSize(p.fontSize * diameterProportion); // size increases with window size
     painter.setFont(font);
 
     painter.setWindow(0, 0, width, height);
 
-    QPolygonF baseline;
-    baseline << QPointF(0, lineHeight)
-             << QPointF(width, lineHeight);
-    painter.drawPolyline(baseline);
+    if (p.showLine) {
+        QPolygonF baseline;
+        baseline << QPointF(0, lineHeight)
+                 << QPointF(width, lineHeight);
+        painter.drawPolyline(baseline);
+    }
 
     double firstTickPosition = findFirstDivisibleNumber(p.left, p.primaryTicksInterval, p.decreasingToRight);
     double tickPos = firstTickPosition - p.primaryTicksInterval * r;
@@ -229,7 +230,7 @@ void XAxis::paintEvent(QPaintEvent* e)
             painter.drawPolyline(tick);
 
             drawText(painter,
-                    QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine +p.labelAdditionalSpacing)),
+                    QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
                     Qt::AlignHCenter | Qt::AlignTop,
                     QString::number(tickPos, 'f', displayPrecision));
         }
@@ -251,7 +252,7 @@ void XAxis::paintEvent(QPaintEvent* e)
     Qt::AlignmentFlag alignment = (std::fabs(0 - xPos(firstTickPosition)) < 0.001 * width) ? Qt::AlignLeft : Qt::AlignHCenter;
 
     drawText(painter,
-             QPointF(xPos(firstTickPosition), lineHeight * (1 + p.relLenghtTickLine +p.labelAdditionalSpacing)),
+             QPointF(xPos(firstTickPosition), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
              alignment | Qt::AlignTop,
              QString::number(firstTickPosition, 'f', displayPrecision));
 
@@ -271,7 +272,7 @@ void XAxis::paintEvent(QPaintEvent* e)
     alignment = (std::fabs(width - xPos(tickPos)) < 0.001 * width) ? Qt::AlignRight : Qt::AlignHCenter;
 
     drawText(painter,
-             QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine +p.labelAdditionalSpacing)),
+             QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
              alignment | Qt::AlignTop,
              QString::number(tickPos, 'f', displayPrecision));
 

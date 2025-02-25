@@ -7,17 +7,19 @@
 #include <QMainWindow>
 
 class QPushButton;
-class TabWidget;
 class QStackedWidget;
 class QFrame;
+class QDockWidget;
 
+class TabWidget;
 class PhaseCorrectionWidget;
-
 
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
+    friend class PhaseCorrectionWidget;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -53,7 +55,7 @@ private:
     // processing widgets
 
     PhaseCorrectionWidget* phaseCorrectionWidget;
-
+    QDockWidget* phaseCorrectionWidgetDock;
 
 
 
@@ -65,11 +67,11 @@ private:
         while (widget) {
             MainWindow* foo = qobject_cast<MainWindow*>(widget);
             if (foo) {
-                return foo; // found a Foo parent
+                return foo;
             }
             widget = widget->parentWidget();
         }
-        return nullptr; // no Foo parent found
+        return nullptr;
     }
 
 private slots:

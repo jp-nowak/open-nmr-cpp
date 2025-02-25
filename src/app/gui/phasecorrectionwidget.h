@@ -4,13 +4,26 @@
 #include <QObject>
 #include <QWidget>
 
+class QDoubleSpinBox;
+
+class Spectrum;
+class LabeledSlider;
+
 class PhaseCorrectionWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PhaseCorrectionWidget(QWidget *parent = nullptr);
+    explicit PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent = nullptr);
 
-signals:
+    void changeActiveExperiment(Spectrum* experiment);
+
+private:
+    Spectrum* experiment;
+    std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> ph0;
+    std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> ph1;
+    std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> pivot;
+
+
 };
 
 #endif // PHASECORRECTIONWIDGET_H

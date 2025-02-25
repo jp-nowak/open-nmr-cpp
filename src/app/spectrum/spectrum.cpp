@@ -2,9 +2,10 @@
 #include "../processing/general.h"
 
 Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid, const std::vector<std::complex<double>>& spectrum)
-  : info{info}
-  , spectrum{spectrum}
-  , fid{fid}
+: info{info}
+, spectrum{spectrum}
+, fid{fid}
+, phaseCorrection{Processing::Ph0{.ph0 = 0}, Processing::Ph1{.pivot = 50, .ph1 = 0}}
 {}
 
 Spectrum Spectrum::from_file_read_result(FileIO::FileReadResult result)
@@ -20,4 +21,9 @@ std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileIO::FileRe
 const std::vector<std::complex<double>>& Spectrum::get_spectrum()
 {
     return spectrum;
+}
+
+const Processing::Phase& Spectrum::getPhase()
+{
+    return phaseCorrection;
 }

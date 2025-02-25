@@ -3,11 +3,11 @@
 
 #include "spectrum_info.h"
 #include "../file_io/general.h"
+#include "../processing/phase_correction.h"
 
 #include <vector>
 #include <complex>
 #include <memory>
-
 
 
 class Spectrum
@@ -18,13 +18,20 @@ public:
     static Spectrum from_file_read_result(FileIO::FileReadResult result);
     static std::unique_ptr<Spectrum> pointer_from_file_read_result(FileIO::FileReadResult result);
 
+
+
+
+
     const std::vector<std::complex<double>>& get_spectrum();
+    const Processing::Phase& getPhase();
 
     SpectrumInfo info;
     std::vector<std::complex<double>> spectrum;
 
 private:
     std::vector<std::complex<double>> fid;
+
+    Processing::Phase phaseCorrection;
 
 };
 

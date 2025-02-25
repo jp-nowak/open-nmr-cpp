@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QPen>
 #include <QList>
+#include <QDockWidget>
 
 #include <filesystem>
 
@@ -33,11 +34,12 @@ MainWindow::MainWindow(QWidget *parent)
     , mainStackedWidget(new QStackedWidget())    
     , tabWidget(new TabWidget(mainStackedWidget, this))
     , phaseCorrectionWidget{nullptr}
+    , phaseCorrectionWidgetDock{nullptr}
     , currentAction{currentAction_}
 
 {
 
-    resize(screen()->availableGeometry().size() * 0.7);
+    setWindowState(Qt::WindowMaximized);
     #ifdef DEBUG__
         qDebug() << "DEBUG__";
     #endif
@@ -169,17 +171,23 @@ void MainWindow::resetZoomSlot()
 void MainWindow::spectrumChangedSlot(int i)
 {
     qDebug() << "changed to" << i;
+    if (phaseCorrectionWidget) {
+        phaseCorrectionWidget->changeActiveExperiment(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))->experiment.get());
+    }
 }
 
 void MainWindow::phaseCorrectionSlot()
 {
-    qDebug() << "phase correction";
-    // if (not mainStackedWidget->count()) {return;}
-    qDebug() << "phase correction";
-    if (phaseCorrectionWidget) {return;}
-    qDebug() << "phase correction";
-    phaseCorrectionWidget = new PhaseCorrectionWidget(this);
-    phaseCorrectionWidget->show();
+    if (not mainStackedWidget->count()) {return;}
+    if (not phaseCorrectionWidget) {
+        phaseCorrectionWidget = new PhaseCorrectionWidget(
+            qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->experiment.get(), this);
+        phaseCorrectionWidgetDock = new QDockWidget(this);
+        phaseCorrectionWidgetDock->setWidget(phaseCorrectionWidget);
+        addDockWidget(Qt::LeftDockWidgetArea, phaseCorrectionWidgetDock);
+    } else {
+        phaseCorrectionWidgetDock->show();
+    }
 }
 
 

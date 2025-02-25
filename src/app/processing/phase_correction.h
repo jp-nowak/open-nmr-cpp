@@ -18,6 +18,12 @@ struct Ph1
     double ph1;
 };
 
+struct Phase
+{
+    Ph0 ph0;
+    Ph1 ph1;
+};
+
 void operator*= (std::vector<std::complex<double>>& a, Ph0 b);
 void operator*= (std::vector<std::complex<double>>& a, Ph1 b);
 } // Processing
