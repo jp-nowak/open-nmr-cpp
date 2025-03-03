@@ -23,7 +23,8 @@ private:
     std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> ph1;
     std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> pivot;
 
-
+private slots:
+    void ph0Slot(double phase);
 };
 
 #endif // PHASECORRECTIONWIDGET_H

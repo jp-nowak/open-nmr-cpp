@@ -102,3 +102,10 @@ void SpectrumDisplayer::resetZoom()
     spainter->resetZoom();
     xAxis->setRange(experiment->info.plot_left_ppm, experiment->info.plot_right_ppm);
 }
+
+void SpectrumDisplayer::updateAll()
+{
+    spainter->update();
+    xAxis->update();
+    update();
+}

@@ -190,6 +190,9 @@ void MainWindow::phaseCorrectionSlot()
     }
 }
 
-
+void MainWindow::refreshCurrentDisplayerSlot()
+{
+    reinterpret_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->update();
+}
 
 

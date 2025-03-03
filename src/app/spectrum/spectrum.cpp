@@ -27,3 +27,12 @@ const Processing::Phase& Spectrum::getPhase()
 {
     return phaseCorrection;
 }
+
+void Spectrum::setPh0(const Processing::Ph0& phase)
+{
+    using namespace Processing;
+
+    spectrum *= Ph0(phase.ph0 - phaseCorrection.ph0.ph0);
+    phaseCorrection.ph0.ph0 = phase.ph0;
+
+}

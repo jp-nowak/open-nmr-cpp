@@ -25,6 +25,8 @@ public:
     const std::vector<std::complex<double>>& get_spectrum();
     const Processing::Phase& getPhase();
 
+    void setPh0(const Processing::Ph0& phase);
+
     SpectrumInfo info;
     std::vector<std::complex<double>> spectrum;
 

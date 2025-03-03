@@ -25,6 +25,9 @@ public:
     std::unique_ptr<Spectrum> experiment;
     void resetZoom();
 
+    void updateAll();
+
+
 private:
     SpectrumPainter* spainter;
     XAxis* xAxis;

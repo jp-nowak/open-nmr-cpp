@@ -80,6 +80,7 @@ private slots:
     void resetZoomSlot();
     void spectrumChangedSlot(int i);
     void phaseCorrectionSlot();
+    void refreshCurrentDisplayerSlot();
 };
 
 #endif // MAINWINDOW_H

@@ -2,6 +2,8 @@
 
 #include "labeledslider.h"
 #include "../spectrum/spectrum.h"
+#include "../processing/phase_correction.h"
+#include "../mainwindow.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -30,6 +32,13 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
     mainLayout->addWidget(std::get<QWidget*>(ph1));
     mainLayout->addWidget(std::get<QWidget*>(pivot));
     setMinimumWidth(350);
+
+    MainWindow* mainWindowPointer = MainWindow::findFrom(parent);
+
+    connect(std::get<QDoubleSpinBox*>(ph0), &QDoubleSpinBox::valueChanged, this, &PhaseCorrectionWidget::ph0Slot);
+    connect(std::get<QDoubleSpinBox*>(ph0), &QDoubleSpinBox::valueChanged, mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
+    connect(std::get<LabeledSlider*>(ph0), &LabeledSlider::sliderMoved, this, &PhaseCorrectionWidget::ph0Slot);
+    connect(std::get<LabeledSlider*>(ph0), &LabeledSlider::sliderMoved, mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
 }
 
 void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
@@ -38,5 +47,11 @@ void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
     LabeledSlider::changeValues(ph0, experiment->getPhase().ph0.ph0);
     LabeledSlider::changeValues(ph1, experiment->getPhase().ph1.ph1);
     LabeledSlider::changeValues(pivot, experiment->getPhase().ph1.pivot);
+}
+
+void PhaseCorrectionWidget::ph0Slot(double phase)
+{
+    using namespace Processing;
+    experiment->setPh0(Ph0(phase * 2 / 360));
 }
 
