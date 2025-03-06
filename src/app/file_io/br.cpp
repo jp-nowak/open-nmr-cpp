@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include <optional>
 #include <unordered_map>
-
+#include <array>
 #include <QDebug>
 
 namespace
@@ -31,6 +31,45 @@ struct BrFidInfo {
     size_t elemN;
 };
 
+std::optional<double> checkGroupDelay(int decim, int dspfvs)
+{
+    static const std::unordered_map<int, std::array<double, 4>> dspTable{
+        // DECIM | DSPFVS 10       11          12          13
+        {2,    {{44.7500,   46.0000,    46.3111,    2.7500}}},
+        {3,    {{33.5000,   36.5000,    36.5300,    2.8330}}},
+        {4,    {{66.6250,   48.0000, 	47.8700, 	2.8750}}},
+        {6,    {{59.0833, 	50.1667, 	50.2290, 	2.9170}}},
+        {8,    {{68.5625, 	53.2500, 	53.2890, 	2.9380}}},
+        {12,   {{60.3750, 	69.5000, 	69.5510, 	2.9580}}},
+        {16,   {{69.5313, 	72.2500, 	71.6000, 	2.9690}}},
+        {24,   {{61.0208, 	70.1667, 	70.1840, 	2.9790}}},
+        {32,   {{70.0156, 	72.7500, 	72.1380, 	2.9840}}},
+        {48,   {{61.3438, 	70.5000, 	70.5280, 	2.9890}}},
+        {64,   {{70.2578, 	73.0000, 	72.3480, 	2.9920}}},
+        {96,   {{61.5052, 	70.6667, 	70.7000, 	2.9950}}},
+        {128,  {{70.3789, 	72.5000, 	72.5240,    0.0   }}},
+        {192,  {{61.5859,	71.3333, 	71.3333, 	0.0   }}},
+        {256,  {{70.4395, 	72.2500, 	72.2500, 	0.0   }}},
+        {384,  {{61.6263, 	71.6667, 	71.6667, 	0.0   }}},
+        {512,  {{70.4697, 	72.1250, 	72.1250, 	0.0   }}},
+        {768,  {{61.6465, 	71.8333, 	71.8333,    0.0   }}},
+        {1024, {{70.4849, 	72.0625, 	72.0625, 	0.0   }}},
+        {1536, {{61.6566, 	71.9167, 	71.9167, 	0.0   }}},
+        {2048, {{70.4924, 	72.0313, 	72.0313, 	0.0   }}},
+        };
+
+    if ((dspfvs > 13) || (dspfvs < 10)) return {};
+
+    double groupDelay = 0.0;
+    try{
+        groupDelay = dspTable.at(decim).at(dspfvs - 10);
+    } catch (const std::out_of_range& e) {
+        return {};
+    }
+    if (groupDelay == 0.0) return {};
+    return groupDelay;
+}
+
 std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqusFile)
 {
     std::unordered_map<std::string, std::string> params{
@@ -43,8 +82,10 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         {"$DTYPA", {}}, // data type
         {"$GRPDLY", {}}, // group delay
         {"$SOLVENT", {}}, // solvent
-        {"$NUC1", {}},
-        {"$BYTORDA", {}},        // observed nucleus
+        {"$NUC1", {}}, // observed nucleus
+        {"$BYTORDA", {}}, // byte order 1 - BE, 0 - LE
+        {"$DECIM", {}},
+        {"$DSPFVS", {}},
     };
 
     std::string currentLine{};
@@ -60,15 +101,36 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         }
     }
 
-    // checks whether any key remained empty
-    if (params.contains(std::string{})) {
-        return {};
+    int decim, dspfvs;
+    double groupDelay;
+
+    if (params["$GRPDLY"].empty()) {
+        try{
+            decim = std::stoi(params["$DECIM"]);
+            dspfvs = std::stoi(params["$DECIM"]);
+        } catch (const std::invalid_argument& e) {
+            return {};
+        } catch(const std::out_of_range& e) {
+            return {};
+        }
+        if (std::optional<double> gd = checkGroupDelay(decim, dspfvs)) {
+            groupDelay = *gd;
+        } else return {};
+    } else {
+        try{
+            groupDelay = std::stod(params["$GRPDLY"]);
+        } catch (const std::invalid_argument& e) {
+            return {};
+        } catch(const std::out_of_range& e) {
+            return {};
+        }
+
     }
 
     double spectrumCenter{}, spectralWidthHz{}, spectralWidthPpm{}, observedNucleusFreq{},
-        irradiationFreq{}, dwellTime{}, groupDelay{};
-    int elementsNumber;
-    bool bigEndian;
+        irradiationFreq{}, dwellTime{};
+    int elementsNumber{};
+    bool bigEndian{};
 
     // if conversions fail file is assumed to be corrupt and empty optional is returned
     try{
@@ -79,7 +141,6 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         elementsNumber = std::stoi(params["$TD"]) / 2;
         irradiationFreq = std::stod(params["$SFO1"]);
         bigEndian = static_cast<bool>(std::stoi(params["$BYTORDA"]));
-        groupDelay = std::stod(params["$GRPDLY"]);
     } catch (const std::invalid_argument& e) {
         return {};
     } catch(const std::out_of_range& e) {
