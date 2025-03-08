@@ -5,7 +5,7 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
 : info{info}
 , spectrum{spectrum}
 , fid{fid}
-, phaseCorrection{Processing::Ph0{.ph0 = 0}, Processing::Ph1{.pivot = 50, .ph1 = 0}}
+, phaseCorrection{Processing::Ph0{.ph0 = 0}, Processing::Ph1{.ph1 = 0, .pivot = 50}}
 {}
 
 Spectrum Spectrum::from_file_read_result(FileIO::FileReadResult result)
@@ -34,5 +34,18 @@ void Spectrum::setPh0(const Processing::Ph0& phase)
 
     spectrum *= Ph0(phase.ph0 - phaseCorrection.ph0.ph0);
     phaseCorrection.ph0.ph0 = phase.ph0;
+}
 
+void Spectrum::setPh1(const Processing::Ph1& phase)
+{
+    using namespace Processing;
+
+    if (phase.pivot == phaseCorrection.ph1.pivot) {
+        spectrum *= Ph1(phase.ph1 - phaseCorrection.ph1.ph1, phase.pivot);
+        phaseCorrection.ph1.ph1 = phase.ph1;
+    } else {
+        spectrum *= Ph1(-phaseCorrection.ph1.ph1, phaseCorrection.ph1.pivot);
+        spectrum *= Ph1(phase.ph1, phase.pivot);
+        phaseCorrection.ph1 = phase;
+    }
 }

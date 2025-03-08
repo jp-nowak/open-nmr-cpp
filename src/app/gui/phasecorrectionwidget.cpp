@@ -13,6 +13,8 @@
 
 #include <tuple>
 
+#define DEG_TO_RAD 2.0/360
+
 PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent)
     : QWidget{parent, Qt::Window}
     , experiment{experiment}
@@ -22,7 +24,7 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
         QStringLiteral(u"ph0"), -180, 180, 90, 1,
         experiment->getPhase().ph0.ph0, this);
     ph1 = LabeledSlider::createWithBoxAndLabel(
-        QStringLiteral(u"ph1"), -180, 180, 90, 1,
+        QStringLiteral(u"ph1"), -360, 360, 180, 1,
         experiment->getPhase().ph1.ph1, this);
     pivot = LabeledSlider::createWithBoxAndLabel(
         QStringLiteral(u"pivot"), 0, 100, 25, 1,
@@ -36,9 +38,14 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
     MainWindow* mainWindowPointer = MainWindow::findFrom(parent);
 
     connect(std::get<QDoubleSpinBox*>(ph0), &QDoubleSpinBox::valueChanged, this, &PhaseCorrectionWidget::ph0Slot);
-    connect(std::get<QDoubleSpinBox*>(ph0), &QDoubleSpinBox::valueChanged, mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
     connect(std::get<LabeledSlider*>(ph0), &LabeledSlider::sliderMoved, this, &PhaseCorrectionWidget::ph0Slot);
-    connect(std::get<LabeledSlider*>(ph0), &LabeledSlider::sliderMoved, mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
+
+    connect(std::get<QDoubleSpinBox*>(ph1), &QDoubleSpinBox::valueChanged, this, &PhaseCorrectionWidget::ph1Slot);
+    connect(std::get<LabeledSlider*>(ph1), &LabeledSlider::sliderMoved, this, &PhaseCorrectionWidget::ph1Slot);
+
+    connect(this, &PhaseCorrectionWidget::signalToRefreshDisplayedExperiment,
+            mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
+
 }
 
 void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
@@ -52,6 +59,13 @@ void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
 void PhaseCorrectionWidget::ph0Slot(double phase)
 {
     using namespace Processing;
-    experiment->setPh0(Ph0(phase * 2 / 360));
+    experiment->setPh0(Ph0(phase * DEG_TO_RAD));
+    emit signalToRefreshDisplayedExperiment();
 }
 
+void PhaseCorrectionWidget::ph1Slot(double phase)
+{
+    using namespace Processing;
+    experiment->setPh1(Ph1(phase * DEG_TO_RAD, std::get<QDoubleSpinBox*>(pivot)->value()));
+    emit signalToRefreshDisplayedExperiment();
+}

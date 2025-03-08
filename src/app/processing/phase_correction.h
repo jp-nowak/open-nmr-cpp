@@ -14,8 +14,8 @@ struct Ph0
 
 struct Ph1
 {
-    double pivot;
     double ph1;
+    double pivot;
 };
 
 struct Phase

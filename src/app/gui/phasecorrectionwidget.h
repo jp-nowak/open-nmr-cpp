@@ -17,6 +17,9 @@ public:
 
     void changeActiveExperiment(Spectrum* experiment);
 
+signals:
+    void signalToRefreshDisplayedExperiment();
+
 private:
     Spectrum* experiment;
     std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> ph0;
@@ -25,6 +28,7 @@ private:
 
 private slots:
     void ph0Slot(double phase);
+    void ph1Slot(double phase);
 };
 
 #endif // PHASECORRECTIONWIDGET_H

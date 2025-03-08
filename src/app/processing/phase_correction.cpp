@@ -7,11 +7,11 @@
 void Processing::operator*= (std::vector<std::complex<double>>& lhs, Ph0 rhs)
 {
     using namespace std::complex_literals;
-    std::complex<double> mult = rhs.ph0 * std::numbers::pi * 1.0i;
-    mult = std::exp(mult);
+    std::complex<double> firstHalf = rhs.ph0 * std::numbers::pi * 1.0i;
+    firstHalf = std::exp(firstHalf);
 
     for (auto& i : lhs) {
-        i *= mult;
+        i *= firstHalf;
     }
 }
 
@@ -20,29 +20,31 @@ void Processing::operator*= (std::vector<std::complex<double>>& lhs, Ph1 rhs)
     assert(lhs.size() % 2 == 0 && "size should be divisible by 2");
 
     using namespace std::complex_literals;
-    double pivot = -(rhs.pivot - 0.5) * 2;
+    double pivot = -(rhs.pivot / 100 - 0.5) * 2;
 
-    std::vector<double> mult{};
+    std::vector<double> firstHalf{};
     size_t halfSize = lhs.size() / 2;
-    mult.resize(halfSize);
+    firstHalf.resize(halfSize);
 
     {
         size_t i = 0;
-        std::generate(mult.begin(), mult.end(), [&](){
-            return i++ / halfSize;
+        std::generate(firstHalf.begin(), firstHalf.end(), [&](){
+            return static_cast<double>(i++) / halfSize;
         });
     }
 
-    std::vector<double> otherHalf{mult.rbegin(), mult.rend()};
-    mult.insert(mult.end(), otherHalf.begin(), otherHalf.end());
-    std::for_each(mult.begin(), mult.end(), [&](double& d) { d += pivot;});
+    std::vector<double> multipliers{firstHalf.rbegin(), firstHalf.rend()};
+    std::for_each(multipliers.begin(), multipliers.end(), [&](double& d) { d *= -1;});
+
+    multipliers.insert(multipliers.end(), firstHalf.begin(), firstHalf.end());
+    std::for_each(multipliers.begin(), multipliers.end(), [&](double& d) { d += pivot;});
 
     std::vector<std::complex<double>> correction;
     correction.resize(lhs.size());
     {
         size_t i = 0;
         std::generate(correction.begin(), correction.end(), [&](){
-            std::complex<double> z = rhs.ph1 * i++ * std::numbers::pi * 1.0i;
+            std::complex<double> z = rhs.ph1 * multipliers[i++] * std::numbers::pi * 1.0i;
             return std::exp(z);
         });
     }

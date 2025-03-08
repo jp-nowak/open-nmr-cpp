@@ -57,9 +57,6 @@ private:
     PhaseCorrectionWidget* phaseCorrectionWidget;
     QDockWidget* phaseCorrectionWidgetDock;
 
-
-
-
  public:
     DisplayerAction const& currentAction;
 
@@ -80,7 +77,10 @@ private slots:
     void resetZoomSlot();
     void spectrumChangedSlot(int i);
     void phaseCorrectionSlot();
+
+public slots:
     void refreshCurrentDisplayerSlot();
+
 };
 
 #endif // MAINWINDOW_H
