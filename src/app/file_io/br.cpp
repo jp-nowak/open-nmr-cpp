@@ -181,7 +181,7 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         .dwell_time = dwellTime,
         .group_delay = groupDelay,
         .trimmed = 0.0,
-        .samplename = {},
+        .samplename = {}, // TODO!!!
         .nucleus = params["$NUC1"],
         .solvent = params["$SOLVENT"]
     };

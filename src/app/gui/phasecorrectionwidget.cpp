@@ -13,7 +13,9 @@
 
 #include <tuple>
 
-#define DEG_TO_RAD 2.0/360
+#define DEG_TO_RAD 2.0/360.0
+#define RAD_TO_DEG 360.0/2.0
+
 
 PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent)
     : QWidget{parent, Qt::Window}
@@ -46,13 +48,15 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
     connect(this, &PhaseCorrectionWidget::signalToRefreshDisplayedExperiment,
             mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
 
+    changeActiveExperiment(experiment);
+
 }
 
 void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
 {
     this->experiment = experiment;
-    LabeledSlider::changeValues(ph0, experiment->getPhase().ph0.ph0);
-    LabeledSlider::changeValues(ph1, experiment->getPhase().ph1.ph1);
+    LabeledSlider::changeValues(ph0, experiment->getPhase().ph0.ph0 * RAD_TO_DEG);
+    LabeledSlider::changeValues(ph1, experiment->getPhase().ph1.ph1 * RAD_TO_DEG);
     LabeledSlider::changeValues(pivot, experiment->getPhase().ph1.pivot);
 }
 

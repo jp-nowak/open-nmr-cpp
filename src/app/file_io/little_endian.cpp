@@ -1,7 +1,6 @@
 #include "little_endian.h"
 
 #include<cstring>
-#include<bit>
 
 std::vector<std::complex<double>> LittleEndian::read_fid_array_double(const std::vector<std::byte>& buffer)
 {
