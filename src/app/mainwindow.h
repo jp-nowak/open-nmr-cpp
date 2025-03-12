@@ -6,25 +6,31 @@
 
 #include <QMainWindow>
 
+class Spectrum;
+
+class TabWidget;
+class PhaseCorrectionWidget;
+
 class QPushButton;
 class QStackedWidget;
 class QFrame;
 class QDockWidget;
 
-class TabWidget;
-class PhaseCorrectionWidget;
-
-
-class MainWindow : public QMainWindow
+class MainWindow final : public QMainWindow
 {
     Q_OBJECT
 
     friend class PhaseCorrectionWidget;
 
 public:
+
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void setCurrentAction(DisplayerAction action);
+
+signals:
+
+    void displayedSpectrumChanged(Spectrum* experiment);
 
 private:
 

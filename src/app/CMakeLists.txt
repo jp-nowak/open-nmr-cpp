@@ -24,6 +24,8 @@ qt_add_executable(open-nmr
     gui/phasecorrectionwidget.h gui/phasecorrectionwidget.cpp
     processing/zero_filling.cpp
     processing/zero_filling.h
+    gui/widgets_for_processing.h
+    gui/widgets_for_processing.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

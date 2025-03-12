@@ -2,6 +2,7 @@
 #define SPECTRUM_INFO_H
 
 #include <string>
+#include <optional>
 
 #ifdef DEBUG__
 #include <iostream>

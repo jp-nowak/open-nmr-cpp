@@ -5,6 +5,7 @@
 
 #include "gui/spectrumdisplayer.h"
 #include "gui/phasecorrectionwidget.h"
+#include "gui/widgets_for_processing.h"
 
 #include <QScreen>
 #include <QMenu>
@@ -170,9 +171,7 @@ void MainWindow::resetZoomSlot()
 
 void MainWindow::spectrumChangedSlot(int i)
 {
-    if (phaseCorrectionWidget) {
-        phaseCorrectionWidget->changeActiveExperiment(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))->experiment.get());
-    }
+    emit displayedSpectrumChanged(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))->experiment.get());
 }
 
 void MainWindow::phaseCorrectionSlot()
