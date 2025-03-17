@@ -30,8 +30,6 @@ void Spectrum::generateSpectrum()
     }
 }
 
-
-
 std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileIO::FileReadResult result)
 {
     return std::make_unique<Spectrum>(result.info, result.fids[0]);

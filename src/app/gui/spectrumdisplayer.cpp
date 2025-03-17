@@ -57,6 +57,11 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
 
 }
 
+SpectrumDisplayer::~SpectrumDisplayer()
+{
+    qDebug() << "SD destructor";
+}
+
 void SpectrumDisplayer::mousePressEvent(QMouseEvent* e)
 {
     mouseMoveStartPoint = e->pos();

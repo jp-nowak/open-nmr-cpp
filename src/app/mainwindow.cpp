@@ -171,7 +171,9 @@ void MainWindow::resetZoomSlot()
 
 void MainWindow::spectrumChangedSlot(int i)
 {
-    emit displayedSpectrumChanged(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))->experiment.get());
+    if (auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))) {
+        emit displayedSpectrumChanged(p->experiment.get());
+    }
 }
 
 void MainWindow::phaseCorrectionSlot()

@@ -24,6 +24,7 @@ TabWidget::TabWidget(QStackedWidget* stackedSpectra, QWidget* parent)
     grid->setHorizontalSpacing(0);
     grid->setColumnStretch(0, 10);
     grid->setColumnStretch(1, 0);
+    stackedSpectra->addWidget(new QWidget(this));
 }
 
 void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
@@ -47,13 +48,11 @@ void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
     delButton->setMinimumSize(
         delButton->style()->sizeFromContents(QStyle::CT_PushButton, &opt, textSize, delButton));
 
-
-
-
     connect(delButton, &QPushButton::clicked, this,
             [newSpectrum, newButton, delButton, this]()
             {
-                this->stackedSpectra->setCurrentIndex(this->stackedSpectra->currentIndex() - 1);
+                //this->stackedSpectra->setCurrentIndex(this->stackedSpectra->currentIndex() - 1);
+                qDebug() << newSpectrum;
                 this->stackedSpectra->removeWidget(newSpectrum);
                 delete newSpectrum;
                 delete newButton;

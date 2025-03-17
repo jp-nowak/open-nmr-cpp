@@ -48,5 +48,25 @@ private slots:
     void ph1Slot(double phase);
 };
 
+class QListWidget;
+
+class ZeroFillingWidget final : public ProcessingWidget
+{
+    Q_OBJECT
+
+public:
+
+    explicit ZeroFillingWidget(Spectrum* experiment, QWidget *parent = nullptr);
+
+private:
+    QListWidget* list;
+
+
+private slots:
+    void zeroFillingSlot(int n);
+
+};
+
+
 
 #endif // WIDGETS_FOR_PROCESSING_H

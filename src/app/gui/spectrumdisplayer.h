@@ -17,6 +17,7 @@ class SpectrumDisplayer : public QWidget
     Q_OBJECT
 public:
     SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent = nullptr);
+    ~SpectrumDisplayer();
 
     void mousePressEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;

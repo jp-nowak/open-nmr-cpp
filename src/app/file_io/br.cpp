@@ -238,22 +238,48 @@ std::optional<std::vector<std::vector<std::complex<double>>>> readFidFile(std::i
         return fids;
 }
 
+std::string readTitle(const std::filesystem::path& folderPath)
+{
+    auto pdataIter = std::filesystem::recursive_directory_iterator{folderPath / "pdata"};
+
+    std::string title{};
+
+    for (auto& i : pdataIter) {
+        if (i.is_regular_file() && i.path().filename() == "title") {
+            std::ifstream titleFile{i.path()};
+            std::string currentLine{};
+            while(std::getline(titleFile, currentLine)) {
+                title.append(1, ' ').append(currentLine);
+            }
+            return title;
+        }
+    }
+
+    return title;
+}
+
+
 } // end of namespace
+
 
 FileIO::FileReadResult FileIO::brParseExperimentFolder(const std::filesystem::path& folderPath)
 {
-    std::ifstream fidFile{folderPath / "fid", std::ios::in | std::ios::binary};
-    std::ifstream acqusFile{folderPath / "acqus", std::ios::in};
 
     FileReadResult result{};
+
+    std::ifstream acqusFile{folderPath / "acqus", std::ios::in};
 
     if (acqusFile) {
         std::optional<std::pair<SpectrumInfo, BrFidInfo>> info = parseAcqus(acqusFile);
         if (info) {
             auto [spectrumInfo, fidInfo] = *info;
             result.info = spectrumInfo;
+            std::ifstream fidFile{folderPath / "fid", std::ios::in | std::ios::binary};
             if (auto fids = readFidFile(fidFile, fidInfo)) {
-                result.fids = *fids;
+
+                result.fids = *fids;    
+                result.info.samplename = readTitle(folderPath);
+
             } else {
                 result.file_read_status = FileReadStatus::invalid_fid;
             }

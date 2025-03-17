@@ -2,7 +2,7 @@
 
 #include<algorithm>
 
-std::vector<std::string> StringOperations::split(std::string s, std::string delimiter) {
+std::vector<std::string> StringOperations::split(const std::string& s, const std::string& delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;

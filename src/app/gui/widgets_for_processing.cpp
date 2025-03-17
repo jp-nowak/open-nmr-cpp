@@ -4,17 +4,22 @@
 #include "../spectrum/spectrum.h"
 #include "../processing/phase_correction.h"
 #include "../mainwindow.h"
+#include "../processing/zero_filling.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QScreen>
 #include <QString>
 #include <QLabel>
+#include <QListWidget>
+#include <QStringList>
 
 #include <tuple>
 
 #define DEG_TO_RAD 2.0/360.0
 #define RAD_TO_DEG 360.0/2.0
+
+//------------------------------------------------------------------------------------------------------------------------
 
 ProcessingWidget::ProcessingWidget(Spectrum* experiment, QWidget *parent)
 : QWidget{parent}
@@ -25,6 +30,8 @@ ProcessingWidget::ProcessingWidget(Spectrum* experiment, QWidget *parent)
             mainWindowPointer, &MainWindow::refreshCurrentDisplayerSlot);
     connect(mainWindowPointer, &MainWindow::displayedSpectrumChanged, this, &ProcessingWidget::changeActiveExperiment);
 }
+
+//------------------------------------------------------------------------------------------------------------------------
 
 PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent)
     : ProcessingWidget{experiment, parent}
@@ -75,3 +82,31 @@ void PhaseCorrectionWidget::ph1Slot(double phase)
     experiment->setPh1(Ph1(phase * DEG_TO_RAD, std::get<QDoubleSpinBox*>(pivot)->value()));
     emit signalToRefreshDisplayedExperiment();
 }
+
+//------------------------------------------------------------------------------------------------------------------------
+
+ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
+    : ProcessingWidget{experiment, parent}
+{
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    list = new QListWidget(this);
+
+    QStringList labels{};
+
+    for (auto i : Processing::POWERS_OF_TWO) {
+        labels << QString::number(i);
+    }
+
+    list->addItems(labels);
+    layout->addWidget(list);
+
+    connect(list, &QListWidget::currentRowChanged, this, &ZeroFillingWidget::zeroFillingSlot);
+
+}
+
+void ZeroFillingWidget::zeroFillingSlot(int n)
+{
+    experiment->zeroFill(Processing::POWERS_OF_TWO[n]);
+    emit signalToRefreshDisplayedExperiment();
+}
+
