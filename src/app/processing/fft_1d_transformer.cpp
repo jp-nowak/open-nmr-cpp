@@ -2,7 +2,7 @@
 
 #include "../3rd_party/kissfft/kiss_fft.h"
 
-Processing::FFT_1D_Transformer::FFT_1D_Transformer(const std::vector<std::complex<double>>& fid)
+Processing::FFT_1D_Transformer::FFT_1D_Transformer(std::span<FidComplexValue const> fid)
 : fft_in{}
 {
     buffer = kiss_fft_alloc(fid.size(), 0, NULL, NULL);
@@ -25,7 +25,7 @@ void Processing::FFT_1D_Transformer::transform()
     kiss_fft(buffer, fft_in.data(), fft_in.data());
 }
 
-std::vector<std::complex<double>> Processing::FFT_1D_Transformer::receive()
+std::vector<SpectrumComplexValue> Processing::FFT_1D_Transformer::receive()
 {
     std::vector<std::complex<double>> result{};
     result.resize(fft_in.size());

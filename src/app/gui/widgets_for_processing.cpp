@@ -15,6 +15,7 @@
 #include <QStringList>
 
 #include <tuple>
+#include <algorithm>
 
 #define DEG_TO_RAD 2.0/360.0
 #define RAD_TO_DEG 360.0/2.0
@@ -102,11 +103,21 @@ ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
 
     connect(list, &QListWidget::currentRowChanged, this, &ZeroFillingWidget::zeroFillingSlot);
 
+    ZeroFillingWidget::changeActiveExperiment(experiment);
+}
+
+void ZeroFillingWidget::changeActiveExperiment(Spectrum* experiment)
+{
+    using namespace Processing;
+    this->experiment = experiment;
+    list->setCurrentRow(std::find(
+                        POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), experiment->get_spectrum().size())
+                        - POWERS_OF_TWO.begin());
 }
 
 void ZeroFillingWidget::zeroFillingSlot(int n)
 {
-    experiment->zeroFill(Processing::POWERS_OF_TWO[n]);
+    experiment->zeroFillOrTruncate(Processing::POWERS_OF_TWO[n]);
     emit signalToRefreshDisplayedExperiment();
 }
 

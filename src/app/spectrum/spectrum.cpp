@@ -11,6 +11,11 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
 : info{info}
 , fid{fid}
 , phaseCorrection{Ph0{.ph0 = 0}, Ph1{.ph1 = 0, .pivot = 50}}
+, initialSize{closestPowerOf2(fid.size())}
+#ifdef DEBUG__
+, trueInitialSize{fid.size()}
+#endif
+
 {
     zeroFillToNextPowerOf2(this->fid);
 
@@ -22,7 +27,7 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
 
 void Spectrum::generateSpectrum()
 {
-    spectrum = generate_spectrum_from_fid(this->fid);
+    spectrum = generate_spectrum_from_fid(std::span<FidComplexValue const>(this->fid));
 
     if (!(info.group_delay == 0.0)) {
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
@@ -35,9 +40,9 @@ std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileIO::FileRe
     return std::make_unique<Spectrum>(result.info, result.fids[0]);
 }
 
-const std::vector<std::complex<double>>& Spectrum::get_spectrum() const
+std::span<SpectrumComplexValue const> Spectrum::get_spectrum() const
 {
-    return spectrum;
+    return {spectrum};
 }
 
 const Phase& Spectrum::getPhase() const
@@ -63,7 +68,7 @@ void Spectrum::setPh1(const Ph1& phase)
     }
 }
 
-void Spectrum::zeroFill(size_t n)
+void Spectrum::zeroFillOrTruncate(size_t n)
 {
     assert(std::find(POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), n) != POWERS_OF_TWO.end());
 

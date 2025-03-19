@@ -51,6 +51,11 @@ void zeroFillToNextPowerOf2(std::vector<std::complex<double>>& fid);
 
 // appends zeros (0 + 0i) to fid until length reaches given number
 void zeroFillToNumber(std::vector<std::complex<double>>& fid, size_t n);
+
+size_t nextPowerOf2(size_t number);
+
+size_t closestPowerOf2(size_t number);
+
 }
 
 

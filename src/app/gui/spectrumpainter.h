@@ -17,7 +17,7 @@ class SpectrumPainter : public QWidget
 {
     Q_OBJECT
 public:
-    SpectrumPainter(std::vector<std::complex<double>>& spectrum, QWidget* parent = nullptr);
+    SpectrumPainter(std::span<SpectrumComplexValue const> spectrum, QWidget* parent = nullptr);
 
     friend SpectrumDisplayer;
 

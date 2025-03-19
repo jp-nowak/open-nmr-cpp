@@ -16,7 +16,7 @@
 #include <QList>
 #include <QTransform>
 
-SpectrumPainter::SpectrumPainter(std::vector<std::complex<double>>& spectrum, QWidget* parent)
+SpectrumPainter::SpectrumPainter(std::span<SpectrumComplexValue const> spectrum, QWidget* parent)
     : QWidget{parent}
     , spectrum{spectrum}
     , spectrumFullSpan{spectrum}

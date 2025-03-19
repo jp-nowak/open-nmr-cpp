@@ -13,7 +13,7 @@ namespace FileIO
      * \return FileReadResult, containing extracted informations. If error occured FileReadResult.file_read_status is set to
      * corresponding error enum.
      */
-    FileReadResult ag_parse_experiment_folder(const std::filesystem::path& folder_path);
+FileReadResult ag_parse_experiment_folder(const std::filesystem::path& folder_path);
 }
 
 #endif // AG_H

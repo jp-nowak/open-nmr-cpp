@@ -26,6 +26,7 @@ qt_add_executable(open-nmr
     processing/zero_filling.h
     gui/widgets_for_processing.h
     gui/widgets_for_processing.cpp
+    spectrum/value_typedefs.h
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

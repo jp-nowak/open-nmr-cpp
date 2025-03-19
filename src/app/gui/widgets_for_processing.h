@@ -25,6 +25,8 @@ protected:
     MainWindow* mainWindowPointer;
 };
 
+//------------------------------------------------------------------------------------------------------------------------
+
 class QDoubleSpinBox;
 class LabeledSlider;
 
@@ -48,6 +50,8 @@ private slots:
     void ph1Slot(double phase);
 };
 
+//------------------------------------------------------------------------------------------------------------------------
+
 class QListWidget;
 
 class ZeroFillingWidget final : public ProcessingWidget
@@ -57,6 +61,8 @@ class ZeroFillingWidget final : public ProcessingWidget
 public:
 
     explicit ZeroFillingWidget(Spectrum* experiment, QWidget *parent = nullptr);
+
+    void changeActiveExperiment(Spectrum* experiment) override;
 
 private:
     QListWidget* list;

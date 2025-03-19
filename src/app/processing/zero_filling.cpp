@@ -4,14 +4,17 @@
 
 void Processing::zeroFillToNextPowerOf2(std::vector<std::complex<double>>& fid)
 {
-    size_t n = 0;
     size_t l = fid.size();
-    for (auto i : POWERS_OF_TWO) {
-        if (i > l) {
-            n = i;
-            break;
-        }
-    }
+    size_t n = nextPowerOf2(l);
+
+    // size_t n = 0; // OLD VERSION
+    // for (auto i : POWERS_OF_TWO) {
+    //     if (i > l) {
+    //         n = i;
+    //         break;
+    //     }
+    // }
+
     if (n == 0) return;
     fid.resize(n, std::complex<double>{0.0, 0.0});
 
@@ -25,3 +28,26 @@ void Processing::zeroFillToNumber(std::vector<std::complex<double>>& fid, size_t
     fid.resize(n, std::complex<double>{0.0, 0.0});
 }
 
+size_t Processing::nextPowerOf2(size_t number)
+{
+    size_t n = 0;
+    for (auto i : POWERS_OF_TWO) {
+        if (i > number) {
+            n = i;
+            break;
+        }
+    }
+    return n;
+}
+
+size_t Processing::closestPowerOf2(size_t number)
+{
+    size_t n = 0;
+    for (auto i : POWERS_OF_TWO) {
+        if (i >= number) {
+            n = i;
+            break;
+        }
+    }
+    return n;
+}
