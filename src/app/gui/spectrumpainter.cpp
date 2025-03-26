@@ -16,24 +16,28 @@
 #include <QList>
 #include <QTransform>
 
-SpectrumPainter::SpectrumPainter(std::span<SpectrumComplexValue const> spectrum, QWidget* parent)
+namespace
+{
+
+auto findRealMaximumFromVectorOfComplex = [](auto i){
+    return i[std::max_element(std::begin(i), std::end(i), [](auto& a, auto& b){
+        return a.real() < b.real();
+    }) - begin(i)].real();
+};
+
+}
+
+SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
     : QWidget{parent}
-    , spectrum{spectrum}
-    , spectrumFullSpan{spectrum}
+    , pointerToSpectrum{spectrum_}
     , selectedRegion{0, 0, 0, static_cast<qreal>(height())}
     , baselinePosition{0.125}
     , multiplier{1}
     , scalingFactor{1}
     , displaySelection{false}
-    , maximum
-            {
-              spectrum[std::max_element(spectrum.begin(), spectrum.end(),
-              [](const std::complex<double>& a, const std::complex<double>& b)
-                                    {
-                                        return a.real() < b.real();
-                                    })
-              - spectrum.begin()].real() * 1.05
-            }
+    , maximum{findRealMaximumFromVectorOfComplex(spectrum_->get_spectrum()) * 1.05}
+    , startPoint_{0}
+    , endPoint_{spectrum_->get_spectrum().size()}
 
 {
     spectrumPen.setCosmetic(true);
@@ -80,12 +84,13 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     start = (start < 0) ? 0 : start;
     end = (end > width()) ? width() : end;
 
-    const size_t startPoint = std::ceil(start / width() * (spectrum.size() - 1));
-    const size_t endPoint = std::floor(end / width() * (spectrum.size() - 1));
+    const size_t size = endPoint_ - startPoint_;
 
-    if (startPoint + 5 > endPoint) {return false;} // stops user from zooming to close
+    endPoint_ = startPoint_ + std::floor(end / width() * (size - 1));
+    startPoint_ += std::ceil(start / width() * (size - 1));
 
-    spectrum = spectrum.subspan(startPoint, endPoint - startPoint);
+    if (startPoint_ + 5 > endPoint_) {return false;} // stops user from zooming to close
+
 
     update();
 
@@ -94,12 +99,14 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
 
 void SpectrumPainter::resetZoom()
 {
-    spectrum = spectrumFullSpan;
+    startPoint_ = 0;
+    endPoint_ = pointerToSpectrum->get_spectrum().size();
     update();
 }
 
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
+        auto spectrum = pointerToSpectrum->get_spectrum().subspan(startPoint_, endPoint_ - startPoint_);
         QPainter painter(this);
         painter.drawPolygon(e->rect().adjusted(1,1,-1,-1));
         QPolygonF baseLine;

@@ -17,7 +17,7 @@ class SpectrumPainter : public QWidget
 {
     Q_OBJECT
 public:
-    SpectrumPainter(std::span<SpectrumComplexValue const> spectrum, QWidget* parent = nullptr);
+    SpectrumPainter(const Spectrum* spectrum_, QWidget* parent = nullptr);
 
     friend SpectrumDisplayer;
 
@@ -32,12 +32,11 @@ public:
 
     void resetZoom();
 
-    std::span<std::complex<double> const> spectrum;
-    const std::span<std::complex<double> const> spectrumFullSpan;
-
 private:
 
     void initialize();
+
+    const Spectrum* pointerToSpectrum;
 
     QPen spectrumPen;
     QRectF selectedRegion;
@@ -46,6 +45,10 @@ private:
     double scalingFactor;
     bool displaySelection;
     const double maximum;
+
+    size_t startPoint_;
+    size_t endPoint_;
+
 };
 
 #endif // SPECTRUMPAINTER_H

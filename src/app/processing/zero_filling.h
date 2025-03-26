@@ -52,8 +52,10 @@ void zeroFillToNextPowerOf2(std::vector<std::complex<double>>& fid);
 // appends zeros (0 + 0i) to fid until length reaches given number
 void zeroFillToNumber(std::vector<std::complex<double>>& fid, size_t n);
 
+// returns closest power of 2 bigger then number
 size_t nextPowerOf2(size_t number);
 
+// returns closest power of 2 bigger then number, or number if it is already power of two
 size_t closestPowerOf2(size_t number);
 
 }

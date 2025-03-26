@@ -11,7 +11,7 @@
 SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
     : QWidget{parent}
     , experiment{std::move(new_experiment)}
-    , spainter{new SpectrumPainter{experiment->get_spectrum(), this}}
+    , spainter{new SpectrumPainter{experiment.get(), this}}
     , mouseMoveStartPoint{0, 0}
     , mainWindow{MainWindow::findFrom(this)}
 

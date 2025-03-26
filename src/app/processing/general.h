@@ -9,7 +9,8 @@
 #include <span>
 #include <complex>
 
-namespace Processing {
+namespace Processing
+{
 
     /*!
      * \brief perform_fft does fft on data, uses FFT_1D_Transformer
@@ -34,6 +35,7 @@ namespace Processing {
      * \return
      */
     std::vector<SpectrumComplexValue> generate_spectrum_from_fid(std::span<FidComplexValue const> fid);
+
 }
 
 
