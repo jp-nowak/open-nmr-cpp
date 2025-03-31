@@ -117,7 +117,7 @@ void ZeroFillingWidget::changeActiveExperiment(Spectrum* experiment)
 
 void ZeroFillingWidget::zeroFillingSlot(int n)
 {
-    experiment->zeroFillOrTruncate(Processing::POWERS_OF_TWO[n]);
+    experiment->zeroFill(Processing::POWERS_OF_TWO[n]);
     emit signalToRefreshDisplayedExperiment();
 }
 

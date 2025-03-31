@@ -52,7 +52,6 @@ void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
             [newSpectrum, newButton, delButton, this]()
             {
                 //this->stackedSpectra->setCurrentIndex(this->stackedSpectra->currentIndex() - 1);
-                qDebug() << newSpectrum;
                 this->stackedSpectra->removeWidget(newSpectrum);
                 delete newSpectrum;
                 delete newButton;

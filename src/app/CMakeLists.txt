@@ -21,7 +21,7 @@ qt_add_executable(open-nmr
     processing/phase_correction.cpp
     processing/phase_correction.h
     gui/labeledslider.h gui/labeledslider.cpp
-    gui/phasecorrectionwidget.h gui/phasecorrectionwidget.cpp
+
     processing/zero_filling.cpp
     processing/zero_filling.h
     gui/widgets_for_processing.h

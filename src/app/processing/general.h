@@ -2,6 +2,8 @@
 #define PGENERAL_H
 
 #include "../spectrum/value_typedefs.h"
+#include "../spectrum/spectrum_info.h"
+
 
 #include "../3rd_party/kissfft/kiss_fft.h"
 
@@ -18,7 +20,7 @@ namespace Processing
      * \return fft transformed data, as std::vector<kiss_fft_cpx> (one more operation iterating over a vector
      *  is required to form spectrum, so it makes no sense to make std::vector<std::complex<double>> at this point)
      */
-    std::vector<kiss_fft_cpx> perform_fft(std::span<FidComplexValue const> fid);
+    std::vector<kiss_fft_cpx> perform_fft(std::span<FidComplexValue const> fid, FidSizeInfo info);
 
     /*!
      * \brief fft_to_spectrum creates a spectrum out of fft transformed data by conrotating them ie.
@@ -34,7 +36,11 @@ namespace Processing
      * \param fid
      * \return
      */
-    std::vector<SpectrumComplexValue> generate_spectrum_from_fid(std::span<FidComplexValue const> fid);
+    std::vector<SpectrumComplexValue> generate_spectrum_from_fid(std::span<FidComplexValue const> fid, FidSizeInfo info);
+
+    // constructs new vector which corresponds to fid after applying zero filling and truncating
+    // in type proper for fft
+    std::vector<kiss_fft_cpx> constructFid(std::span<FidComplexValue const> fid, FidSizeInfo info);
 
 }
 

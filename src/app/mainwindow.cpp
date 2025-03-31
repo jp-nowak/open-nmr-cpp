@@ -4,7 +4,6 @@
 #include "spectrum/spectrum.h"
 
 #include "gui/spectrumdisplayer.h"
-#include "gui/phasecorrectionwidget.h"
 #include "gui/widgets_for_processing.h"
 
 #include <QScreen>

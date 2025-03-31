@@ -1,42 +1,37 @@
 #include "fft_1d_transformer.h"
 
+#include "../processing/general.h"
+
 #include "../3rd_party/kissfft/kiss_fft.h"
 
-Processing::FFT_1D_Transformer::FFT_1D_Transformer(std::span<FidComplexValue const> fid)
-: fft_in{}
+Processing::FFT1DTransformer::FFT1DTransformer(std::span<FidComplexValue const> fid, FidSizeInfo info)
+: fftIn{constructFid(fid, info)}
 {
-    buffer = kiss_fft_alloc(fid.size(), 0, NULL, NULL);
-
-    fft_in.resize(fid.size());
-
-    for (size_t i = 0; i < fid.size(); i++) {
-        fft_in[i].r = fid[i].real();
-        fft_in[i].i = fid[i].imag();
-    }
+    buffer = kiss_fft_alloc(fftIn.size(), 0, NULL, NULL);
 }
 
-Processing::FFT_1D_Transformer::~FFT_1D_Transformer()
+Processing::FFT1DTransformer::~FFT1DTransformer()
 {
     kiss_fft_free(buffer);
 }
 
-void Processing::FFT_1D_Transformer::transform()
+void Processing::FFT1DTransformer::transform()
 {
-    kiss_fft(buffer, fft_in.data(), fft_in.data());
+    kiss_fft(buffer, fftIn.data(), fftIn.data());
 }
 
-std::vector<SpectrumComplexValue> Processing::FFT_1D_Transformer::receive()
+std::vector<SpectrumComplexValue> Processing::FFT1DTransformer::receive()
 {
     std::vector<std::complex<double>> result{};
-    result.resize(fft_in.size());
+    result.resize(fftIn.size());
 
-    for (size_t i = 0; i < fft_in.size(); i++) {
-        result[i] = std::complex<double>{fft_in[i].r, fft_in[i].i};
+    for (size_t i = 0; i < fftIn.size(); i++) {
+        result[i] = std::complex<double>{fftIn[i].r, fftIn[i].i};
     }
     return result;
 }
 
-std::vector<kiss_fft_cpx> Processing::FFT_1D_Transformer::receive_raw()
+std::vector<kiss_fft_cpx> Processing::FFT1DTransformer::receiveRaw()
 {
-    return fft_in;
+    return fftIn;
 }

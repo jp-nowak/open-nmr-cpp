@@ -2,6 +2,8 @@
 #include "../processing/general.h"
 #include "../processing/zero_filling.h"
 
+#include <QDebug>
+
 #include <algorithm>
 #include <cassert>
 
@@ -10,24 +12,20 @@ using namespace Processing;
 Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
 : info{info}
 , fid{fid}
-, phaseCorrection{Ph0{.ph0 = 0}, Ph1{.ph1 = 0, .pivot = 50}}
-, initialSize{closestPowerOf2(fid.size())}
-#ifdef DEBUG__
-, trueInitialSize{fid.size()}
-#endif
+, phaseCorrection{Ph0{.ph0 = 0},
+                  Ph1{.ph1 = 0, .pivot = 50}}
+, fidSizeInfo{.initialSize = fid.size(),
+              .truncationStart = fid.size(),
+              .zeroFilledTo = nextPowerOf2(fid.size()),
+              .groupDelay = info.group_delay}
 
 {
-    zeroFillToNextPowerOf2(this->fid);
-
-    if (!(info.group_delay == 0.0)) {
-        std::rotate(this->fid.begin(), this->fid.begin() + static_cast<size_t>(info.group_delay), this->fid.end());
-    }
     generateSpectrum();
 }
 
 void Spectrum::generateSpectrum()
 {
-    spectrum = generate_spectrum_from_fid(std::span<FidComplexValue const>(this->fid));
+    spectrum = generate_spectrum_from_fid(std::span<FidComplexValue const>(this->fid), fidSizeInfo);
 
     if (!(info.group_delay == 0.0)) {
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
@@ -68,21 +66,8 @@ void Spectrum::setPh1(const Ph1& phase)
     }
 }
 
-void Spectrum::zeroFillOrTruncate(size_t n)
+void Spectrum::zeroFill(size_t n)
 {
     assert(std::find(POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), n) != POWERS_OF_TWO.end());
-
-    // put delayed part again in the beginning
-    if (!(info.group_delay == 0.0)) {
-        std::rotate(fid.rbegin(), fid.rbegin() + static_cast<size_t>(info.group_delay), fid.rend()); // rotate right
-    }
-
-    zeroFillToNumber(fid, n);
-
-    // put delayed part at the end
-    if (!(info.group_delay == 0.0)) {
-        std::rotate(fid.begin(), fid.begin() + static_cast<size_t>(info.group_delay), fid.end()); // rotate left
-    }
-
-
+    fidSizeInfo.zeroFilledTo = n;
 }

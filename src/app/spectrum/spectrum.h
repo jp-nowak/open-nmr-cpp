@@ -26,7 +26,7 @@ public:
     void setPh1(const Processing::Ph1& phase);
 
     // append 0 + 0i to fid until it has size n, n should be power of 2
-    void zeroFillOrTruncate(size_t n);
+    void zeroFill(size_t n);
 
     SpectrumInfo info;
 
@@ -41,11 +41,8 @@ private:
 
     Processing::Phase phaseCorrection;
 
-    const size_t initialSize;
+    FidSizeInfo fidSizeInfo;
 
-    #ifdef DEBUG__
-    const size_t trueInitialSize;
-    #endif
 };
 
 

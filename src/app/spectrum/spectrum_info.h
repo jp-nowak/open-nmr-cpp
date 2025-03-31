@@ -9,6 +9,14 @@
 #include <QDebug>
 #endif
 
+struct FidSizeInfo
+{
+    const size_t initialSize; // stores true size of fid ie. number of acquired data points
+    size_t truncationStart; // number of not truncated data points
+    size_t zeroFilledTo; // length of fid after zero filling
+    double groupDelay;
+};
+
 struct SpectrumInfo
 {
     double plot_right_Hz; // [Hz] value of x axis at right edge of spectrum
