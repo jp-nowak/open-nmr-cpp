@@ -33,8 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     , currentAction_{DisplayerAction::None}
     , mainStackedWidget(new QStackedWidget())    
     , tabWidget(new TabWidget(mainStackedWidget, this))
-    , phaseCorrectionWidget{nullptr}
-    , phaseCorrectionWidgetDock{nullptr}
+    , processingWidgets{}
     , currentAction{currentAction_}
 
 {
@@ -79,8 +78,8 @@ void MainWindow::createActions()
     connect(closeAppAction, &QAction::triggered, this, &MainWindow::close);
     phaseCorrectionAction = new QAction(tr("Phase Correction"), this);
     connect(phaseCorrectionAction, &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
-
-
+    zeroFillingAction = new QAction(tr("Zero Filling"), this);
+    connect(zeroFillingAction, &QAction::triggered, this, &MainWindow::zeroFillingSlot);
 }
 
 void MainWindow::createTopMenuBar()
@@ -93,6 +92,7 @@ void MainWindow::createTopMenuBar()
 
     QMenu* processingMenu = topMenuBar->addMenu(tr("Processing"));
     processingMenu->addAction(phaseCorrectionAction);
+    processingMenu->addAction(zeroFillingAction);
 }
 
 void MainWindow::createActionsFrame()
@@ -175,18 +175,30 @@ void MainWindow::spectrumChangedSlot(int i)
     }
 }
 
+template<typename T>
+void MainWindow::showProcessingWidget()
+{
+    if (mainStackedWidget->count() == 1) {return;}
+    if (auto& dockWidget = std::get<QDockWidget*>(std::get<std::tuple<T*, QDockWidget*>>(processingWidgets));
+    not dockWidget) {
+        auto& processingWidget = std::get<T*>(std::get<std::tuple<T*, QDockWidget*>>(processingWidgets));
+        processingWidget = new T(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->experiment.get(), this);
+        dockWidget = new QDockWidget(this);
+        dockWidget->setWidget(processingWidget);
+        addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+    } else {
+        dockWidget->show();
+    }
+}
+
 void MainWindow::phaseCorrectionSlot()
 {
-    if (not mainStackedWidget->count()) {return;}
-    if (not phaseCorrectionWidget) {
-        phaseCorrectionWidget = new PhaseCorrectionWidget(
-            qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->experiment.get(), this);
-        phaseCorrectionWidgetDock = new QDockWidget(this);
-        phaseCorrectionWidgetDock->setWidget(phaseCorrectionWidget);
-        addDockWidget(Qt::LeftDockWidgetArea, phaseCorrectionWidgetDock);
-    } else {
-        phaseCorrectionWidgetDock->show();
-    }
+    showProcessingWidget<PhaseCorrectionWidget>();
+}
+
+void MainWindow::zeroFillingSlot()
+{
+    showProcessingWidget<ZeroFillingWidget>();
 }
 
 void MainWindow::refreshCurrentDisplayerSlot()

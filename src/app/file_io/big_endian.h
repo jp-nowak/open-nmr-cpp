@@ -13,7 +13,7 @@ namespace BigEndian
      * \param begin: position in buffer at which reading starts
      * \return short: value corresponding to bytes
      */
-    short to_short(std::vector<std::byte> buffer, size_t begin);
+    short to_short(const std::vector<std::byte>& buffer, size_t begin);
 
     /*!
      * \brief to_int takes vector of big endian bytes and returns int corresponfing to them
@@ -21,7 +21,7 @@ namespace BigEndian
      * \param begin: position in buffer at which reading starts
      * \return int: value corresponding to bytes
      */
-    int to_int(std::vector<std::byte> buffer, size_t begin);
+    int to_int(const std::vector<std::byte>& buffer, size_t begin);
 
     /*!
      * \brief to_float takes vector of big endian bytes and returns float corresponfing to them
@@ -30,7 +30,7 @@ namespace BigEndian
      * \param begin: position in buffer at which reading starts
      * \return float: value corresponding to bytes
      */
-    float to_float(std::vector<std::byte> buffer, size_t begin);
+    float to_float(const std::vector<std::byte>& buffer, size_t begin);
 
     std::vector<std::complex<double>> read_fid_array_double(const std::vector<std::byte>& buffer);
 

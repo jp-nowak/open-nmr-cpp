@@ -3,21 +3,21 @@
 #include<cstring>
 #include<bit>
 
-short BigEndian::to_short(std::vector<std::byte> buffer, size_t begin)
+short BigEndian::to_short(const std::vector<std::byte>& buffer, size_t begin)
 {
     short i{};
     std::memcpy(&i, &buffer[begin], sizeof(short));
     return std::byteswap(i);
 }
 
-int BigEndian::to_int(std::vector<std::byte> buffer, size_t begin)
+int BigEndian::to_int(const std::vector<std::byte>& buffer, size_t begin)
 {
     int i{};
     std::memcpy(&i, &buffer[begin], sizeof(int));
     return std::byteswap(i);
 }
 
-float BigEndian::to_float(std::vector<std::byte> buffer, size_t begin)
+float BigEndian::to_float(const std::vector<std::byte>& buffer, size_t begin)
 {
     int i{};
     std::memcpy(&i, &buffer[begin], sizeof(int));

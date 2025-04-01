@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QStringList>
+#include <QSignalBlocker>
 
 #include <tuple>
 #include <algorithm>
@@ -89,7 +90,24 @@ void PhaseCorrectionWidget::ph1Slot(double phase)
 ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
     : ProcessingWidget{experiment, parent}
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+
+    mainLayout->addWidget(new QLabel{tr("Truncation"), this});
+
+    QString sizeString{"Original size: "};
+    sizeString += QString::number(experiment->getFidSizeInfo().initialSize);
+    sizeLabel = new QLabel(sizeString);
+    spinBox = new QSpinBox(this);
+    spinBox->setRange(128, experiment->getFidSizeInfo().initialSize);
+    spinBox->setValue(experiment->getFidSizeInfo().truncationStart);
+
+    mainLayout->addWidget(sizeLabel);
+    mainLayout->addWidget(spinBox);
+
+    mainLayout->addWidget(new QLabel{tr("Zero Filling"), this});
+
+
     list = new QListWidget(this);
 
     QStringList labels{};
@@ -99,9 +117,11 @@ ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
     }
 
     list->addItems(labels);
-    layout->addWidget(list);
+
+    mainLayout->addWidget(list);
 
     connect(list, &QListWidget::currentRowChanged, this, &ZeroFillingWidget::zeroFillingSlot);
+    connect(spinBox, &QSpinBox::valueChanged, this, &ZeroFillingWidget::truncatingSlot);
 
     ZeroFillingWidget::changeActiveExperiment(experiment);
 }
@@ -109,15 +129,30 @@ ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
 void ZeroFillingWidget::changeActiveExperiment(Spectrum* experiment)
 {
     using namespace Processing;
+    QSignalBlocker a{list};
+    QSignalBlocker b{spinBox};
     this->experiment = experiment;
     list->setCurrentRow(std::find(
                         POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), experiment->get_spectrum().size())
                         - POWERS_OF_TWO.begin());
+
+    spinBox->setRange(128, experiment->getFidSizeInfo().initialSize);
+    spinBox->setValue(experiment->getFidSizeInfo().truncationStart);
+    QString sizeString{"Original size: "};
+    sizeString += QString::number(experiment->getFidSizeInfo().initialSize);
+    sizeLabel->setText(sizeString);
 }
 
 void ZeroFillingWidget::zeroFillingSlot(int n)
 {
     experiment->zeroFill(Processing::POWERS_OF_TWO[n]);
+    changeActiveExperiment(experiment);
     emit signalToRefreshDisplayedExperiment();
 }
 
+void ZeroFillingWidget::truncatingSlot(int n)
+{
+    qDebug() << __FUNCTION__ << n;
+    experiment->truncate(n);
+    emit signalToRefreshDisplayedExperiment();
+}

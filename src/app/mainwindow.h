@@ -6,10 +6,13 @@
 
 #include <QMainWindow>
 
+#include <tuple>
+
 class Spectrum;
 
 class TabWidget;
 class PhaseCorrectionWidget;
+class ZeroFillingWidget;
 
 class QPushButton;
 class QStackedWidget;
@@ -48,6 +51,7 @@ private:
     QAction* openFileAction;
     QAction* closeAppAction;
     QAction* phaseCorrectionAction;
+    QAction* zeroFillingAction;
 
     QStackedWidget* mainStackedWidget;
 
@@ -60,8 +64,12 @@ private:
 
     // processing widgets
 
-    PhaseCorrectionWidget* phaseCorrectionWidget;
-    QDockWidget* phaseCorrectionWidgetDock;
+    std::tuple<
+        std::tuple<PhaseCorrectionWidget*, QDockWidget*>,
+        std::tuple<ZeroFillingWidget*, QDockWidget*>> processingWidgets;
+
+    template<typename T>
+    void showProcessingWidget();
 
  public:
     DisplayerAction const& currentAction;
@@ -83,6 +91,7 @@ private slots:
     void resetZoomSlot();
     void spectrumChangedSlot(int i);
     void phaseCorrectionSlot();
+    void zeroFillingSlot();
 
 public slots:
     void refreshCurrentDisplayerSlot();

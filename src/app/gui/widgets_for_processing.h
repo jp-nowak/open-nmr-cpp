@@ -53,6 +53,8 @@ private slots:
 //------------------------------------------------------------------------------------------------------------------------
 
 class QListWidget;
+class QSpinBox;
+class QLabel;
 
 class ZeroFillingWidget final : public ProcessingWidget
 {
@@ -66,11 +68,12 @@ public:
 
 private:
     QListWidget* list;
-
+    QSpinBox* spinBox;
+    QLabel* sizeLabel;
 
 private slots:
     void zeroFillingSlot(int n);
-
+    void truncatingSlot(int n);
 };
 
 

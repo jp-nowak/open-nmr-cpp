@@ -38,6 +38,7 @@ SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
     , maximum{findRealMaximumFromVectorOfComplex(spectrum_->get_spectrum()) * 1.05}
     , startPoint_{0}
     , endPoint_{spectrum_->get_spectrum().size()}
+    , currentSpectrumSize{spectrum_->get_spectrum().size()}
 
 {
     spectrumPen.setCosmetic(true);
@@ -104,33 +105,46 @@ void SpectrumPainter::resetZoom()
     update();
 }
 
+void SpectrumPainter::recalculateDisplayRange()
+{
+    assert(currentSpectrumSize != 0);
+    if (size_t n = pointerToSpectrum->get_spectrum().size(); n == currentSpectrumSize) {
+        return;
+    } else {
+        startPoint_ = static_cast<double>(startPoint_) / currentSpectrumSize * n;
+        endPoint_ = static_cast<double>(endPoint_) / currentSpectrumSize * n;
+        currentSpectrumSize = n;
+    }
+}
+
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
-        auto spectrum = pointerToSpectrum->get_spectrum().subspan(startPoint_, endPoint_ - startPoint_);
-        QPainter painter(this);
-        painter.drawPolygon(e->rect().adjusted(1,1,-1,-1));
-        QPolygonF baseLine;
-        baseLine << QPointF(0, e->rect().height() * (1 - baselinePosition))
-                 << QPointF(e->rect().width(), e->rect().height() * (1 - baselinePosition));
-        painter.drawPolyline(baseLine);
+    recalculateDisplayRange();
+    auto spectrum = pointerToSpectrum->get_spectrum().subspan(startPoint_, endPoint_ - startPoint_);
+    QPainter painter(this);
+    painter.drawPolygon(e->rect().adjusted(1,1,-1,-1));
+    QPolygonF baseLine;
+    baseLine << QPointF(0, e->rect().height() * (1 - baselinePosition))
+             << QPointF(e->rect().width(), e->rect().height() * (1 - baselinePosition));
+    painter.drawPolyline(baseLine);
 
-        // drawing selection region
-        if (displaySelection) {
-            selectedRegion.setHeight(height());
-            painter.fillRect(selectedRegion, QColor(255, 0, 0, 100));
-        }
+    // drawing selection region
+    if (displaySelection) {
+        selectedRegion.setHeight(height());
+        painter.fillRect(selectedRegion, QColor(255, 0, 0, 100));
+    }
 
-        // setting coordinate system in such way that points from spectrum can be displayed without many transformations
-        painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
-        painter.scale(1, -1);
+    // setting coordinate system in such way that points from spectrum can be displayed without many transformations
+    painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
+    painter.scale(1, -1);
 
-        // drawing spectrum
-        QPolygonF spectrumPolygon{};
-        for (size_t i = 0; i < spectrum.size(); i++) {
-            spectrumPolygon << QPointF(i * multiplier, spectrum[i].real() * multiplier * scalingFactor);
-        }
-        painter.setPen(spectrumPen);
-        painter.drawPolyline(spectrumPolygon);
+    // drawing spectrum
+    QPolygonF spectrumPolygon{};
+    for (size_t i = 0; i < spectrum.size(); i++) {
+        spectrumPolygon << QPointF(i * multiplier, spectrum[i].real() * multiplier * scalingFactor);
+    }
+    painter.setPen(spectrumPen);
+    painter.drawPolyline(spectrumPolygon);
 }
 
 void SpectrumPainter::wheelEvent(QWheelEvent* e)

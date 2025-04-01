@@ -31,6 +31,7 @@ public:
     void resetSelection();
 
     void resetZoom();
+    void recalculateDisplayRange();
 
 private:
 
@@ -48,7 +49,7 @@ private:
 
     size_t startPoint_;
     size_t endPoint_;
-
+    size_t currentSpectrumSize;
 };
 
 #endif // SPECTRUMPAINTER_H
