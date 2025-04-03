@@ -235,7 +235,7 @@ namespace
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
                 return {};
             }
-            BlockHeader block_header = read_block_header(buffer, 0);
+            [[maybe_unused]] BlockHeader block_header = read_block_header(buffer, 0);
             #endif // DEBUG__
             #ifndef DEBUG__
                 fid_file.ignore(BLOCK_HEADER_SIZE);
@@ -250,7 +250,7 @@ namespace
                     return {};
                 }
 
-                BlockHeader additional_block_header = read_block_header(buffer, 0);
+                [[maybe_unused]] BlockHeader additional_block_header = read_block_header(buffer, 0);
                 #endif // DEBUG__
                 #ifndef DEBUG__
                 fid_file.ignore(BLOCK_HEADER_SIZE);

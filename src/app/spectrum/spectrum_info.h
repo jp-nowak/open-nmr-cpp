@@ -2,12 +2,23 @@
 #define SPECTRUM_INFO_H
 
 #include <string>
-#include <optional>
 
 #ifdef DEBUG__
 #include <iostream>
 #include <QDebug>
 #endif
+
+struct IntegralRecord
+{
+    size_t leftEdge; // left edge of integral range as data point number (0 - left edge)
+    size_t rightEdge; // right edge of integral range as data point number
+    double absoluteValue; // absolute value of integral
+    double relativeValue; // relative value of integral = absolute / valueOfOne
+    static bool comparator(IntegralRecord a, IntegralRecord b)
+    {
+        return ((a.leftEdge != b.leftEdge) ? (a.leftEdge < b.leftEdge) : (a.rightEdge < b.rightEdge));
+    }
+};
 
 struct FidSizeInfo
 {

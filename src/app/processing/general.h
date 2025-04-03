@@ -9,7 +9,6 @@
 
 #include <vector>
 #include <span>
-#include <complex>
 
 namespace Processing
 {
@@ -41,6 +40,9 @@ namespace Processing
     // constructs new vector which corresponds to fid after applying zero filling and truncating
     // in type proper for fft
     std::vector<kiss_fft_cpx> constructFid(std::span<FidComplexValue const> fid, FidSizeInfo info);
+
+    double integrateByTrapezoidRule(SpectrumSpan values);
+
 
 }
 
