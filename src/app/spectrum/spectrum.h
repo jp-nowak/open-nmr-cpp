@@ -30,8 +30,10 @@ public:
     void setPh1(const Processing::Ph1& phase);
 
     void zeroFill(size_t n);
-
     void truncate(size_t n);
+
+    void integrate(size_t start, size_t end);
+    void recalcRelativeIntegralsValues(double valueOfOne);
 
     SpectrumInfo info;
 
@@ -45,7 +47,7 @@ private:
     std::vector<std::complex<double>> fid;
 
     std::vector<std::complex<double>> spectrum;
-
+    std::vector<IntegralRecord> integrals;
 
     Processing::Phase phaseCorrection;
 

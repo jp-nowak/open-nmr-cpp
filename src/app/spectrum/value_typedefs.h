@@ -11,5 +11,6 @@ typedef std::vector<FidComplexValue> FidType;
 typedef FidType SpectrumType;
 typedef std::span<FidComplexValue> FidSpan;
 typedef FidSpan SpectrumSpan;
-
+typedef std::span<FidComplexValue const> ConstFidSpan;
+typedef ConstFidSpan ConstSpectrumSpan;
 #endif // VALUE_TYPEDEFS_H

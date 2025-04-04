@@ -103,3 +103,32 @@ void Spectrum::truncate(size_t n)
     fidSizeInfo.truncationStart = n;
     generateSpectrum();
 }
+
+void Spectrum::integrate(size_t start, size_t end)
+{
+    double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
+    if (integrals.empty()) {
+        integrals.push_back(IntegralRecord{
+                                        .leftEdge = 0,
+                                        .rightEdge = 0,
+                                        .absoluteValue = absoluteValue,
+                                        .relativeValue = 1.0});
+    }
+    double relativeValue = absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue;
+    integrals.push_back(IntegralRecord{
+                                    .leftEdge = start,
+                                    .rightEdge = end,
+                                    .absoluteValue = absoluteValue,
+                                    .relativeValue = relativeValue});
+}
+
+void Spectrum::recalcRelativeIntegralsValues(double valueOfOne)
+{
+    if (integrals.empty()) return;
+    integrals[0].absoluteValue = valueOfOne;
+
+    for (auto& i : integrals) {
+        i.relativeValue = i.absoluteValue / valueOfOne;
+    }
+}
+

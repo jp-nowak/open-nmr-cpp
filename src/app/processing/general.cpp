@@ -50,7 +50,7 @@ std::vector<kiss_fft_cpx> Processing::constructFid(std::span<FidComplexValue con
     return processedFid;
 }
 
-SpectrumSpan::value_type::value_type Processing::integrateByTrapezoidRule(SpectrumSpan values)
+ConstSpectrumSpan::value_type::value_type Processing::integrateByTrapezoidRule(ConstSpectrumSpan values)
 {
     assert(values.size() > 2);
 
@@ -62,8 +62,6 @@ SpectrumSpan::value_type::value_type Processing::integrateByTrapezoidRule(Spectr
     SubValue deltaX = values.size() / values.size();
 
     SubValue firstAndLast = (real(*values.begin()) + real(*(values.end() - 1))) / 2;
-
-
 
     SubValue sum = std::accumulate(values.begin() + 1, values.end() - 1, SubValue{},
     [](ComplexValue a, ComplexValue b) -> SubValue {
