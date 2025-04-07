@@ -1,5 +1,9 @@
 #include "spectrumdisplayer.h"
+
 #include "../mainwindow.h"
+#include "spectrumpainter.h"
+#include "xaxis.h"
+#include "integralsdisplayer.h"
 
 #include <cassert>
 
@@ -33,6 +37,7 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
     : QWidget{parent}
     , experiment{std::move(new_experiment)}
     , spainter{new SpectrumPainter{experiment.get(), this}}
+    , idisplayer{new IntegralsDisplayer{experiment.get(), this}}
     , mouseMoveStartPoint{0, 0}
     , mainWindow{MainWindow::findFrom(this)}
 
@@ -60,8 +65,10 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
         , this};
 
     spectrumAndXAxis->addWidget(spainter);
+    spectrumAndXAxis->addWidget(idisplayer);
     spectrumAndXAxis->addWidget(xAxis);
     spectrumAndXAxis->setStretchFactor(spainter, 12);
+    spectrumAndXAxis->setStretchFactor(idisplayer, 1);
     spectrumAndXAxis->setStretchFactor(xAxis, 1);
 
     QLabel* yAxis = new QLabel(tr("Y"), this);
@@ -121,6 +128,7 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
         auto [left, right] = spainter->selectionRangeToDataPointsOfSpectrum(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
         experiment->integrate(left, right);
         mainWindow->setCurrentAction(DisplayerAction::None);
+        idisplayer->update();
         break;
     }
     case None:

@@ -1,17 +1,24 @@
 #ifndef SPECTRUMDISPLAYER_H
 #define SPECTRUMDISPLAYER_H
 
-#include "spectrumpainter.h"
-#include "xaxis.h"
-
 
 #include <QObject>
 #include <QWidget>
 #include <QPointF>
 
+class Spectrum;
 class MainWindow;
+class SpectrumPainter;
+class XAxis;
+class IntegralsDisplayer;
 
-
+// widget that governs fully display of spectrum
+//
+// layout:
+//
+// SpectrumPainter    |
+// XAxis              | YAxis
+// IntegralsDisplayer |
 class SpectrumDisplayer : public QWidget
 {
     Q_OBJECT
@@ -32,6 +39,7 @@ public:
 private:
     SpectrumPainter* spainter;
     XAxis* xAxis;
+    IntegralsDisplayer* idisplayer;
 
     QPointF mouseMoveStartPoint;
     QPointF mouseMoveEndPoint;

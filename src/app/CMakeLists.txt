@@ -27,6 +27,7 @@ qt_add_executable(open-nmr
     gui/widgets_for_processing.h
     gui/widgets_for_processing.cpp
     spectrum/value_typedefs.h
+    gui/integralsdisplayer.h gui/integralsdisplayer.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

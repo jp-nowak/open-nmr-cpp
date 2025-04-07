@@ -207,6 +207,9 @@ void XAxis::paintEvent(QPaintEvent* e)
                               / std::sqrt(std::pow(screen()->availableGeometry().size().width(), 2)
                               + std::pow(screen()->availableGeometry().size().height(), 2)); // to be put elsewhere not in paintevent?
     font.setPixelSize(p.fontSize * diameterProportion); // size increases with window size
+
+    qDebug() << "font pixel size" << p.fontSize * diameterProportion;
+
     painter.setFont(font);
 
     painter.setWindow(0, 0, width, height);

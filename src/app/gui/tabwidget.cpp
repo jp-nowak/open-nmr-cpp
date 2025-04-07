@@ -1,6 +1,7 @@
 #include "tabwidget.h"
 
 #include "spectrumdisplayer.h"
+#include "../spectrum/spectrum.h"
 
 #include <QStackedWidget>
 #include <QVBoxLayout>
