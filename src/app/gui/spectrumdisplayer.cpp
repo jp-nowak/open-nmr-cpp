@@ -8,6 +8,27 @@
 #include <QLabel>
 #include <QMouseEvent>
 
+
+namespace
+{
+QColor mapDisplayerActionToColor(DisplayerAction action)
+{
+    using enum DisplayerAction;
+    switch(action)
+    {
+    case Zoom:
+        return QColor(255, 0, 0, 100); // RED
+    case Integrate:
+        return QColor(0, 255, 0, 100); // GREEN
+    case None:
+        break;
+    }
+    return QColor(0, 0, 0, 100);
+}
+}
+
+
+
 SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
     : QWidget{parent}
     , experiment{std::move(new_experiment)}
@@ -66,39 +87,51 @@ void SpectrumDisplayer::mousePressEvent(QMouseEvent* e)
 {
     mouseMoveStartPoint = e->pos();
 
-    if (mainWindow->currentAction == DisplayerAction::Zoom)
-    {
-        spainter->setSelectionStart(mapToGlobal(mouseMoveStartPoint));
-    }
+    if (mainWindow->currentAction == DisplayerAction::None) return;
 
+    spainter->setSelectionStart(mapToGlobal(mouseMoveStartPoint), mapDisplayerActionToColor(mainWindow->currentAction));
 }
 
 void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
 {
     mouseMoveEndPoint = e->pos();
 
+    using enum DisplayerAction;
+
+    // double clicking on spectrum shall have no effect
     if (mouseMoveStartPoint.x() == mouseMoveEndPoint.x()) {
-        mainWindow->setCurrentAction(DisplayerAction::None);
+        mainWindow->setCurrentAction(None);
         spainter->resetSelection();
         return;
     }
 
-    if (mainWindow->currentAction == DisplayerAction::Zoom)
+    switch (mainWindow->currentAction)
     {
+    case Zoom:
         spainter->resetSelection();
         if (spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint))) {
             xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
         }
         mainWindow->setCurrentAction(DisplayerAction::None);
+        break;
+
+    case Integrate:
+    {
+        spainter->resetSelection();
+        auto [left, right] = spainter->selectionRangeToDataPointsOfSpectrum(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+        experiment->integrate(left, right);
+        mainWindow->setCurrentAction(DisplayerAction::None);
+        break;
+    }
+    case None:
+        return;
     }
 }
 
 void SpectrumDisplayer::mouseMoveEvent(QMouseEvent* e)
 {
-    if (mainWindow->currentAction == DisplayerAction::Zoom)
-    {
-        spainter->changeSelectionWidth(mapToGlobal(e->pos()), mapToGlobal(mouseMoveStartPoint));
-    }
+    if (mainWindow->currentAction == DisplayerAction::None) return;
+    spainter->changeSelectionWidth(mapToGlobal(e->pos()), mapToGlobal(mouseMoveStartPoint));
 }
 
 
@@ -114,3 +147,5 @@ void SpectrumDisplayer::updateAll()
     xAxis->update();
     update();
 }
+
+

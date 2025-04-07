@@ -111,11 +111,26 @@ void MainWindow::createActionsFrame()
     connect(zoomResetButton, &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
 
     integrateButton = new QPushButton(tr("Integrate"), actionsFrame);
+    integrateButton->setCheckable(true);
+    connect(integrateButton, &QPushButton::clicked, this, [&](){
+        if (mainStackedWidget->count() == 1) {return;}
+        setCurrentAction(DisplayerAction::Integrate);
+        qDebug() << "Int button clicked";
+    });
+
+    auto resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
+    connect(resetIntegralsButton, &QPushButton::clicked, this, [&](){
+        if (mainStackedWidget->count() == 1) {return;}
+        auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
+        resetIntegrals(p->experiment->integrals);
+        p->update();
+    });
 
     actionsLayout->addWidget(openFileButton);
     actionsLayout->addWidget(zoomButton);
     actionsLayout->addWidget(zoomResetButton);
     actionsLayout->addWidget(integrateButton);
+    actionsLayout->addWidget(resetIntegralsButton);
 
     actionsFrame->setLayout(actionsLayout);
 }
@@ -149,22 +164,33 @@ void MainWindow::openFileSlot()
 
 void MainWindow::setCurrentAction(DisplayerAction action)
 {
+    using enum DisplayerAction;
     if (currentAction_ == action) {return;}
-    if (currentAction_ == DisplayerAction::Zoom) {
+
+    switch(currentAction_)
+    {
+    case Zoom:
         zoomButton->setChecked(false);
+        break;
+    case Integrate:
+        integrateButton->setChecked(false);
+        break;
+    case None:
+        break;
     }
+
     currentAction_ = action;
 }
 
 void MainWindow::zoomSlot()
 {
-    if (not mainStackedWidget->count()) {return;}
+    if (mainStackedWidget->count() == 1) {return;}
     setCurrentAction(DisplayerAction::Zoom);
 }
 
 void MainWindow::resetZoomSlot()
 {
-    if (not mainStackedWidget->count()) {return;}
+    if (mainStackedWidget->count() == 1) {return;}
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
 }
 

@@ -35,6 +35,7 @@ SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
     , multiplier{1}
     , scalingFactor{1}
     , displaySelection{false}
+    , selectionColor{}
     , maximum{findRealMaximumFromVectorOfComplex(spectrum_->get_spectrum()) * 1.05}
     , startPoint_{0}
     , endPoint_{spectrum_->get_spectrum().size()}
@@ -60,10 +61,11 @@ void SpectrumPainter::changeSelectionWidth(QPointF x, QPointF origin)
     update();
 }
 
-void SpectrumPainter::setSelectionStart(QPointF x)
+void SpectrumPainter::setSelectionStart(QPointF x, const QColor& selectionColor)
 {
     selectedRegion.setX(mapFromGlobal(x).x());
     displaySelection = true;
+    this->selectionColor = selectionColor;
 }
 
 void SpectrumPainter::resetSelection()
@@ -117,6 +119,26 @@ void SpectrumPainter::recalculateDisplayRange()
     }
 }
 
+std::pair<size_t, size_t> SpectrumPainter::selectionRangeToDataPointsOfSpectrum(QPointF startPos, QPointF endPos) const
+{
+    double start = mapFromGlobal(startPos).x();
+    double end = mapFromGlobal(endPos).x();
+
+    if (start > end) {
+        std::swap(start, end);
+    }
+
+    start = (start < 0) ? 0 : start;
+    end = (end > width()) ? width() : end;
+
+    const size_t size = endPoint_ - startPoint_;
+
+    size_t right = startPoint_ + std::floor(end / width() * (size - 1));
+    size_t left = startPoint_ + std::ceil(start / width() * (size - 1));
+
+    return{left, right};
+}
+
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
     recalculateDisplayRange();
@@ -131,7 +153,7 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
     // drawing selection region
     if (displaySelection) {
         selectedRegion.setHeight(height());
-        painter.fillRect(selectedRegion, QColor(255, 0, 0, 100));
+        painter.fillRect(selectedRegion, selectionColor);
     }
 
     // setting coordinate system in such way that points from spectrum can be displayed without many transformations

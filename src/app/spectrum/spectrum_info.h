@@ -14,10 +14,32 @@ struct IntegralRecord
     size_t rightEdge; // right edge of integral range as data point number
     double absoluteValue; // absolute value of integral
     double relativeValue; // relative value of integral = absolute / valueOfOne
-    static bool comparator(IntegralRecord a, IntegralRecord b)
+
+    // static bool comparator(IntegralRecord a, IntegralRecord b)
+    // {
+    //     return ((a.leftEdge != b.leftEdge) ? (a.leftEdge < b.leftEdge) : (a.rightEdge < b.rightEdge));
+    // }
+
+    #ifdef DEBUG__
+    friend std::ostream& operator<<(std::ostream& os, IntegralRecord const& m)
     {
-        return ((a.leftEdge != b.leftEdge) ? (a.leftEdge < b.leftEdge) : (a.rightEdge < b.rightEdge));
+        return os << "IntegralRecord" << "\n"
+               << "leftEdge: " << m.leftEdge << "\n"
+               << "rightEdge: " << m.rightEdge << "\n"
+               << "absoluteValue: " << m.absoluteValue << "\n"
+               << "relativeValue: " << m.relativeValue << "\n";
     }
+
+    friend QDebug operator<<(QDebug os, IntegralRecord const& m)
+    {
+        return os << "IntegralRecord" << "\n"
+               << "leftEdge: " << m.leftEdge << "\n"
+               << "rightEdge: " << m.rightEdge << "\n"
+               << "absoluteValue: " << m.absoluteValue << "\n"
+               << "relativeValue: " << m.relativeValue << "\n";
+    }
+    #endif
+
 };
 
 struct FidSizeInfo
@@ -47,7 +69,7 @@ struct SpectrumInfo
     #ifdef DEBUG__
     friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& m)
     {
-        return os
+        return os << "SpectrumInfo" << "\n"
         << "plot_right_Hz: " << m.plot_right_Hz << "\n"
         << "plot_left_Hz: " << m.plot_left_Hz << "\n"
         << "plot_right_ppm: " << m.plot_right_ppm << "\n"
@@ -65,7 +87,7 @@ struct SpectrumInfo
 
     friend QDebug operator<<(QDebug os, SpectrumInfo const& m)
     {
-        return os
+        return os << "SpectrumInfo" << "\n"
         << "plot_right_Hz: " << m.plot_right_Hz << "\n"
         << "plot_left_Hz: " << m.plot_left_Hz << "\n"
         << "plot_right_ppm: " << m.plot_right_ppm << "\n"

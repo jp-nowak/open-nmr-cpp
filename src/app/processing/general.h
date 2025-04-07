@@ -41,6 +41,7 @@ namespace Processing
     // in type proper for fft
     std::vector<kiss_fft_cpx> constructFid(std::span<FidComplexValue const> fid, FidSizeInfo info);
 
+    // integrates real values of spectrum in given span using trapezoid rule
     ConstSpectrumSpan::value_type::value_type integrateByTrapezoidRule(ConstSpectrumSpan values);
 
 

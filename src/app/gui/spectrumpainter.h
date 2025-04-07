@@ -7,9 +7,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QPen>
-
-#include <span>
-#include <memory>
+#include <QColor>
 
 class SpectrumDisplayer;
 
@@ -27,11 +25,14 @@ public:
     bool zoom(QPointF startPos, QPointF endPos);
 
     void changeSelectionWidth(QPointF x, QPointF origin);
-    void setSelectionStart(QPointF x);
+    void setSelectionStart(QPointF x, const QColor& selectionColor = QColor(255, 0, 0, 100));
     void resetSelection();
 
     void resetZoom();
     void recalculateDisplayRange();
+
+    // returns data point numbers in spectrum which correspond to current selection
+    std::pair<size_t, size_t> selectionRangeToDataPointsOfSpectrum(QPointF startPos, QPointF endPos) const;
 
 private:
 
@@ -45,6 +46,7 @@ private:
     double multiplier;
     double scalingFactor;
     bool displaySelection;
+    QColor selectionColor;
     const double maximum;
 
     size_t startPoint_;

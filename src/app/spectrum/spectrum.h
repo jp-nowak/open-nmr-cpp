@@ -32,10 +32,14 @@ public:
     void zeroFill(size_t n);
     void truncate(size_t n);
 
-    void integrate(size_t start, size_t end);
-    void recalcRelativeIntegralsValues(double valueOfOne);
+    void integrate(size_t start, size_t end) const;
+    void recalcIntegrals(size_t previousSpectrumSize) const;
 
     SpectrumInfo info;
+
+    mutable IntegralsVector integrals;
+
+
 
 private:
 
@@ -47,13 +51,19 @@ private:
     std::vector<std::complex<double>> fid;
 
     std::vector<std::complex<double>> spectrum;
-    std::vector<IntegralRecord> integrals;
 
     Processing::Phase phaseCorrection;
 
     FidSizeInfo fidSizeInfo;
 
 };
+
+// recalculates .relativeValue in IntegralRecord's in integrals according to .relativeValue = .absoluteValue / valueOfOne
+void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne);
+
+// calls .clear() on integrals
+void resetIntegrals(IntegralsVector& integrals);
+
 
 
 #endif // SPECTRUM_H

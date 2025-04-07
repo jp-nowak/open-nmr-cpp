@@ -104,7 +104,7 @@ void Spectrum::truncate(size_t n)
     generateSpectrum();
 }
 
-void Spectrum::integrate(size_t start, size_t end)
+void Spectrum::integrate(size_t start, size_t end) const
 {
     double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
     if (integrals.empty()) {
@@ -122,7 +122,21 @@ void Spectrum::integrate(size_t start, size_t end)
                                     .relativeValue = relativeValue});
 }
 
-void Spectrum::recalcRelativeIntegralsValues(double valueOfOne)
+void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
+{
+    const double mult = static_cast<double>(spectrum.size()) / previousSpectrumSize;
+
+    for (auto& i : std::span(integrals).subspan(1, integrals.size() - 1)) {
+        i.leftEdge *= mult;
+        i.rightEdge *= mult;
+        i.absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(i.leftEdge, i.rightEdge - i.leftEdge));
+        i.relativeValue = i.absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne)
 {
     if (integrals.empty()) return;
     integrals[0].absoluteValue = valueOfOne;
@@ -132,3 +146,7 @@ void Spectrum::recalcRelativeIntegralsValues(double valueOfOne)
     }
 }
 
+void resetIntegrals(IntegralsVector& integrals)
+{
+    integrals.clear();
+}

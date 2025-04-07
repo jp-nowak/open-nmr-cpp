@@ -1,6 +1,8 @@
 #ifndef VALUE_TYPEDEFS_H
 #define VALUE_TYPEDEFS_H
 
+#include "spectrum_info.h"
+
 #include <complex>
 #include <vector>
 #include <span>
@@ -13,4 +15,7 @@ typedef std::span<FidComplexValue> FidSpan;
 typedef FidSpan SpectrumSpan;
 typedef std::span<FidComplexValue const> ConstFidSpan;
 typedef ConstFidSpan ConstSpectrumSpan;
+
+typedef std::vector<IntegralRecord> IntegralsVector;
+
 #endif // VALUE_TYPEDEFS_H
