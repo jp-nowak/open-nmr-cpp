@@ -11,6 +11,7 @@ using namespace Processing;
 
 Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
 : info{info}
+, integrals{IntegralRecord{0, 0, 0.0, 0.0}}
 , fid{fid}
 , phaseCorrection{Ph0{.ph0 = 0},
                   Ph1{.ph1 = 0, .pivot = 50}}
@@ -18,7 +19,6 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
               .truncationStart = fid.size(),
               .zeroFilledTo = nextPowerOf2(fid.size()),
               .groupDelay = info.group_delay}
-
 {
     generateSpectrum();
     if (!(info.group_delay == 0.0)) {
@@ -63,6 +63,7 @@ void Spectrum::setPh0(const Ph0& phase)
 {
     spectrum *= Ph0(phase.ph0 - phaseCorrection.ph0.ph0);
     phaseCorrection.ph0.ph0 = phase.ph0;
+    recalcIntegrals(spectrum.size());
 }
 
 void Spectrum::setPh1(const Ph1& phase)
@@ -75,11 +76,14 @@ void Spectrum::setPh1(const Ph1& phase)
         spectrum *= Ph1(phase.ph1, phase.pivot);
         phaseCorrection.ph1 = phase;
     }
+    recalcIntegrals(spectrum.size());
 }
 
 void Spectrum::zeroFill(size_t n)
 {
     assert(std::find(POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), n) != POWERS_OF_TWO.end());
+    const size_t size = spectrum.size();
+
     fidSizeInfo.zeroFilledTo = n;
 
     if (n < fidSizeInfo.truncationStart) { // n lower then acquired fid size - truncation occurs
@@ -95,24 +99,27 @@ void Spectrum::zeroFill(size_t n)
     }*/
 
     generateSpectrum();
+    recalcIntegrals(size);
 }
 
 void Spectrum::truncate(size_t n)
 {
     assert(n <= fidSizeInfo.initialSize);
+    const size_t size = spectrum.size();
     fidSizeInfo.truncationStart = n;
     generateSpectrum();
+    recalcIntegrals(size);
 }
 
 void Spectrum::integrate(size_t start, size_t end) const
 {
     double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
-    if (integrals.empty()) {
-        integrals.push_back(IntegralRecord{
+    if (integrals.size() == 1) {
+        integrals[0] = IntegralRecord{
                                         .leftEdge = 0,
                                         .rightEdge = 0,
                                         .absoluteValue = absoluteValue,
-                                        .relativeValue = 1.0});
+                                        .relativeValue = 1.0};
     }
     double relativeValue = absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue;
     integrals.push_back(IntegralRecord{
@@ -124,7 +131,12 @@ void Spectrum::integrate(size_t start, size_t end) const
 
 void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
 {
+    if (integrals.size() < 2) return;
     const double mult = static_cast<double>(spectrum.size()) / previousSpectrumSize;
+
+    integrals[0].absoluteValue *= mult; // increasing size by two by zero filling causes two fold increase
+    // of y values in spectrum. To preserve integral values absolute value corresponding to 1.00 relative is
+    // changed
 
     for (auto& i : std::span(integrals).subspan(1, integrals.size() - 1)) {
         i.leftEdge *= mult;
@@ -138,7 +150,6 @@ void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
 
 void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne)
 {
-    if (integrals.empty()) return;
     integrals[0].absoluteValue = valueOfOne;
 
     for (auto& i : integrals) {

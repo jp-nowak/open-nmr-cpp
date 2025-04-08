@@ -18,8 +18,8 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *pare
     , pen{}
 {
     pen.setCosmetic(true);
-    pen.setWidth(1);
-    // pen.setColor(QColor(0, 255, 0));
+    pen.setWidth(2);
+    pen.setColor(QColor(0, 255, 0));
     pen.setCapStyle(Qt::RoundCap);
 }
 
@@ -51,51 +51,57 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 {
     recalculateDisplayRange();
 
-    constexpr int multiplier = 100;
-    constexpr double baselinePosition = 0.5;
-    constexpr int displayPrecision = 2;
+    QPainter painter{this};
 
-    QPainter painter(this);
-    painter.setPen(pen);
+    const double startPoint = startPoint_; // TODO create uniform struct with setting for IntegralsDisplayer and XAxis
+    const double endPoint = endPoint_;
+    const double width = e->rect().width();
+    const double height = e->rect().height();
+    constexpr double baselineHeight = 0.5;
+    constexpr double displayPrecision = 2;
+    constexpr double tickHeight = 0.1;
 
-    qDebug() << painter.viewTransformEnabled() << painter.worldMatrixEnabled();
+    auto xPos = [startPoint, endPoint, width](double x){
+        return x / (endPoint - startPoint) * width;
+    };
 
-
-    painter.setWindow(startPoint_ * multiplier, 0, (endPoint_ - 1) * multiplier, 100);
-
-    qDebug() << painter.viewTransformEnabled() << painter.worldMatrixEnabled();
-
-
-    // TRANFORMING WINDOW BREAKS DRAWING TEXT!!!
-
-    QFont font = painter.font();
-    font.setPixelSize(12);
-    painter.setFont(font);
-
-    qDebug() << "paint event";
 
     for (const auto& i : experiment->integrals) {
 
-        if ((i.rightEdge <= startPoint_) or (i.rightEdge > endPoint_)) continue;
-
-        QPolygonF baseLine;
-        baseLine << QPointF(i.leftEdge * multiplier, e->rect().height() * (1 - baselinePosition))
-                 << QPointF(i.rightEdge * multiplier, e->rect().height() * (1 - baselinePosition));
-        painter.drawPolyline(baseLine);
-
-        auto text = QString::number(i.relativeValue, 'f', displayPrecision);
-        auto point = QPointF(i.leftEdge, e->rect().height() * (1 - baselinePosition));
-
-        qDebug() << baseLine << i.relativeValue << text << point;
-
         painter.setPen(pen);
 
-        painter.drawText(point, text);
+        if ((i.rightEdge <= startPoint_) or (i.rightEdge > endPoint_)) continue;
+
+        { // TODO to be separated into function
+        QPolygonF line;
+        line << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight))
+             << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight));
+        painter.drawPolyline(line);
+        }
+
+        {
+        QPolygonF line;
+        line << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight - tickHeight))
+             << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight + tickHeight));
+        painter.drawPolyline(line);
+        }
+
+        {
+        QPolygonF line;
+        line << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight - tickHeight))
+             << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight + tickHeight));
+        painter.drawPolyline(line);
+        }
+
+        auto text = QString::number(i.relativeValue, 'f', displayPrecision);
+        auto point = QPointF(xPos(i.leftEdge + (i.rightEdge - i.leftEdge) / 2), e->rect().height() * (1 - baselineHeight + tickHeight));
+
+        painter.setPen(QColor("black"));
 
         drawText(painter,
                  point,
                  Qt::AlignHCenter | Qt::AlignTop,
                  text);
-
     }
+
 }

@@ -115,7 +115,6 @@ void MainWindow::createActionsFrame()
     connect(integrateButton, &QPushButton::clicked, this, [&](){
         if (mainStackedWidget->count() == 1) {return;}
         setCurrentAction(DisplayerAction::Integrate);
-        qDebug() << "Int button clicked";
     });
 
     auto resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
