@@ -118,6 +118,7 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
         spainter->resetSelection();
         if (spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint))) {
             xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+            idisplayer->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
         }
         mainWindow->setCurrentAction(DisplayerAction::None);
         break;
@@ -146,6 +147,7 @@ void SpectrumDisplayer::mouseMoveEvent(QMouseEvent* e)
 void SpectrumDisplayer::resetZoom()
 {
     spainter->resetZoom();
+    idisplayer->resetZoom();
     xAxis->setRange(experiment->info.plot_left_ppm, experiment->info.plot_right_ppm);
 }
 
@@ -153,6 +155,7 @@ void SpectrumDisplayer::updateAll()
 {
     spainter->update();
     xAxis->update();
+    idisplayer->update();
     update();
 }
 

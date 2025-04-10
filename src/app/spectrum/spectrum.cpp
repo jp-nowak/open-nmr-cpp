@@ -6,12 +6,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 
 using namespace Processing;
 
 Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
 : info{info}
-, integrals{IntegralRecord{0, 0, 0.0, 0.0}}
 , fid{fid}
 , phaseCorrection{Ph0{.ph0 = 0},
                   Ph1{.ph1 = 0, .pivot = 50}}
@@ -114,14 +114,18 @@ void Spectrum::truncate(size_t n)
 void Spectrum::integrate(size_t start, size_t end) const
 {
     double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
-    if (integrals.size() == 1) {
-        integrals[0] = IntegralRecord{
+    if (integrals.empty()) {
+        integrals.push_back(IntegralRecord{
                                         .leftEdge = 0,
                                         .rightEdge = 0,
                                         .absoluteValue = absoluteValue,
-                                        .relativeValue = 1.0};
+                                        .relativeValue = 1.0});
     }
-    double relativeValue = absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue;
+
+    double relativeValue = (integrals[0].absoluteValue != 0.0)
+                         ? absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue
+                         : 0.0;
+
     integrals.push_back(IntegralRecord{
                                     .leftEdge = start,
                                     .rightEdge = end,
@@ -131,7 +135,7 @@ void Spectrum::integrate(size_t start, size_t end) const
 
 void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
 {
-    if (integrals.size() < 2) return;
+    if (integrals.empty()) return;
     const double mult = static_cast<double>(spectrum.size()) / previousSpectrumSize;
 
     integrals[0].absoluteValue *= mult; // increasing size by two by zero filling causes two fold increase
@@ -142,7 +146,9 @@ void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
         i.leftEdge *= mult;
         i.rightEdge *= mult;
         i.absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(i.leftEdge, i.rightEdge - i.leftEdge));
-        i.relativeValue = i.absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue;
+        i.relativeValue = (integrals[0].absoluteValue != 0.0)
+                        ? i.absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue
+                        : 0.0;
     }
 }
 
@@ -150,7 +156,16 @@ void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
 
 void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne)
 {
+    if (integrals.empty()) return;
+
     integrals[0].absoluteValue = valueOfOne;
+
+    if (valueOfOne == 0.0) {
+        for (auto& i : integrals) {
+            i.relativeValue = 0.0;
+    }
+        return;
+    }
 
     for (auto& i : integrals) {
         i.relativeValue = i.absoluteValue / valueOfOne;

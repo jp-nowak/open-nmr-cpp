@@ -80,6 +80,9 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     double start = mapFromGlobal(startPos).x();
     double end = mapFromGlobal(endPos).x();
 
+    const size_t oldStart = startPoint_;
+    const size_t oldEnd = endPoint_;
+
     if (start > end) {
         std::swap(start, end);
     }
@@ -92,7 +95,11 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     endPoint_ = startPoint_ + std::floor(end / width() * (size - 1));
     startPoint_ += std::ceil(start / width() * (size - 1));
 
-    if (startPoint_ + 5 > endPoint_) {return false;} // stops user from zooming to close
+    if (startPoint_ + 5 > endPoint_) {
+        startPoint_ = oldStart;
+        endPoint_ = oldEnd;
+        return false;
+    } // stops user from zooming to close
 
 
     update();
