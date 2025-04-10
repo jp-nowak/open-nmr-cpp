@@ -3,7 +3,7 @@
 
 #include <string>
 
-#ifdef DEBUG__
+#ifdef DEBUG_COMP
 #include <iostream>
 #include <QDebug>
 #endif
@@ -20,7 +20,7 @@ struct IntegralRecord
     //     return ((a.leftEdge != b.leftEdge) ? (a.leftEdge < b.leftEdge) : (a.rightEdge < b.rightEdge));
     // }
 
-    #ifdef DEBUG__
+    #ifdef DEBUG_COMP
     friend std::ostream& operator<<(std::ostream& os, IntegralRecord const& m)
     {
         return os << "IntegralRecord" << "\n"
@@ -66,7 +66,7 @@ struct SpectrumInfo
     std::string nucleus; // measured nucleus of format XXNN X-nucleus symbol NN-mass
     std::string solvent; // solvent in which sample was solubilized
 
-    #ifdef DEBUG__
+    #ifdef DEBUG_COMP
     friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& m)
     {
         return os << "SpectrumInfo" << "\n"

@@ -38,7 +38,7 @@ namespace
         int nbheaders; // number of block headers per block, 1 in case of simple experiments, 2 in 2D hypercomplex
     };
 
-    #ifdef DEBUG__
+    #ifdef DEBUG_COMP
     //! data from block header; seems not really relevant, will be cut off in release versions
     struct BlockHeader
     {
@@ -76,7 +76,7 @@ namespace
         };
     }
 
-    #ifdef DEBUG__
+    #ifdef DEBUG_COMP
     /*!
      * @brief read_block_header creates BlockHeader out of vector of big endian bytes, will be cut off in release
      * version as those informations doesnt seem important
@@ -229,21 +229,21 @@ namespace
 
         for (size_t i = 0; i < static_cast<size_t>(file_header.nblocks); i++) { // loop over blocks
 
-            #ifdef DEBUG__
+            #ifdef DEBUG_COMP
             buffer.resize(BLOCK_HEADER_SIZE);
 
             if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
                 return {};
             }
             [[maybe_unused]] BlockHeader block_header = read_block_header(buffer, 0);
-            #endif // DEBUG__
-            #ifndef DEBUG__
+            #endif // DEBUG_COMP
+            #ifndef DEBUG_COMP
                 fid_file.ignore(BLOCK_HEADER_SIZE);
             #endif
 
             if (file_header.nbheaders == 2) { // there may exist second block header in more complicated experiments
 
-                #ifdef DEBUG__
+                #ifdef DEBUG_COMP
                 buffer.resize(BLOCK_HEADER_SIZE);
 
                 if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
@@ -251,8 +251,8 @@ namespace
                 }
 
                 [[maybe_unused]] BlockHeader additional_block_header = read_block_header(buffer, 0);
-                #endif // DEBUG__
-                #ifndef DEBUG__
+                #endif // DEBUG_COMP
+                #ifndef DEBUG_COMP
                 fid_file.ignore(BLOCK_HEADER_SIZE);
                 #endif
             }
