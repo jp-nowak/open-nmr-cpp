@@ -2,7 +2,7 @@
 
 #include "../spectrum/spectrum.h"
 #include "gui_utilities.h"
-
+#include "../mainwindow.h"
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -12,6 +12,36 @@
 
 #include <utility>
 #include <cmath>
+
+namespace
+{
+// finds integral from integrals which middle point was closest to xCoord
+// if clicled on point didnt overlap with any integral returns nullptr
+IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
+{
+    std::vector<IntegralRecord*> fittingIntegrals{};
+    for (auto& i : integrals) {
+        if ((i.leftEdge < xCoord) and (i.rightEdge > xCoord)) {
+            fittingIntegrals.push_back(&i);
+        }
+    } // TODO separate into method
+
+    if (fittingIntegrals.empty()) return nullptr;
+
+    // choosing closest integral to clicked point
+    IntegralRecord* bestFit = fittingIntegrals[0];
+    for (const auto i : fittingIntegrals) {
+        size_t middlePoint = i->leftEdge + (i->rightEdge - i->leftEdge) / 2;
+        size_t previousMiddlePoint = bestFit->leftEdge + (bestFit->rightEdge - bestFit->leftEdge) / 2;
+        if ((std::abs(static_cast<long long>(xCoord) - static_cast<long long>(middlePoint)))
+            < (std::abs(static_cast<long long>(xCoord) - static_cast<long long>(previousMiddlePoint)))) {
+            bestFit = i;
+            }
+    }
+    return bestFit;
+}
+}
+
 
 IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *parent)
     : QWidget{parent}
@@ -27,6 +57,10 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *pare
     pen.setWidth(2);
     pen.setColor(QColor(0, 255, 0));
     pen.setCapStyle(Qt::RoundCap);
+
+    connect(MainWindow::findFrom(parent), &MainWindow::closeDynamicElements,
+            this, &IntegralsDisplayer::closeIntegralEditField);
+
 }
 
 void IntegralsDisplayer::setRange(size_t begin, size_t end)
@@ -109,36 +143,9 @@ void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 
     size_t dataPoint = xPosToDataPoint(position.x());
 
-    qDebug() << __FUNCTION__;
-
-    // choosing integrals that contain double clicked point
-    std::vector<IntegralRecord*> fittingIntegrals{};
-    for (auto& i : experiment->integrals) {
-        if ((i.leftEdge < dataPoint) and (i.rightEdge > dataPoint)) {
-            fittingIntegrals.push_back(&i);
-        }
-    } // TODO separate into method
-
-    if (fittingIntegrals.empty()) return;
-
-    // choosing closest integral to clicked point
-    IntegralRecord* bestFit = fittingIntegrals[0];
-    for (const auto i : fittingIntegrals) {
-        size_t middlePoint = i->leftEdge + (i->rightEdge - i->leftEdge) / 2;
-        size_t previousMiddlePoint = bestFit->leftEdge + (bestFit->rightEdge - bestFit->leftEdge) / 2;
-        if ((std::abs(static_cast<long long>(dataPoint) - static_cast<long long>(middlePoint)))
-            < (std::abs(static_cast<long long>(dataPoint) - static_cast<long long>(previousMiddlePoint)))) {
-            bestFit = i;
-            }
-    }
-
-    qDebug() << "best fit" << bestFit->relativeValue;
-
-    editedIntegral = bestFit;
+    editedIntegral = findClickedOnIntegral(dataPoint, experiment->integrals);
 
     update();
-
-
 }
 
 
@@ -158,65 +165,66 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
     auto xPos = [startPoint, endPoint, width](double x) -> double{
         return (x - startPoint) / (endPoint - startPoint) * width;
-    };
+    }; // calculates position of spectrum datapoint as x coord of widget
 
 
     for (const auto& i : experiment->integrals) {
 
         painter.setPen(pen);
 
-        if ((i.rightEdge <= startPoint_) or (i.rightEdge > endPoint_)) continue;
+        if ((i.rightEdge <= startPoint_) or (i.leftEdge > endPoint_)) continue; // omits integrals not visible in current view range
 
-        { // TODO to be separated into function
-        QPolygonF line;
-        line << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight))
-             << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight));
-        painter.drawPolyline(line);
-        }
-
-        {
-        QPolygonF line;
-        line << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight - tickHeight))
-             << QPointF(xPos(i.leftEdge), height * (1 - baselineHeight + tickHeight));
-        painter.drawPolyline(line);
-        }
-
-        {
-        QPolygonF line;
-        line << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight - tickHeight))
-             << QPointF(xPos(i.rightEdge), height * (1 - baselineHeight + tickHeight));
-        painter.drawPolyline(line);
-        }
+        drawRangeWithMarks(painter,
+                           QPointF(xPos(i.leftEdge), height * (1 - baselineHeight)),
+                           QPointF(xPos(i.rightEdge), height * (1 - baselineHeight)),
+                           tickHeight * height
+        );
 
         auto text = QString::number(i.relativeValue, 'f', displayPrecision);
+
         auto point = QPointF(xPos(i.leftEdge + (i.rightEdge - i.leftEdge) / 2), e->rect().height() * (1 - baselineHeight + tickHeight));
+
+        auto alignment = Qt::AlignHCenter;
+
+        if (i.leftEdge < startPoint_) { // integrals stretching outside view range have labels aligned to internal side
+            point.setX(xPos(i.rightEdge));
+            alignment = Qt::AlignRight;
+        } else if (i.rightEdge > endPoint_) {
+            point.setX(xPos(i.leftEdge));
+            alignment = Qt::AlignLeft;
+        }
 
         painter.setPen(QColor("black"));
 
         drawText(painter,
                  point,
-                 Qt::AlignHCenter | Qt::AlignTop,
+                 alignment | Qt::AlignTop,
                  text);
     }
 
-    if (editedIntegral and not integralEditField) {
+    if (editedIntegral and not integralEditField) { // block for showing integral edit field
         integralEditField = new QDoubleSpinBox{this};
         integralEditField->setButtonSymbols(QAbstractSpinBox::NoButtons);
 
-        auto xPos = [startPoint, endPoint, width](double x) -> double{
-            return (x - startPoint) / (endPoint - startPoint) * width;
-        };
+        // auto xPos = [startPoint, endPoint, width](double x) -> double{
+        //     return (x - startPoint) / (endPoint - startPoint) * width;
+        // };
 
         auto text = QString::number(editedIntegral->relativeValue, 'f', displayPrecision);
 
         QFontMetrics fm = painter.fontMetrics();
         int textWidth = fm.boundingRect(text).width();
 
-
         auto point = QPoint(xPos(editedIntegral->leftEdge
                             + (editedIntegral->rightEdge - editedIntegral->leftEdge) / 2)
                             - textWidth / 2,
-                            height * (1 - baselineHeight + tickHeight));
+                            height * (1 - baselineHeight + tickHeight)); // tries to set point which makes edit field cover label of edited integral
+
+        if (editedIntegral->leftEdge < startPoint_) {
+            point.setX(xPos(editedIntegral->rightEdge) - textWidth);
+        } else if (editedIntegral->rightEdge > endPoint_) {
+            point.setX(xPos(editedIntegral->leftEdge) - textWidth / 2);
+        }
 
         integralEditField->move(point);
         integralEditField->setValue(editedIntegral->relativeValue);
@@ -235,9 +243,19 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
            editedIntegral = nullptr;
            update();
         });
-
         integralEditField->show();
     }
-
-
 }
+
+void IntegralsDisplayer::mousePressEvent(QMouseEvent*)
+{
+    closeIntegralEditField();
+}
+
+void IntegralsDisplayer::closeIntegralEditField()
+{
+    delete integralEditField; integralEditField = nullptr;
+    editedIntegral = nullptr;
+    update();
+}
+

@@ -24,3 +24,25 @@ void drawText(QPainter & painter, const QPointF & point, Qt::Alignment flags,
    drawText(painter, point.x(), point.y(), flags, text, boundingRect);
 }
 
+void drawRangeWithMarks(QPainter& painter, const QPointF& left, const QPointF& right, double tickHeight)
+{
+    {
+        QPolygonF line;
+        line << left << right;
+        painter.drawPolyline(line);
+    }
+
+    {
+        QPolygonF line;
+        line << QPointF(left.x(), left.y() - tickHeight)
+             << QPointF(left.x(), left.y() + tickHeight);
+        painter.drawPolyline(line);
+    }
+
+    {
+        QPolygonF line;
+        line << QPointF(right.x(), right.y() - tickHeight)
+             << QPointF(right.x(), right.y() + tickHeight);
+        painter.drawPolyline(line);
+    }
+}

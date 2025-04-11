@@ -34,6 +34,7 @@ public:
 signals:
 
     void displayedSpectrumChanged(Spectrum* experiment);
+    void closeDynamicElements();
 
 private:
 
@@ -44,6 +45,7 @@ private:
     void createActions();
     void createTopMenuBar();
     void createActionsFrame();
+    void createKeyShortcuts();
 
     QFrame* actionsFrame;
     QMenuBar* topMenuBar;

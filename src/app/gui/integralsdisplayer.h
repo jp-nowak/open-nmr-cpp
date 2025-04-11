@@ -35,6 +35,7 @@ public:
 
     void mouseDoubleClickEvent(QMouseEvent* e) override;
     void paintEvent(QPaintEvent* e) override;
+    void mousePressEvent(QMouseEvent* e) override;
 
 
 
@@ -53,6 +54,9 @@ private:
 
     void recalculateDisplayRange();
 
+private slots:
+
+    void closeIntegralEditField();
 
 };
 

@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(mainWidget);
 
     connect(mainStackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::spectrumChangedSlot);
+    connect(this, &MainWindow::displayedSpectrumChanged, this, [this](){emit closeDynamicElements();});
+
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +105,7 @@ void MainWindow::createActionsFrame()
     openFileButton = new QPushButton(tr("Open File"), actionsFrame);
     connect(openFileButton, &QPushButton::clicked, this, &MainWindow::openFileSlot);
 
+
     zoomButton = new QPushButton(tr("Zoom"), actionsFrame);
     zoomButton->setCheckable(true);
     connect(zoomButton, &QPushButton::clicked, this, &MainWindow::zoomSlot);
@@ -110,15 +113,17 @@ void MainWindow::createActionsFrame()
     zoomResetButton = new QPushButton(tr("Reset Zoom"), actionsFrame);
     connect(zoomResetButton, &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
 
-    integrateButton = new QPushButton(tr("Integrate"), actionsFrame);
+    integrateButton = new QPushButton(tr("&Integrate"), actionsFrame);
     integrateButton->setCheckable(true);
-    connect(integrateButton, &QPushButton::clicked, this, [&](){
+    connect(integrateButton, &QPushButton::clicked, this, [this](){
+
         if (mainStackedWidget->count() == 1) {return;}
         setCurrentAction(DisplayerAction::Integrate);
     });
 
     auto resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
-    connect(resetIntegralsButton, &QPushButton::clicked, this, [&](){
+    connect(resetIntegralsButton, &QPushButton::clicked, this, [this](){
+
         if (mainStackedWidget->count() == 1) {return;}
         auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
         resetIntegrals(p->experiment->integrals);
@@ -133,6 +138,12 @@ void MainWindow::createActionsFrame()
 
     actionsFrame->setLayout(actionsLayout);
 }
+
+void MainWindow::createKeyShortcuts()
+{
+
+}
+
 
 void MainWindow::openFileSlot()
 {
@@ -185,18 +196,21 @@ void MainWindow::zoomSlot()
 {
     if (mainStackedWidget->count() == 1) {return;}
     setCurrentAction(DisplayerAction::Zoom);
+    emit closeDynamicElements();
 }
 
 void MainWindow::resetZoomSlot()
 {
     if (mainStackedWidget->count() == 1) {return;}
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
+    emit closeDynamicElements();
 }
 
 void MainWindow::spectrumChangedSlot(int i)
 {
     if (auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))) {
         emit displayedSpectrumChanged(p->experiment.get());
+        emit closeDynamicElements();
     }
 }
 
@@ -214,6 +228,7 @@ void MainWindow::showProcessingWidget()
     } else {
         dockWidget->show();
     }
+    emit closeDynamicElements();
 }
 
 void MainWindow::phaseCorrectionSlot()
@@ -229,6 +244,7 @@ void MainWindow::zeroFillingSlot()
 void MainWindow::refreshCurrentDisplayerSlot()
 {
     reinterpret_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->update();
+    emit closeDynamicElements();
 }
 
 
