@@ -61,6 +61,7 @@ private:
     QPushButton* zoomButton;
     QPushButton* zoomResetButton;
     QPushButton* integrateButton;
+    QPushButton* resetIntegralsButton;
 
     TabWidget* tabWidget;
 
@@ -91,6 +92,8 @@ private slots:
     void openFileSlot();
     void zoomSlot();
     void resetZoomSlot();
+    void integrateSlot();
+    void resetIntegralsSlot();
     void spectrumChangedSlot(int i);
     void phaseCorrectionSlot();
     void zeroFillingSlot();

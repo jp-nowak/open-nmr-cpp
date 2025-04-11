@@ -25,8 +25,11 @@
 #include <QPen>
 #include <QList>
 #include <QDockWidget>
+#include <QShortcut>
 
 #include <filesystem>
+
+void qt_set_sequence_auto_mnemonic(bool b);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -37,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
     , currentAction{currentAction_}
 
 {
+    qt_set_sequence_auto_mnemonic(true);
+    activateWindow();
 
     setWindowState(Qt::WindowMaximized);
     #ifdef DEBUG__
@@ -47,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
     createActions();
     createTopMenuBar();
     createActionsFrame();
+    createKeyShortcuts();
 
     QWidget* mainWidget = new QWidget(this);
     QHBoxLayout* mainLayout = new QHBoxLayout();
@@ -115,20 +121,10 @@ void MainWindow::createActionsFrame()
 
     integrateButton = new QPushButton(tr("&Integrate"), actionsFrame);
     integrateButton->setCheckable(true);
-    connect(integrateButton, &QPushButton::clicked, this, [this](){
+    connect(integrateButton, &QPushButton::clicked, this, &MainWindow::integrateSlot);
 
-        if (mainStackedWidget->count() == 1) {return;}
-        setCurrentAction(DisplayerAction::Integrate);
-    });
-
-    auto resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
-    connect(resetIntegralsButton, &QPushButton::clicked, this, [this](){
-
-        if (mainStackedWidget->count() == 1) {return;}
-        auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
-        resetIntegrals(p->experiment->integrals);
-        p->update();
-    });
+    resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
+    connect(resetIntegralsButton, &QPushButton::clicked, this, &MainWindow::resetIntegralsSlot);
 
     actionsLayout->addWidget(openFileButton);
     actionsLayout->addWidget(zoomButton);
@@ -141,7 +137,33 @@ void MainWindow::createActionsFrame()
 
 void MainWindow::createKeyShortcuts()
 {
+    // Z - zoom
+    auto zoomShorcut = new QShortcut(Qt::Key_Z, this);
+    connect(zoomShorcut, &QShortcut::activated, this, [this](){
+        if (zoomButton->isChecked()) {
+            setCurrentAction(DisplayerAction::None);
+        } else {
+            zoomButton->setChecked(true);
+            zoomSlot();
+        }
+        emit closeDynamicElements();
+    });
 
+    // F - reset zoom
+    auto resetZoomShortcut = new QShortcut(Qt::Key_F, this);
+    connect(resetZoomShortcut, &QShortcut::activated, this, &MainWindow::resetZoomSlot);
+
+    // I - integrate
+    auto integrateShortCut = new QShortcut(Qt::Key_I, this);
+    connect(integrateShortCut, &QShortcut::activated, this, [this](){
+        if (integrateButton->isChecked()) {
+            setCurrentAction(DisplayerAction::None);
+        } else {
+            integrateButton->setChecked(true);
+            integrateSlot();
+        }
+        emit closeDynamicElements();
+    });
 }
 
 
@@ -190,21 +212,43 @@ void MainWindow::setCurrentAction(DisplayerAction action)
     }
 
     currentAction_ = action;
+
+    if (mainStackedWidget->count() == 1) {
+        setCurrentAction(None);
+    }
 }
 
 void MainWindow::zoomSlot()
 {
-    if (mainStackedWidget->count() == 1) {return;}
     setCurrentAction(DisplayerAction::Zoom);
     emit closeDynamicElements();
 }
 
 void MainWindow::resetZoomSlot()
 {
+    setCurrentAction(DisplayerAction::None);
     if (mainStackedWidget->count() == 1) {return;}
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
     emit closeDynamicElements();
 }
+
+void MainWindow::integrateSlot()
+{
+    setCurrentAction(DisplayerAction::Integrate);
+    emit closeDynamicElements();
+}
+
+void MainWindow::resetIntegralsSlot()
+{
+    setCurrentAction(DisplayerAction::None);
+    if (mainStackedWidget->count() == 1) {return;}
+        auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
+        resetIntegrals(p->experiment->integrals);
+        p->update();
+    emit closeDynamicElements();
+}
+
+
 
 void MainWindow::spectrumChangedSlot(int i)
 {
