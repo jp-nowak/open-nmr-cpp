@@ -25,6 +25,7 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
         setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});
     }
+    return;
 }
 
 void Spectrum::generateSpectrum()

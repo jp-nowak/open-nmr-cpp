@@ -46,8 +46,8 @@ FileReadResult FileIO::open_experiment(std::filesystem::path& input_path)
     std::filesystem::path folder_path = input_path.parent_path();
     FileType file_type = check_type(folder_path);
 
-    FileReadResult result{};
-    result.file_type = file_type;
+    FileReadResult result;
+
     switch (file_type){
     case FileType::Ag:
         result = ag_parse_experiment_folder(folder_path);
@@ -63,6 +63,10 @@ FileReadResult FileIO::open_experiment(std::filesystem::path& input_path)
 #ifdef DEBUG__
     qDebug() << result.info;
 #endif
+
+    if (result.info.samplename.empty()) {
+        result.info.samplename = result.info.nucleus + " experiment";
+    }
 
     return result;
 }

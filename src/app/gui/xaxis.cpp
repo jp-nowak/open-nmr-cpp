@@ -251,7 +251,7 @@ void XAxis::paintEvent(QPaintEvent* e)
     pen.setWidth(1);
     painter.setPen(pen);
 
-    Qt::AlignmentFlag alignment = (std::fabs(0 - xPos(firstTickPosition)) < 0.001 * width) ? Qt::AlignLeft : Qt::AlignHCenter;
+    Qt::AlignmentFlag alignment = (std::fabs(0 - xPos(firstTickPosition)) < 0.01 * width) ? Qt::AlignLeft : Qt::AlignHCenter;
 
     drawText(painter,
              QPointF(xPos(firstTickPosition), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
@@ -271,7 +271,7 @@ void XAxis::paintEvent(QPaintEvent* e)
     pen.setWidth(1);
     painter.setPen(pen);
 
-    alignment = (std::fabs(width - xPos(tickPos)) < 0.001 * width) ? Qt::AlignRight : Qt::AlignHCenter;
+    alignment = (std::fabs(width - xPos(tickPos)) < 0.01 * width) ? Qt::AlignRight : Qt::AlignHCenter;
 
     drawText(painter,
              QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),

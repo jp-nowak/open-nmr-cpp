@@ -21,9 +21,9 @@ namespace FileIO
 
     struct FileReadResult
     {
-        FileReadStatus file_read_status;
-        FileType file_type;
-        SpectrumInfo info;
+        FileReadStatus file_read_status{FileReadStatus::unknown_failure};
+        FileType file_type{FileType::U};
+        SpectrumInfo info{};
         std::vector<std::vector<std::complex<double>>> fids;
 
     };

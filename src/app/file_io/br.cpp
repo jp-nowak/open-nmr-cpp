@@ -103,11 +103,23 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
 
     int decim, dspfvs;
     double groupDelay;
+    bool validGroupDelay;
+    try{
+        groupDelay = std::stod(params["$GRPDLY"]);
+        validGroupDelay = true;
+    } catch (const std::invalid_argument& e) {
+        validGroupDelay = false;
+    } catch(const std::out_of_range& e) {
+        validGroupDelay = false;
+    }
+    if (groupDelay < 0.0) {
+        validGroupDelay = false;
+    }
 
-    if (params["$GRPDLY"].empty()) {
+    if (not validGroupDelay) {
         try{
             decim = std::stoi(params["$DECIM"]);
-            dspfvs = std::stoi(params["$DECIM"]);
+            dspfvs = std::stoi(params["$DSPFVS"]);
         } catch (const std::invalid_argument& e) {
             return {};
         } catch(const std::out_of_range& e) {
@@ -116,15 +128,6 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         if (std::optional<double> gd = checkGroupDelay(decim, dspfvs)) {
             groupDelay = *gd;
         } else return {};
-    } else {
-        try{
-            groupDelay = std::stod(params["$GRPDLY"]);
-        } catch (const std::invalid_argument& e) {
-            return {};
-        } catch(const std::out_of_range& e) {
-            return {};
-        }
-
     }
 
     double spectrumCenter{}, spectralWidthHz{}, spectralWidthPpm{}, observedNucleusFreq{},
@@ -240,13 +243,14 @@ std::optional<std::vector<std::vector<std::complex<double>>>> readFidFile(std::i
 
 std::string readTitle(const std::filesystem::path& folderPath)
 {
-    auto pdataIter = std::filesystem::recursive_directory_iterator{folderPath / "pdata"};
-
     std::string title{};
+    if (not std::filesystem::exists(folderPath / "pdata")) return title;
+    auto pdataIter = std::filesystem::recursive_directory_iterator{folderPath / "pdata"};
 
     for (auto& i : pdataIter) {
         if (i.is_regular_file() && i.path().filename() == "title") {
             std::ifstream titleFile{i.path()};
+            if (not titleFile) return title;
             std::string currentLine{};
             while(std::getline(titleFile, currentLine)) {
                 title.append(1, ' ').append(currentLine);
@@ -266,7 +270,8 @@ FileIO::FileReadResult FileIO::brParseExperimentFolder(const std::filesystem::pa
 {
 
     FileReadResult result{};
-
+    result.file_type = FileType::Br;
+    result.file_read_status = FileReadStatus::unknown_failure;
     std::ifstream acqusFile{folderPath / "acqus", std::ios::in};
 
     if (acqusFile) {
@@ -276,12 +281,12 @@ FileIO::FileReadResult FileIO::brParseExperimentFolder(const std::filesystem::pa
             result.info = spectrumInfo;
             std::ifstream fidFile{folderPath / "fid", std::ios::in | std::ios::binary};
             if (auto fids = readFidFile(fidFile, fidInfo)) {
-
                 result.fids = *fids;    
                 result.info.samplename = readTitle(folderPath);
-
+                result.file_read_status = FileReadStatus::success_1D;
             } else {
                 result.file_read_status = FileReadStatus::invalid_fid;
+                return result;
             }
         } else {
             result.file_read_status = FileReadStatus::invalidAcqus;
@@ -293,7 +298,6 @@ FileIO::FileReadResult FileIO::brParseExperimentFolder(const std::filesystem::pa
     }
 
 
-    result.file_read_status = FileReadStatus::success_1D;
 
     return result;
 }

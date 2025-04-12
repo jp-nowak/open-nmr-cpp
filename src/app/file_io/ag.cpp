@@ -165,7 +165,7 @@ namespace
             return {};
         }
 
-        double irradiation_freq = (zero_freq - obs_nucleus_freq) * -1000000;
+        double irradiation_freq = std::fabs((zero_freq - obs_nucleus_freq) * 1000000);
         double plot_begin = irradiation_freq - spectral_width / 2;
         double plot_end = irradiation_freq + spectral_width / 2;
 
@@ -299,12 +299,14 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
     std::ifstream procpar_file{folder_path / "procpar", std::ios::in};
 
     FileReadResult result{};
-    result.file_read_status = FileReadStatus::success_1D;
+    result.file_type = FileType::Ag;
+    result.file_read_status = FileReadStatus::unknown_failure;
 
     if (fid_file) {
         std::optional<std::vector<std::vector<std::complex<double>>>> fids = read_fid_file(fid_file);
         if (fids) {
             result.fids = fids.value();
+            result.file_read_status = FileReadStatus::success_1D;
         } else {
             result.file_read_status = FileReadStatus::invalid_fid;
         }
@@ -316,6 +318,7 @@ FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem:
         std::optional<SpectrumInfo> info = parse_procpar(procpar_file);
         if (info) {
             result.info = info.value();
+            result.file_read_status = FileReadStatus::success_1D;
         } else {
             result.file_read_status = FileReadStatus::invalid_procpar;
         }
