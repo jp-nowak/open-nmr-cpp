@@ -42,7 +42,6 @@ IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
 }
 }
 
-
 IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *parent)
     : QWidget{parent}
     , experiment{experiment}
@@ -53,9 +52,10 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *pare
     , currentSpectrumSize{endPoint_}
     , pen{}
 {
+    setMouseTracking(true);
     pen.setCosmetic(true);
     pen.setWidth(2);
-    pen.setColor(QColor(0, 255, 0));
+    pen.setColor(QColor(21,71,52));
     pen.setCapStyle(Qt::RoundCap);
 
     connect(MainWindow::findFrom(parent), &MainWindow::closeDynamicElements,
@@ -125,7 +125,7 @@ void IntegralsDisplayer::recalculateDisplayRange()
 
 void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 {
-
+    QWidget::mouseDoubleClickEvent(e);
     delete integralEditField; integralEditField = nullptr;
     editedIntegral = nullptr;
 
@@ -151,6 +151,7 @@ void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 
 void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 {
+    QWidget::paintEvent(e);
     recalculateDisplayRange();
 
     QPainter painter{this};
@@ -167,6 +168,9 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
         return (x - startPoint) / (endPoint - startPoint) * width;
     }; // calculates position of spectrum datapoint as x coord of widget
 
+    auto xPosToDataPoint = [startPoint, endPoint, width](double x) -> size_t {
+        return static_cast<size_t>(x * (endPoint - startPoint) / width + startPoint);
+    };
 
     for (const auto& i : experiment->integrals) {
 
@@ -201,6 +205,28 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
                  alignment | Qt::AlignTop,
                  text);
     }
+
+    size_t mouseDataPoint = xPosToDataPoint(mousePosition.x());
+    IntegralRecord* pointedIntegral = findClickedOnIntegral(mouseDataPoint, experiment->integrals);
+
+    if ((std::fabs(mousePosition.y() - height * (1 - baselineHeight)) < 15)
+        and pointedIntegral) {
+        painter.save();
+        QPen pen{};
+        pen.setCosmetic(true);
+        pen.setWidth(4);
+        pen.setColor(QColor(0, 255, 0, 100));
+        pen.setCapStyle(Qt::RoundCap);
+        painter.setPen(pen);
+        drawRangeWithMarks(painter,
+                           QPointF(xPos(pointedIntegral->leftEdge), height * (1 - baselineHeight)),
+                           QPointF(xPos(pointedIntegral->rightEdge), height * (1 - baselineHeight)),
+                           tickHeight * height
+        );
+        painter.restore();
+    }
+
+    mousePosition = {0, 0};
 
     if (editedIntegral and not integralEditField) { // block for showing integral edit field
         integralEditField = new QDoubleSpinBox{this};
@@ -247,9 +273,17 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
     }
 }
 
-void IntegralsDisplayer::mousePressEvent(QMouseEvent*)
+void IntegralsDisplayer::mousePressEvent(QMouseEvent* e)
 {
+    QWidget::mousePressEvent(e);
     closeIntegralEditField();
+}
+
+void IntegralsDisplayer::mouseMoveEvent(QMouseEvent* e)
+{
+    QWidget::mouseMoveEvent(e);
+    mousePosition = e->pos();
+    update();
 }
 
 void IntegralsDisplayer::closeIntegralEditField()

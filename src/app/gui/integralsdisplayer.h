@@ -36,7 +36,7 @@ public:
     void mouseDoubleClickEvent(QMouseEvent* e) override;
     void paintEvent(QPaintEvent* e) override;
     void mousePressEvent(QMouseEvent* e) override;
-
+    void mouseMoveEvent(QMouseEvent* e) override;
 
 
 
@@ -45,6 +45,9 @@ private:
 
     QDoubleSpinBox* integralEditField;
     IntegralRecord* editedIntegral;
+
+    QPointF mousePosition;
+
 
     size_t startPoint_;
     size_t endPoint_;

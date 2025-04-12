@@ -34,7 +34,7 @@ public:
 
     XAxis(XAxisProperties properties, QWidget* parent);
 
-    void paintEvent(QPaintEvent*);
+    void paintEvent(QPaintEvent*) override;
     void setRange(double left, double right);
     void setRangePoints(QPointF left, QPointF right);
 

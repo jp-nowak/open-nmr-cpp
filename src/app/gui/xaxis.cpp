@@ -183,6 +183,7 @@ void XAxis::setRangePoints(QPointF left, QPointF right)
 
 void XAxis::paintEvent(QPaintEvent* e)
 {
+    QWidget::paintEvent(e);
     const double width = e->rect().width();
     const double height = e->rect().height();
     const double spectralWidth = std::fabs(p.left - p.right);
