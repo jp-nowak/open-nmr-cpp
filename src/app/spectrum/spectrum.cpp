@@ -108,6 +108,9 @@ void Spectrum::truncate(size_t n)
     assert(n <= fidSizeInfo.initialSize);
     const size_t size = spectrum.size();
     fidSizeInfo.truncationStart = n;
+    if (n > fidSizeInfo.zeroFilledTo) {
+        fidSizeInfo.zeroFilledTo = Processing::nextPowerOf2(n);
+    }
     generateSpectrum();
     recalcIntegrals(size);
 }

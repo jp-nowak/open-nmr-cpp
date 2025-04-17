@@ -152,7 +152,7 @@ void ZeroFillingWidget::zeroFillingSlot(int n)
 
 void ZeroFillingWidget::truncatingSlot(int n)
 {
-    qDebug() << __FUNCTION__ << n;
     experiment->truncate(n);
+    changeActiveExperiment(experiment);
     emit signalToRefreshDisplayedExperiment();
 }
