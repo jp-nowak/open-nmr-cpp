@@ -9,7 +9,7 @@
 
 ## Overview
 
-Open NMR will be a simple and free application for processing and analysis of NMR spectra
+Open NMR will be a simple and free application for processing and analysis of NMR spectra.
 
 ![usage example](usage_example.PNG)
 
@@ -32,7 +32,7 @@ Application is started by running open-nmr.exe
 
 - Qt Framework 6.9
 - kissfft https://github.com/mborgerding/kissfft
-(should be cloned into /src/app/3rd_party for compilation
+(should be cloned into /src/app/3rd_party for compilation)
 
 
 
