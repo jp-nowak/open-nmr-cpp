@@ -11,7 +11,7 @@
 
 Open NMR will be a simple and free application for processing and analysis of NMR spectra
 
-![usage example](usage_example.png)
+![usage example](usage_example.PNG)
 
 ## Features
 
@@ -34,8 +34,6 @@ Application is started by running open-nmr.exe
 - kissfft https://github.com/mborgerding/kissfft
 (should be cloned into /src/app/3rd_party for compilation
 
-## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 
