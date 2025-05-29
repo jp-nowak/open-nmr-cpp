@@ -11,7 +11,7 @@
 
 Open NMR will be a simple and free application for processing and analysis of NMR spectra.
 
-![usage example](usage_example.PNG)
+
 
 ## Features
 
