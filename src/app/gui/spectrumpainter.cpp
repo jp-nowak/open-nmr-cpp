@@ -1,4 +1,5 @@
 #include "spectrumpainter.h"
+#include "../processing/peak_finding.h"
 
 #include <algorithm>
 #include <utility>
@@ -174,6 +175,45 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
     }
     painter.setPen(spectrumPen);
     painter.drawPolyline(spectrumPolygon);
+
+#ifdef PEAK_FINDING_TEST
+    // drawing found peaks
+    for (auto& i : pointerToSpectrum->autoPeakList) {
+        auto peakTickXVal = (i.zenith.x - startPoint_);
+
+        QPolygonF tick{};
+        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
+        tick << QPointF(peakTickXVal * multiplier, maximum);
+        painter.drawPolyline(tick);
+    }
+    painter.setPen(QColor("green"));
+    for (auto& i : pointerToSpectrum->autoPeakList) {
+        auto peakTickXVal = (i.leftTrough.x - startPoint_);
+
+        QPolygonF tick{};
+        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
+        tick << QPointF(peakTickXVal * multiplier, maximum);
+        painter.drawPolyline(tick);
+    }
+    for (auto& i : pointerToSpectrum->autoPeakList) {
+        auto peakTickXVal = (i.rightTrough.x - startPoint_);
+
+        QPolygonF tick{};
+        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
+        tick << QPointF(peakTickXVal * multiplier, maximum);
+        painter.drawPolyline(tick);
+    }
+    painter.setPen(QColor("black"));
+    for (auto& i : pointerToSpectrum->autoPeakList) {
+        auto peakTickXVal = (i.nidar.x - startPoint_);
+
+        QPolygonF tick{};
+        tick << QPointF(peakTickXVal * multiplier, 0);
+        tick << QPointF(peakTickXVal * multiplier, maximum * 0.01);
+        painter.drawPolyline(tick);
+    }
+#endif
+
 }
 
 void SpectrumPainter::wheelEvent(QWheelEvent* e)

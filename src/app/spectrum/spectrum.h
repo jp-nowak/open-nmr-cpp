@@ -5,6 +5,7 @@
 #include "value_typedefs.h"
 #include "../file_io/general.h"
 #include "../processing/phase_correction.h"
+#include "../processing/peak_finding.h"
 
 #include <vector>
 #include <complex>
@@ -35,28 +36,47 @@ public:
     void integrate(size_t start, size_t end) const;
     void recalcIntegrals(size_t previousSpectrumSize) const;
 
+    void refreshDependentMembers(size_t previousSpectrumSize) const;
+
+    void autoFindPeaks() const;
+
+// public members
+//---------------------------------------------------------------------------------------------------------------------
     SpectrumInfo info;
 
     mutable IntegralsVector integrals;
 
+    mutable std::vector<PeakFinding::Peak> autoPeakList;
 
 
 private:
 
+    // new spectrum is generated from fid
     void generateSpectrum();
 
     void restorePhase();
+
+
+// private members
+//---------------------------------------------------------------------------------------------------------------------
 
 
     std::vector<std::complex<double>> fid;
 
     std::vector<std::complex<double>> spectrum;
 
+    // applied phase correction
     Processing::Phase phaseCorrection;
 
+    // data used in preparation of fid for fft:
+    // initial size, applied zero filling and truncation, group delay of fid
     FidSizeInfo fidSizeInfo;
 
 };
+
+// free functions
+//---------------------------------------------------------------------------------------------------------------------
+
 
 // recalculates .relativeValue in IntegralRecord's in integrals according to .relativeValue = .absoluteValue / valueOfOne
 void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne);

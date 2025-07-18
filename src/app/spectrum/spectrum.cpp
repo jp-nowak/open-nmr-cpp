@@ -25,6 +25,11 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
         setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});
     }
+
+#ifdef PEAK_FINDING_TEST
+    autoFindPeaks();
+#endif
+
     return;
 }
 
@@ -64,7 +69,7 @@ void Spectrum::setPh0(const Ph0& phase)
 {
     spectrum *= Ph0(phase.ph0 - phaseCorrection.ph0.ph0);
     phaseCorrection.ph0.ph0 = phase.ph0;
-    recalcIntegrals(spectrum.size());
+    refreshDependentMembers(spectrum.size());
 }
 
 void Spectrum::setPh1(const Ph1& phase)
@@ -77,7 +82,7 @@ void Spectrum::setPh1(const Ph1& phase)
         spectrum *= Ph1(phase.ph1, phase.pivot);
         phaseCorrection.ph1 = phase;
     }
-    recalcIntegrals(spectrum.size());
+    refreshDependentMembers(spectrum.size());
 }
 
 void Spectrum::zeroFill(size_t n)
@@ -100,7 +105,7 @@ void Spectrum::zeroFill(size_t n)
     }*/
 
     generateSpectrum();
-    recalcIntegrals(size);
+    refreshDependentMembers(size);
 }
 
 void Spectrum::truncate(size_t n)
@@ -112,7 +117,7 @@ void Spectrum::truncate(size_t n)
         fidSizeInfo.zeroFilledTo = Processing::nextPowerOf2(n);
     }
     generateSpectrum();
-    recalcIntegrals(size);
+    refreshDependentMembers(size);
 }
 
 void Spectrum::integrate(size_t start, size_t end) const
@@ -156,6 +161,19 @@ void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
     }
 }
 
+void Spectrum::refreshDependentMembers(size_t previousSpectrumSize) const
+{
+    recalcIntegrals(previousSpectrumSize);
+    autoFindPeaks();
+}
+
+void Spectrum::autoFindPeaks() const
+{
+    using namespace PeakFinding;
+    autoPeakList = simpleFindPeaks(get_spectrum(), calcTreshold(get_spectrum()));
+}
+
+// free functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne)

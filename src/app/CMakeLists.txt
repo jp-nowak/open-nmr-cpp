@@ -27,6 +27,10 @@ qt_add_executable(open-nmr
     gui/widgets_for_processing.cpp
     spectrum/value_typedefs.h
     gui/integralsdisplayer.h gui/integralsdisplayer.cpp
+    processing/peak_finding.h
+    processing/peak_finding.cpp
+    processing/utils.h
+    processing/utils.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)
