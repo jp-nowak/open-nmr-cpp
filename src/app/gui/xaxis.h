@@ -25,6 +25,16 @@ struct XAxisProperties
     bool showLine{true};
 };
 
+struct AxisProperties
+{
+    double minimum; // smallest value of axis
+    double maximum; // biggest value of axis
+    bool decreasing; // if true vertical axis has biggest value on the top, horizontal on left side
+    bool vertical; // if true axis is vertical if not horizontal
+    bool showline; // if true line connecting ticks is displayed
+    bool dynamic; // allows to use setRange method which changes values range
+};
+
 class XAxis : public QWidget
 {
     Q_OBJECT
@@ -48,5 +58,8 @@ private:
     int r;
 
 };
+
+
+
 
 #endif // XAXIS_H

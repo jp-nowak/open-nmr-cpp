@@ -11,7 +11,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
-
+#include <QGridLayout>
 
 namespace
 {
@@ -43,9 +43,9 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
 
 {
     assert(mainWindow && "nullptr to main window");
+    assert(parent && "nullptr to parent");
 
-
-    QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
+    // QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
 
     auto& info = experiment->info;
 
@@ -64,24 +64,46 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
         }
         , this};
 
-    spectrumAndXAxis->addWidget(spainter);
-    spectrumAndXAxis->addWidget(idisplayer);
-    spectrumAndXAxis->addWidget(xAxis);
-    spectrumAndXAxis->setStretchFactor(spainter, 12);
-    spectrumAndXAxis->setStretchFactor(idisplayer, 1);
-    spectrumAndXAxis->setStretchFactor(xAxis, 1);
-
     QLabel* yAxis = new QLabel(tr("Y"), this);
     yAxis->setAlignment(Qt::AlignVCenter);
 
+    QLabel* rightBottomEdge = new QLabel(tr("ppm"), this);
+    rightBottomEdge->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
 
-    QHBoxLayout* spectrumWithXAxisAndYAxis = new QHBoxLayout();
-    spectrumWithXAxisAndYAxis->addLayout(spectrumAndXAxis);
-    spectrumWithXAxisAndYAxis->addWidget(yAxis);
-    spectrumWithXAxisAndYAxis->setStretchFactor(spectrumAndXAxis, 60);
-    spectrumWithXAxisAndYAxis->setStretchFactor(yAxis, 1);
+    auto* layout = new QGridLayout();
+    layout->addWidget(spainter, 0, 0);
+    auto* xAxisLayout = new QVBoxLayout();
+    xAxisLayout->addWidget(idisplayer);
+    xAxisLayout->addWidget(xAxis);
+    xAxisLayout->setStretchFactor(idisplayer, 1);
+    xAxisLayout->setStretchFactor(xAxis, 1);
+    layout->addLayout(xAxisLayout, 1, 0);
+    layout->addWidget(yAxis, 0, 1);
+    layout->addWidget(rightBottomEdge, 1, 1);
+    layout->setColumnStretch(0, 10);
+    layout->setColumnStretch(1, 1);
+    layout->setRowStretch(0, 15);
+    layout->setRowStretch(1, 2);
+    setLayout(layout);
 
-    setLayout(spectrumWithXAxisAndYAxis);
+    // spectrumAndXAxis->addWidget(spainter);
+    // spectrumAndXAxis->addWidget(idisplayer);
+    // spectrumAndXAxis->addWidget(xAxis);
+    // spectrumAndXAxis->setStretchFactor(spainter, 12);
+    // spectrumAndXAxis->setStretchFactor(idisplayer, 1);
+    // spectrumAndXAxis->setStretchFactor(xAxis, 1);
+
+
+
+
+
+    // QHBoxLayout* spectrumWithXAxisAndYAxis = new QHBoxLayout();
+    // spectrumWithXAxisAndYAxis->addLayout(spectrumAndXAxis);
+    // spectrumWithXAxisAndYAxis->addWidget(yAxis);
+    // spectrumWithXAxisAndYAxis->setStretchFactor(spectrumAndXAxis, 60);
+    // spectrumWithXAxisAndYAxis->setStretchFactor(yAxis, 1);
+
+    // setLayout(spectrumWithXAxisAndYAxis);
 
 }
 

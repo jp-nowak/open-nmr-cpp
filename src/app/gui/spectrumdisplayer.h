@@ -16,9 +16,9 @@ class IntegralsDisplayer;
 //
 // layout:
 //
-// SpectrumPainter    |
-// XAxis              | YAxis
-// IntegralsDisplayer |
+// SpectrumPainter    | YAxis
+// XAxis              | -----
+// IntegralsDisplayer | placeholder
 class SpectrumDisplayer : public QWidget
 {
     Q_OBJECT
