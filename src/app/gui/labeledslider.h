@@ -9,7 +9,7 @@
 #include <QDoubleSpinBox>
 #include <QSignalBlocker>
 
-class XAxis;
+class UniversalAxis;
 class QHBoxLayout;
 class QSlider;
 class QDoubleSpinBox;
@@ -29,50 +29,14 @@ public:
     void setValue(double value);
 
     static std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> createWithBoxAndLabel(QString label, double minimum, double maximum,
-                                                       double interval, unsigned int precision,
-                                                       double initial,
-                                                       QWidget* parent)
-    {
-        QWidget* mainWidget = new QWidget(parent);
-        QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-        QHBoxLayout* subLayout = new QHBoxLayout(nullptr);
-        QLabel* qlabel = new QLabel(label, mainWidget);
-        QDoubleSpinBox* box = new QDoubleSpinBox(mainWidget);
-        box->setMinimum(minimum);
-        box->setMaximum(maximum);
-        box->setDecimals(precision);
-        box->setValue(initial);
-        LabeledSlider* slider = new LabeledSlider(minimum, maximum, interval, precision, initial, mainWidget);
-        connect(slider, &LabeledSlider::sliderMoved, [box](double i)
-                {
-                    QSignalBlocker blocker(box);
-                    box->setValue(i);
-                });
-        connect(box, &QDoubleSpinBox::valueChanged, [slider](double i)
-                {
-                    QSignalBlocker blocker(slider);
-                    slider->setValue(i);
-                });
-        subLayout->addWidget(qlabel);
-        subLayout->addWidget(box);
-        mainLayout->addLayout(subLayout);
-        mainLayout->addWidget(slider);
-        return {mainWidget, slider, box};
-    }
+                                                       double interval, unsigned int precision, double initial, QWidget* parent);
 
-    static void changeValues(std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> i, double value)
-    {
-        QSignalBlocker blocker1(std::get<LabeledSlider*>(i));
-        QSignalBlocker blocker2(std::get<QDoubleSpinBox*>(i));
-        std::get<LabeledSlider*>(i)->setValue(value);
-        std::get<QDoubleSpinBox*>(i)->setValue(value);
-    }
-
+    static void changeValues(std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> i, double value);
 
 private:
     double multiplier;
     QVBoxLayout* layout;
-    XAxis* labels;
+    UniversalAxis* labels;
     QSlider* slider;
 
 signals:

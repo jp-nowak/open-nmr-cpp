@@ -49,20 +49,30 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
 
     auto& info = experiment->info;
 
-    xAxis = new XAxis{
-        XAxisProperties{
-            .left = info.plot_left_ppm,
-            .right = info.plot_right_ppm,
-            // .left = 0.01,
-            // .right = 0.003,
-            .primaryTicksInterval = 0.0,
-            .secondaryTicksInterval = 0.0,
-            .secTickProp = 0.25,
-            .relLenghtTickLine = 0.5,
-            .lineHeight = 0.5,
-            .labelAdditionalSpacing = 0.01
-        }
-        , this};
+    // xAxis = new XAxis{
+    //     XAxisProperties{
+    //         .left = info.plot_left_ppm,
+    //         .right = info.plot_right_ppm,
+    //         // .left = 0.01,
+    //         // .right = 0.003,
+    //         .primaryTicksInterval = 0.0,
+    //         .secondaryTicksInterval = 0.0,
+    //         .secTickProp = 0.25,
+    //         .relLenghtTickLine = 0.5,
+    //         .lineHeight = 0.5,
+    //         .labelAdditionalSpacing = 0.01
+    //     }
+    //     , this};
+
+    xAxis = new UniversalAxis{AxisProperties{
+                .minimum = info.plot_right_ppm,
+                .maximum = info.plot_left_ppm,
+                .fontSize = 15,
+                .showLine = true,
+                .vertical = false,
+                .descending = true,
+                .dynamic = true},
+                              this};
 
     QLabel* yAxis = new QLabel(tr("Y"), this);
     yAxis->setAlignment(Qt::AlignVCenter);
@@ -76,13 +86,13 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
     xAxisLayout->addWidget(idisplayer);
     xAxisLayout->addWidget(xAxis);
     xAxisLayout->setStretchFactor(idisplayer, 1);
-    xAxisLayout->setStretchFactor(xAxis, 1);
+    xAxisLayout->setStretchFactor(xAxis, 2);
     layout->addLayout(xAxisLayout, 1, 0);
     layout->addWidget(yAxis, 0, 1);
     layout->addWidget(rightBottomEdge, 1, 1);
     layout->setColumnStretch(0, 10);
     layout->setColumnStretch(1, 1);
-    layout->setRowStretch(0, 15);
+    layout->setRowStretch(0, 14);
     layout->setRowStretch(1, 2);
     setLayout(layout);
 

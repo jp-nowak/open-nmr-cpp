@@ -9,55 +9,84 @@
 
 class SpectrumDisplayer;
 
-struct XAxisProperties
-{
-    double left;
-    double right;
-    double primaryTicksInterval;
-    double secondaryTicksInterval;
-    double secTickProp;
-    double relLenghtTickLine;
-    double lineHeight;
-    double labelAdditionalSpacing;
-    bool decreasingToRight{true};
-    int fontSize{15}; // size of text in ticks labels, 15 is default for spectrum
-    std::optional<int> fixedDisplayPrecision{}; // should only be set when setRange wont be used
-    bool showLine{true};
-};
 
 struct AxisProperties
 {
     double minimum; // smallest value of axis
     double maximum; // biggest value of axis
-    bool decreasing; // if true vertical axis has biggest value on the top, horizontal on left side
-    bool vertical; // if true axis is vertical if not horizontal
-    bool showline; // if true line connecting ticks is displayed
-    bool dynamic; // allows to use setRange method which changes values range
+    double primaryTicksInterval; // matters only if dynamic is false
+    double secondaryTicksInterval; // matters only if dynamic is false
+    double primaryToSecondaryTickRatio{2}; // matters only if dynamic is true
+    unsigned short fontSize;
+    bool showLine; // if true line connecting ticks is displayed
+    unsigned short displayPrecision;
+    bool vertical; // if true axis is vertical if false horizontal
+    bool descending; // if true vertical axis has biggest value on the top, horizontal on left side
+    bool dynamic; // if true setRange methods can be used to change values, if false displayPrecision can be used to specify fixed display precision
 };
 
-class XAxis : public QWidget
+class UniversalAxis : public QWidget
 {
     Q_OBJECT
 public:
-
-    friend SpectrumDisplayer;
-
-    XAxis(XAxisProperties properties, QWidget* parent);
-
+    UniversalAxis(AxisProperties properties, QWidget* parent);
     void paintEvent(QPaintEvent*) override;
-    void setRange(double left, double right);
+    void setRange(double minimum, double maximum);
     void setRangePoints(QPointF left, QPointF right);
 
-
-
+    /*!
+     * \brief xPos returns coordinate of point corresponding to value on axis
+     * if axis is vertical it is y coordinate else x coordinate
+     * \param
+     * \return
+     */
+    double xPos(double x);
 private:
     void initialize();
 
-    XAxisProperties p;
-    int displayPrecision;
-    int r;
-
+    AxisProperties p;
 };
+
+
+// struct XAxisProperties
+// {
+//     double left;
+//     double right;
+//     double primaryTicksInterval;
+//     double secondaryTicksInterval;
+//     double secTickProp;
+//     double relLenghtTickLine;
+//     double lineHeight;
+//     double labelAdditionalSpacing;
+//     bool decreasingToRight{true};
+//     int fontSize{15}; // size of text in ticks labels, 15 is default for spectrum
+//     std::optional<int> fixedDisplayPrecision{}; // should only be set when setRange wont be used
+//     bool showLine{true};
+// };
+
+// class XAxis : public QWidget
+// {
+//     Q_OBJECT
+// public:
+
+//     friend SpectrumDisplayer;
+
+//     XAxis(XAxisProperties properties, QWidget* parent);
+
+//     void paintEvent(QPaintEvent*) override;
+//     void setRange(double left, double right);
+//     void setRangePoints(QPointF left, QPointF right);
+
+
+
+// private:
+//     void initialize();
+
+//     XAxisProperties p;
+//     int displayPrecision;
+//     int r;
+
+// };
 
 
 

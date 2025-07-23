@@ -24,23 +24,21 @@ LabeledSlider::LabeledSlider(double minimum, double maximum,
     , layout{new QVBoxLayout{this}}
     , slider{new QSlider{Qt::Horizontal, this}}
 {
-    labels = new XAxis{
-                      XAxisProperties{
-                          .left = minimum,
-                          .right = maximum,
+    labels = new UniversalAxis{
+                      AxisProperties{
+                          .minimum = minimum,
+                          .maximum = maximum,
                           .primaryTicksInterval = interval,
-                          .secondaryTicksInterval = 0.0,
-                          .secTickProp = 0.25,
-                          .relLenghtTickLine = 0.2,
-                          .lineHeight = 0.5,
-                          .labelAdditionalSpacing = 0.01,
-                          .decreasingToRight = false,
-                          .fontSize = 65,
-                          .fixedDisplayPrecision = 0,
+                          .fontSize = 10,
                           .showLine = true,
+                          .displayPrecision = 0,
+                          .vertical = false,
+                          .descending = false,
+                          .dynamic = false
                       }
                       , this};
-    labels->setFixedHeight(30);
+
+    labels->setMinimumHeight(45);
     slider->setMinimum(std::round(minimum * multiplier));
     slider->setMaximum(std::round(maximum * multiplier));
     slider->setValue(initial * multiplier);
@@ -51,6 +49,47 @@ LabeledSlider::LabeledSlider(double minimum, double maximum,
     layout->addStretch(1);
     connect(slider, &QSlider::sliderMoved, this, &LabeledSlider::sliderMovedSlot);
 }
+
+std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> LabeledSlider::createWithBoxAndLabel(QString label, double minimum, double maximum,
+                                                                    double interval, unsigned int precision, double initial, QWidget* parent)
+{
+    QWidget* mainWidget = new QWidget(parent);
+    QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+    QHBoxLayout* subLayout = new QHBoxLayout(nullptr);
+    QLabel* qlabel = new QLabel(label, mainWidget);
+    QDoubleSpinBox* box = new QDoubleSpinBox(mainWidget);
+    box->setMinimum(minimum);
+    box->setMaximum(maximum);
+    box->setDecimals(precision);
+    box->setValue(initial);
+    LabeledSlider* slider = new LabeledSlider(minimum, maximum, interval, precision, initial, mainWidget);
+    connect(slider, &LabeledSlider::sliderMoved, [box](double i)
+            {
+                QSignalBlocker blocker(box);
+                box->setValue(i);
+            });
+    connect(box, &QDoubleSpinBox::valueChanged, [slider](double i)
+            {
+                QSignalBlocker blocker(slider);
+                slider->setValue(i);
+            });
+    subLayout->addWidget(qlabel);
+    subLayout->addWidget(box);
+    mainLayout->addLayout(subLayout);
+    mainLayout->addWidget(slider);
+    return {mainWidget, slider, box};
+}
+
+void LabeledSlider::changeValues(std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> i, double value)
+{
+    QSignalBlocker blocker1(std::get<LabeledSlider*>(i));
+    QSignalBlocker blocker2(std::get<QDoubleSpinBox*>(i));
+    std::get<LabeledSlider*>(i)->setValue(value);
+    std::get<QDoubleSpinBox*>(i)->setValue(value);
+}
+
+
+
 
 void LabeledSlider::setValue(double value)
 {

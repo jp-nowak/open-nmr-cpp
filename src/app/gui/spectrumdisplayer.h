@@ -11,6 +11,7 @@ class MainWindow;
 class SpectrumPainter;
 class XAxis;
 class IntegralsDisplayer;
+class UniversalAxis;
 
 // widget that governs fully display of spectrum
 //
@@ -38,7 +39,8 @@ public:
 
 private:
     SpectrumPainter* spainter;
-    XAxis* xAxis;
+    // XAxis* xAxis;
+    UniversalAxis* xAxis;
     IntegralsDisplayer* idisplayer;
 
     QPointF mouseMoveStartPoint;
