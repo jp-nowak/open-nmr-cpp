@@ -6,6 +6,11 @@
 size_t Processing::indexOfMaxRealElemFromComplexArray(ConstSpectrumSpan array)
 {
     return std::max_element(std::begin(array), std::end(array), [](auto& a, auto& b){
-        return a.real() < b.real();
+               return std::real(a) < std::real(b);
            }) - std::begin(array);
+}
+
+double Processing::findRealMaximumFromVectorOfComplex(ConstSpectrumSpan array)
+{
+    return std::real(array[indexOfMaxRealElemFromComplexArray(array)]);
 }

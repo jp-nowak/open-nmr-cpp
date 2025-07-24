@@ -4,6 +4,7 @@
 #include "spectrumpainter.h"
 #include "xaxis.h"
 #include "integralsdisplayer.h"
+#include "../processing/utils.h"
 
 #include <cassert>
 
@@ -48,21 +49,6 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
     // QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
 
     auto& info = experiment->info;
-
-    // xAxis = new XAxis{
-    //     XAxisProperties{
-    //         .left = info.plot_left_ppm,
-    //         .right = info.plot_right_ppm,
-    //         // .left = 0.01,
-    //         // .right = 0.003,
-    //         .primaryTicksInterval = 0.0,
-    //         .secondaryTicksInterval = 0.0,
-    //         .secTickProp = 0.25,
-    //         .relLenghtTickLine = 0.5,
-    //         .lineHeight = 0.5,
-    //         .labelAdditionalSpacing = 0.01
-    //     }
-    //     , this};
 
     xAxis = new UniversalAxis{AxisProperties{
                 .minimum = info.plot_right_ppm,

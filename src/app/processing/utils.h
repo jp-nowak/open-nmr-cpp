@@ -8,7 +8,7 @@ namespace Processing
 
 size_t indexOfMaxRealElemFromComplexArray(ConstSpectrumSpan array);
 
-
+double findRealMaximumFromVectorOfComplex(ConstSpectrumSpan array);
 
 }
 

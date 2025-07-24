@@ -153,10 +153,15 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
     auto spectrum = pointerToSpectrum->get_spectrum().subspan(startPoint_, endPoint_ - startPoint_);
     QPainter painter(this);
     painter.drawPolygon(e->rect().adjusted(1,1,-1,-1));
-    QPolygonF baseLine;
-    baseLine << QPointF(0, e->rect().height() * (1 - baselinePosition))
-             << QPointF(e->rect().width(), e->rect().height() * (1 - baselinePosition));
-    painter.drawPolyline(baseLine);
+
+    const double width_ = e->rect().width();
+    const double height_ = e->rect().height();
+
+    auto xPos = [&](double x) -> double {return x / spectrum.size() * width_;};
+    auto yPos = [&](double y) -> double {return (1 - (y + baselinePosition * (1 + baselinePosition) * maximum) / ((1 + baselinePosition) * maximum)) * height_;};
+
+    // drawing baseline
+    painter.drawLine(QPointF(0, (1 - baselinePosition) * height_), QPointF(width_, (1 - baselinePosition) * height_));
 
     // drawing selection region
     if (displaySelection) {
@@ -164,14 +169,10 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
         painter.fillRect(selectedRegion, selectionColor);
     }
 
-    // setting coordinate system in such way that points from spectrum can be displayed without many transformations
-    painter.setWindow(0, -maximum * multiplier, (spectrum.size() - 1) * multiplier, (maximum * (1/(1-baselinePosition))) * multiplier);
-    painter.scale(1, -1);
-
     // drawing spectrum
-    QPolygonF spectrumPolygon{};
+    QPolygonF spectrumPolygon;
     for (size_t i = 0; i < spectrum.size(); i++) {
-        spectrumPolygon << QPointF(i * multiplier, spectrum[i].real() * multiplier * scalingFactor);
+        spectrumPolygon << QPointF(xPos(i), yPos(spectrum[i].real() * scalingFactor));
     }
     painter.setPen(spectrumPen);
     painter.drawPolyline(spectrumPolygon);
@@ -180,37 +181,21 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
     // drawing found peaks
     for (auto& i : pointerToSpectrum->autoPeakList) {
         auto peakTickXVal = (i.zenith.x - startPoint_);
-
-        QPolygonF tick{};
-        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
-        tick << QPointF(peakTickXVal * multiplier, maximum);
-        painter.drawPolyline(tick);
+        painter.drawLine(QPointF(xPos(peakTickXVal), yPos(maximum * 0.8)), QPointF(xPos(peakTickXVal), yPos(maximum)));
     }
     painter.setPen(QColor("green"));
     for (auto& i : pointerToSpectrum->autoPeakList) {
         auto peakTickXVal = (i.leftTrough.x - startPoint_);
-
-        QPolygonF tick{};
-        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
-        tick << QPointF(peakTickXVal * multiplier, maximum);
-        painter.drawPolyline(tick);
+        painter.drawLine(QPointF(xPos(peakTickXVal), yPos(maximum * 0.8)), QPointF(xPos(peakTickXVal), yPos(maximum)));
     }
     for (auto& i : pointerToSpectrum->autoPeakList) {
         auto peakTickXVal = (i.rightTrough.x - startPoint_);
-
-        QPolygonF tick{};
-        tick << QPointF(peakTickXVal * multiplier, maximum * 0.8);
-        tick << QPointF(peakTickXVal * multiplier, maximum);
-        painter.drawPolyline(tick);
+        painter.drawLine(QPointF(xPos(peakTickXVal), yPos(maximum * 0.8)), QPointF(xPos(peakTickXVal), yPos(maximum)));
     }
     painter.setPen(QColor("black"));
     for (auto& i : pointerToSpectrum->autoPeakList) {
         auto peakTickXVal = (i.nidar.x - startPoint_);
-
-        QPolygonF tick{};
-        tick << QPointF(peakTickXVal * multiplier, 0);
-        tick << QPointF(peakTickXVal * multiplier, maximum * 0.01);
-        painter.drawPolyline(tick);
+        painter.drawLine(QPointF(xPos(peakTickXVal), yPos(maximum * 0.8)), QPointF(xPos(peakTickXVal), yPos(maximum)));
     }
 #endif
 

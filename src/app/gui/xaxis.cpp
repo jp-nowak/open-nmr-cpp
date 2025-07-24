@@ -122,6 +122,7 @@ UniversalAxis::UniversalAxis(AxisProperties properties, QWidget* parent)
     : p{properties}
 {
     assert(parent && "nullptr to parent");
+    assert(p.minimum != p.maximum);
     initialize();
 }
 
