@@ -203,10 +203,13 @@ void SpectrumPainter::paintEvent(QPaintEvent* e)
 
 void SpectrumPainter::wheelEvent(QWheelEvent* e)
 {
+    const double increment = 1.1;
     if (e->angleDelta().y() > 0) { // mouse wheel is turned from user, spectrum values are scaled up
-        scalingFactor *= 1.1;
+        scalingFactor *= increment;
+        emit wheelTurned(increment);
     } else { // mouse wheel is turned towards user, spectrum values are scaled down
-        scalingFactor /= 1.1;
+        scalingFactor /= increment;
+        emit wheelTurned(-increment);
     }
     update();
 }

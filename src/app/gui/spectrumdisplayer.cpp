@@ -57,11 +57,36 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
                 .showLine = true,
                 .vertical = false,
                 .descending = true,
-                .dynamic = true},
+                .dynamic = true,},
                               this};
 
-    QLabel* yAxis = new QLabel(tr("Y"), this);
-    yAxis->setAlignment(Qt::AlignVCenter);
+
+    yAxis = new UniversalAxis{AxisProperties{
+            .minimum = -(spainter->baselinePosition * spainter->maximum / (1 - spainter->baselinePosition)),
+            .maximum = spainter->maximum,
+            .fontSize = 15,
+            .showLine = true,
+            .vertical = true,
+            .descending = true,
+            .dynamic = true,
+            .relTickLine = 0.1,
+            .linePos = 0.1,
+            .labelAdditionalSpacing = 0.1
+                        }, this};
+    // QLabel* yAxis = new QLabel(tr("Y"), this);
+    // yAxis->setAlignment(Qt::AlignVCenter);
+
+    // rescaling of yAxis when spainter is scrolled
+    connect(spainter, &SpectrumPainter::wheelTurned, this, [this](double x){
+        auto [maximum, minimum] = yAxis->getRange();
+        if (x > 0) {
+            yAxis->setRange(minimum / x, maximum / x);
+        } else {
+            x = std::fabs(x);
+            yAxis->setRange(minimum * x, maximum * x);
+        }
+        yAxis->update();
+    });
 
     QLabel* rightBottomEdge = new QLabel(tr("ppm"), this);
     rightBottomEdge->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
@@ -76,7 +101,7 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
     layout->addLayout(xAxisLayout, 1, 0);
     layout->addWidget(yAxis, 0, 1);
     layout->addWidget(rightBottomEdge, 1, 1);
-    layout->setColumnStretch(0, 10);
+    layout->setColumnStretch(0, 15);
     layout->setColumnStretch(1, 1);
     layout->setRowStretch(0, 14);
     layout->setRowStretch(1, 2);

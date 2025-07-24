@@ -34,6 +34,10 @@ public:
     // returns data point numbers in spectrum which correspond to current selection
     std::pair<size_t, size_t> selectionRangeToDataPointsOfSpectrum(QPointF startPos, QPointF endPos) const;
 
+signals:
+    void wheelTurned(double);
+
+
 private:
 
     void initialize();

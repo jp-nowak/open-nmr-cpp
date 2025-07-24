@@ -21,6 +21,8 @@ namespace {
     {
         auto inRange = [span](double low, double high){return !(span < low) && (span < high);};
 
+        if (span <= 0.01) return findInterval(span * 10) / 10;
+
         if (inRange(5, 1000)) {
 
             if (inRange(5, 10)) return 1;
@@ -61,34 +63,40 @@ namespace {
             if (inRange(0.90, 1.00)) return 0.10;
         }
 
-        return [](double x){
-            int power10 = std::floor(std::log10(x));
-            if (power10 < 0)
-            {
-                x *= std::pow(10, -power10);
-            }
-            int interval = std::ceil(x);
-            double result = interval / std::pow(10, std::abs(std::ceil(std::log10(interval))));
+        if (span >= 1000) return findInterval(span / 10) * 10;
 
-            int power10Result = std::floor(std::log10(result));
-            if (power10Result < 0)
-            {
-                result *= std::pow(10, -power10Result);
-            }
-            result = std::round(result);
-            if (power10Result < 0)
-            {
-                result /= std::pow(10, -power10Result);
-            }
+        assert(false);
+        return 0;
 
-            return (power10 < 0) ? result / std::pow(10, -power10) : result;
-        }(span);
+        // return [](double x){
+        //     int power10 = std::floor(std::log10(x));
+        //     if (power10 < 0)
+        //     {
+        //         x *= std::pow(10, -power10);
+        //     }
+        //     int interval = std::ceil(x);
+        //     double result = interval / std::pow(10, std::abs(std::ceil(std::log10(interval))));
+
+        //     int power10Result = std::floor(std::log10(result));
+        //     if (power10Result < 0)
+        //     {
+        //         result *= std::pow(10, -power10Result);
+        //     }
+        //     result = std::round(result);
+        //     if (power10Result < 0)
+        //     {
+        //         result /= std::pow(10, -power10Result);
+        //     }
+
+        //     return (power10 < 0) ? result / std::pow(10, -power10) : result;
+        // }(span);
     }
 
     int calcDisplayPrecision(double x)
     {
         double divisor = 1;
         int precision = 1;
+        if (x > 10) return 0;
         for (; x < divisor; precision++, divisor /=10) {continue;} // empty body
         return precision;
     }
@@ -121,6 +129,9 @@ namespace {
 UniversalAxis::UniversalAxis(AxisProperties properties, QWidget* parent)
     : p{properties}
 {
+    if (p.vertical) {
+        qDebug();
+    }
     assert(parent && "nullptr to parent");
     assert(p.minimum != p.maximum);
     initialize();
@@ -128,6 +139,9 @@ UniversalAxis::UniversalAxis(AxisProperties properties, QWidget* parent)
 
 void UniversalAxis::initialize()
 {
+    if (p.vertical) {
+        qDebug();
+    }
     assert(p.minimum < p.maximum);
     if (p.dynamic) {
         p.primaryTicksInterval = findInterval(p.maximum - p.minimum);
@@ -195,15 +209,21 @@ void UniversalAxis::setRangePoints(QPointF start, QPointF end)
     setRange(startCoord, endCoord);
 }
 
+std::pair<double, double> UniversalAxis::getRange()
+{
+    return {p.maximum, p.minimum};
+}
+
 void UniversalAxis::paintEvent(QPaintEvent* e)
 {
+
     QWidget::paintEvent(e);
     const double width = e->rect().width();
     const double height = e->rect().height();
     const double valueWidth = p.maximum - p.minimum;
-    const double linePos = 0.5;
-    const double relLenghtTickLine = 0.5;
-    const double labelAdditionalSpacing = 0.01;
+    const double linePos = p.linePos;
+    const double relLenghtTickLine = p.relTickLine / linePos;
+    const double labelAdditionalSpacing = p.labelAdditionalSpacing / linePos;
     double linePos_;
 
     if (p.vertical) { // position of line connecting ticks
@@ -230,6 +250,11 @@ void UniversalAxis::paintEvent(QPaintEvent* e)
     font.setPixelSize(p.fontSize);
 
     painter.setFont(font);
+
+    if (p.vertical) {
+        qDebug();
+    }
+
 
     if (p.showLine) { // drawing line connecting ticks
         QPolygonF baseline;
@@ -281,11 +306,11 @@ void UniversalAxis::paintEvent(QPaintEvent* e)
     QPolygonF firstTick;
 
     if (p.vertical) { // line for first tick
-        firstTick << QPointF(linePos * width * (1 - relLenghtTickLine), xPos(firstTickPosition))
-                  << QPointF(linePos * width * (1 + relLenghtTickLine), xPos(firstTickPosition));
+        firstTick << QPointF(linePos_ * (1 - relLenghtTickLine), xPos(firstTickPosition))
+                  << QPointF(linePos_ * (1 + relLenghtTickLine), xPos(firstTickPosition));
     } else {
-        firstTick << QPointF(xPos(firstTickPosition), linePos * height * (1 - relLenghtTickLine))
-                  << QPointF(xPos(firstTickPosition), linePos * height * (1 + relLenghtTickLine));
+        firstTick << QPointF(xPos(firstTickPosition), linePos_ * (1 - relLenghtTickLine))
+                  << QPointF(xPos(firstTickPosition), linePos_ * (1 + relLenghtTickLine));
     }
     painter.drawPolyline(firstTick);
 

@@ -41,6 +41,7 @@ private:
     SpectrumPainter* spainter;
     // XAxis* xAxis;
     UniversalAxis* xAxis;
+    UniversalAxis* yAxis;
     IntegralsDisplayer* idisplayer;
 
     QPointF mouseMoveStartPoint;
