@@ -57,7 +57,9 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
                 .showLine = true,
                 .vertical = false,
                 .descending = true,
-                .dynamic = true,},
+                .dynamic = true,
+                .linePos = 0.1,
+                .labelAdditionalSpacing = 0.01},
                               this};
 
 

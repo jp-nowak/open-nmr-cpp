@@ -19,54 +19,55 @@ namespace {
     // symetric
     double findInterval(double span)
     {
+        double multiplier = 1;
+        while (span <= 0.01) span *= 10, multiplier /= 10;
+        while (span >= 1000) span /= 10, multiplier *= 10;
+
         auto inRange = [span](double low, double high){return !(span < low) && (span < high);};
 
-        if (span <= 0.01) return findInterval(span * 10) / 10;
+        double result = 1;
 
         if (inRange(5, 1000)) {
 
-            if (inRange(5, 10)) return 1;
-            if (inRange(10, 20)) return 2;
-            if (inRange(20, 30)) return 3;
-            if (inRange(30, 40)) return 4;
-            if (inRange(40, 50)) return 5;
-            if (inRange(50, 60)) return 6;
-            if (inRange(60, 70)) return 7;
-            if (inRange(70, 80)) return 8;
-            if (inRange(80, 90)) return 9;
-            if (inRange(90, 150)) return 10;
-            if (inRange(150, 250)) return 20;
-            if (inRange(250, 350)) return 30;
-            if (inRange(350, 450)) return 40;
-            if (inRange(450, 550)) return 50;
-            if (inRange(550, 650)) return 60;
-            if (inRange(650, 1000)) return 100;
+            if (inRange(5, 10)) result = 1;
+            if (inRange(10, 20)) result = 2;
+            if (inRange(20, 30)) result = 3;
+            if (inRange(30, 40)) result = 4;
+            if (inRange(40, 50)) result = 5;
+            if (inRange(50, 60)) result = 6;
+            if (inRange(60, 70)) result = 7;
+            if (inRange(70, 80)) result = 8;
+            if (inRange(80, 90)) result = 9;
+            if (inRange(90, 150)) result = 10;
+            if (inRange(150, 250)) result = 20;
+            if (inRange(250, 350)) result = 30;
+            if (inRange(350, 450)) result = 40;
+            if (inRange(450, 550)) result = 50;
+            if (inRange(550, 650)) result = 60;
+            if (inRange(650, 1000)) result = 100;
         }
 
         if (inRange(1, 5)) {
-            if (inRange(1, 2)) return 0.2;
-            if (inRange(2, 3)) return 0.3;
-            if (inRange(3, 4)) return 0.4;
-            if (inRange(4, 5)) return 0.5;
+            if (inRange(1, 2)) result = 0.2;
+            if (inRange(2, 3)) result = 0.3;
+            if (inRange(3, 4)) result = 0.4;
+            if (inRange(4, 5)) result = 0.5;
         }
 
         if (inRange(0.01, 1)) {
-            if (inRange(0.01, 0.1)) return 0.01;
-            if (inRange(0.10, 0.20)) return 0.02;
-            if (inRange(0.20, 0.30)) return 0.03;
-            if (inRange(0.30, 0.40)) return 0.04;
-            if (inRange(0.40, 0.50)) return 0.05;
-            if (inRange(0.50, 0.60)) return 0.06;
-            if (inRange(0.60, 0.70)) return 0.07;
-            if (inRange(0.70, 0.80)) return 0.08;
-            if (inRange(0.80, 0.90)) return 0.09;
-            if (inRange(0.90, 1.00)) return 0.10;
+            if (inRange(0.01, 0.1)) result = 0.01;
+            if (inRange(0.10, 0.20)) result = 0.02;
+            if (inRange(0.20, 0.30)) result = 0.03;
+            if (inRange(0.30, 0.40)) result = 0.04;
+            if (inRange(0.40, 0.50)) result = 0.05;
+            if (inRange(0.50, 0.60)) result = 0.06;
+            if (inRange(0.60, 0.70)) result = 0.07;
+            if (inRange(0.70, 0.80)) result = 0.08;
+            if (inRange(0.80, 0.90)) result = 0.09;
+            if (inRange(0.90, 1.00)) result = 0.10;
         }
 
-        if (span >= 1000) return findInterval(span / 10) * 10;
-
-        assert(false);
-        return 0;
+        return result * multiplier;
 
         // return [](double x){
         //     int power10 = std::floor(std::log10(x));
@@ -123,15 +124,23 @@ namespace {
         return static_cast<double>(firstPosition) / multiplier;
     }
 
+    class P : public QPointF
+    {
+        public:
+        using QPointF::QPointF;
+        QPointF transposeIf(bool p)
+        {
+            if (p) return this->transposed(); else return *this;
+        }
+    };
+
 }
 
 
 UniversalAxis::UniversalAxis(AxisProperties properties, QWidget* parent)
     : p{properties}
 {
-    if (p.vertical) {
-        qDebug();
-    }
+
     assert(parent && "nullptr to parent");
     assert(p.minimum != p.maximum);
     initialize();
@@ -139,34 +148,50 @@ UniversalAxis::UniversalAxis(AxisProperties properties, QWidget* parent)
 
 void UniversalAxis::initialize()
 {
-    if (p.vertical) {
-        qDebug();
-    }
+
     assert(p.minimum < p.maximum);
+
+    if (not p.dynamic and not positions.empty()) return;
+
     if (p.dynamic) {
         p.primaryTicksInterval = findInterval(p.maximum - p.minimum);
         p.secondaryTicksInterval = p.primaryTicksInterval / p.primaryToSecondaryTickRatio;
         p.displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
     }
+
+    positions.clear();
+    labels.clear();
+
+    for (double value = findFirstDivisibleNumber(p.maximum, p.primaryTicksInterval, p.descending);
+        value >= p.minimum; value -= p.primaryTicksInterval) {
+        positions.append(value);
+        labels.append(QString::number(value, 'f', p.displayPrecision));
+        }
+
 }
 
 double UniversalAxis::xPos(double x)
 {
     const double valueWidth = p.maximum - p.minimum;
-    if (p.vertical) {
-        if (p.descending) {
-            return (1 - ((x - p.minimum) / valueWidth)) * height();
-        } else {
-            return ((x - p.minimum) / valueWidth) * height();
-        }
+    const double longestDimension = (p.vertical) ? height() : width();
+    if (p.descending) {
+        return (1 - ((x - p.minimum) / valueWidth)) * longestDimension;
     } else {
-        if (p.descending) {
-            return (1 - ((x - p.minimum) / valueWidth)) * width();
-        } else {
-            return ((x - p.minimum) / valueWidth) * width();
-        }
+        return ((x - p.minimum) / valueWidth) * longestDimension;
     }
 }
+
+QPolygonF UniversalAxis::getPointsAsGlobals()
+{
+    QPolygonF points;
+    const double shorterDimension = (p.vertical) ? width() : height();
+    const double linePos_ = p.linePos * shorterDimension;
+    for (auto x : std::as_const(positions)) {
+        points << mapToGlobal(P(x, linePos_).transposeIf(p.vertical));
+    }
+    return points;
+}
+
 
 void UniversalAxis::setRange(double minimum, double maximum)
 {
@@ -216,28 +241,28 @@ std::pair<double, double> UniversalAxis::getRange()
 
 void UniversalAxis::paintEvent(QPaintEvent* e)
 {
+    assert(not positions.empty());
+    assert(not labels.empty());
 
     QWidget::paintEvent(e);
     const double width = e->rect().width();
     const double height = e->rect().height();
-    const double valueWidth = p.maximum - p.minimum;
     const double linePos = p.linePos;
     const double relLenghtTickLine = p.relTickLine / linePos;
     const double labelAdditionalSpacing = p.labelAdditionalSpacing / linePos;
-    double linePos_;
+    const double shorterDimension = (p.vertical) ? width : height;
+    const double longerDimension = (p.vertical) ? height : width;
+    const double linePos_ = p.linePos * shorterDimension;
 
-    if (p.vertical) { // position of line connecting ticks
-        linePos_ = linePos * width;
+    QFlags<Qt::AlignmentFlag> mainAlignment, secondaryAlignment;
+
+    if (p.labelAdditionalSpacing > 0) {
+        secondaryAlignment = (p.vertical) ? Qt::AlignLeft : Qt::AlignTop;
     } else {
-        linePos_ = linePos * height;
+        secondaryAlignment = (p.vertical) ? Qt::AlignRight : Qt::AlignBottom;
     }
 
-    QFlags<Qt::AlignmentFlag> mainAlignment;
-    if (p.vertical) { // TODO rework to include text in top of axis
-        mainAlignment = Qt::AlignVCenter | Qt::AlignLeft;
-    } else {
-        mainAlignment = Qt::AlignHCenter | Qt::AlignTop;
-    }
+    mainAlignment = (p.vertical) ? (Qt::AlignVCenter | secondaryAlignment) : (Qt::AlignHCenter | secondaryAlignment);
 
     QPainter painter(this);
     QPen pen;
@@ -251,316 +276,81 @@ void UniversalAxis::paintEvent(QPaintEvent* e)
 
     painter.setFont(font);
 
-    if (p.vertical) {
-        qDebug();
-    }
-
-
     if (p.showLine) { // drawing line connecting ticks
-        QPolygonF baseline;
-        if (p.vertical) {
-            baseline << QPointF(linePos * width, 0)
-                     << QPointF(linePos * width, height);
-        } else {
-            baseline << QPointF(0, linePos * height)
-                     << QPointF(width, linePos * height);
-        }
-        painter.drawPolyline(baseline);
-    }
-    double firstTickPosition = findFirstDivisibleNumber(p.maximum, p.primaryTicksInterval, p.descending);
-    double tickPos = firstTickPosition - p.primaryTicksInterval;
-    { // drawing line and labels for all ticks except first and last
-        int stepNumber = std::round(std::fabs(valueWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
-        for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval)
-        {
-            QPolygonF tick;
-            if (p.vertical) {
-                tick << QPointF(linePos * width * (1 - relLenghtTickLine), xPos(tickPos))
-                     << QPointF(linePos * width * (1 + relLenghtTickLine), xPos(tickPos));
-                drawText(painter,
-                         QPointF(linePos * width * (1 + relLenghtTickLine + labelAdditionalSpacing), xPos(tickPos)),
-                         mainAlignment, QString::number(tickPos, 'f', p.displayPrecision));
-            } else {
-                tick << QPointF(xPos(tickPos), linePos * height * (1 - relLenghtTickLine))
-                << QPointF(xPos(tickPos), linePos * height * (1 + relLenghtTickLine));
-                drawText(painter,
-                         QPointF(xPos(tickPos), linePos * height * (1 + relLenghtTickLine + labelAdditionalSpacing)),
-                         mainAlignment, QString::number(tickPos, 'f', p.displayPrecision));
-            }
-            painter.drawPolyline(tick);
-        }
-    }
-    double dimension; // dimension used to test if tick is too close to edge
-    if (p.vertical) {
-        dimension = height;
-    } else {
-        dimension = width;
+        painter.drawLine(P(0, linePos_).transposeIf(p.vertical), P(longerDimension, linePos_).transposeIf(p.vertical));
     }
 
-    if ((xPos(firstTickPosition) <= 0.0) or (xPos(firstTickPosition) >= dimension)) { // if tick is exactly on edge it is drawn with wider line, otherwise it sometimes disappears
-        pen.setWidth(2);
-        pen.setWidth(2);
-        painter.setPen(pen);
+    const double labelPosition = (relLenghtTickLine + labelAdditionalSpacing) * ((p.labelAdditionalSpacing > 0) ? 1 : -1);
+
+    // shrinks font size if needed for label to fit in widget area
+    setFontPixelSize(painter, fitFontPixelSize(painter, P(xPos(positions[1]), linePos_ * (1 + labelPosition)).transposeIf(p.vertical), mainAlignment, labels[1]));
+
+    for (int i = 1; i < positions.size() - 1; i++) // drawing ticks and labels except first and last
+    {
+        // tick line
+        painter.drawLine(P(xPos(positions[i]), linePos_ * (1 - relLenghtTickLine) ).transposeIf(p.vertical),
+                         P(xPos(positions[i]), linePos_ * (1 + relLenghtTickLine) ).transposeIf(p.vertical));
+        // label
+        drawText(painter, P(xPos(positions[i]), linePos_ * (1 + labelPosition)).transposeIf(p.vertical), mainAlignment, labels[i]);
     }
 
-    QPolygonF firstTick;
+    painter.save();
 
-    if (p.vertical) { // line for first tick
-        firstTick << QPointF(linePos_ * (1 - relLenghtTickLine), xPos(firstTickPosition))
-                  << QPointF(linePos_ * (1 + relLenghtTickLine), xPos(firstTickPosition));
-    } else {
-        firstTick << QPointF(xPos(firstTickPosition), linePos_ * (1 - relLenghtTickLine))
-                  << QPointF(xPos(firstTickPosition), linePos_ * (1 + relLenghtTickLine));
+    // drawing first tick line, if line is on the edge it is doubled (otherwise it disappears)
+    if ((xPos(positions[0]) <= 0.0) or (xPos(positions[0]) >= longerDimension)) {
+        setWidth(painter, 2);
     }
-    painter.drawPolyline(firstTick);
+    painter.drawLine(P(xPos(positions[0]), linePos_ * (1 - relLenghtTickLine) ).transposeIf(p.vertical),
+                     P(xPos(positions[0]), linePos_ * (1 + relLenghtTickLine) ).transposeIf(p.vertical));
+    painter.restore();
 
-    pen.setWidth(1);
-    painter.setPen(pen);
+    painter.save();
+
+    // drawing last tick line, if line is on the edge it is doubled (otherwise it disappears)
+    if ((xPos(positions.last()) <= 0.0) or (xPos(positions.last()) >= longerDimension)) {
+        setWidth(painter, 2);
+    }
+    painter.drawLine(P(xPos(positions.last()), linePos_ * (1 - relLenghtTickLine) ).transposeIf(p.vertical),
+                     P(xPos(positions.last()), linePos_ * (1 + relLenghtTickLine) ).transposeIf(p.vertical));
+    painter.restore();
 
     QFlags<Qt::AlignmentFlag> edgeAlignment = mainAlignment;
-    if (p.vertical) { // alignment of first tick label
-        QRectF testRect1 = getBoundingRect(painter,
-                                           QPointF(linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing), xPos(firstTickPosition)),
-                                           edgeAlignment,
-                                           QString::number(firstTickPosition, 'f', p.displayPrecision));
-        if (testRect1.y() < 0.0) {
-            edgeAlignment = Qt::AlignTop | Qt::AlignLeft;
-        } else if (testRect1.y() + testRect1.height() > height) {
-            edgeAlignment = Qt::AlignBottom | Qt::AlignLeft;
-        }
-    } else {
-        QRectF testRect1 = getBoundingRect(painter,
-                                           QPointF(xPos(firstTickPosition), linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing)),
-                                           edgeAlignment,
-                                           QString::number(firstTickPosition, 'f', p.displayPrecision));
-        if (testRect1.x() < 0.0) {
-            edgeAlignment = Qt::AlignLeft | Qt::AlignTop;
-        } else if (testRect1.x() + testRect1.width() > width) {
-            edgeAlignment = Qt::AlignRight | Qt::AlignTop;
-        }
 
+    // checking if label fits, if not alignment is shifted so it does fit
+    QRectF testRect = getBoundingRect(painter,
+                                      P(xPos(positions[0]), linePos_ * (1 + labelPosition) ).transposeIf(p.vertical),
+                                      edgeAlignment, labels[0]);
+
+    double testRectDimension = (p.vertical) ? testRect.y() : testRect.x();
+
+    if (testRectDimension < 0.0) {
+            edgeAlignment = (p.vertical) ? (Qt::AlignTop | secondaryAlignment) : (Qt::AlignLeft | secondaryAlignment);
+    } else if (testRectDimension += (p.vertical) ? testRect.height() : testRect.width();
+               testRectDimension > longerDimension) {
+            edgeAlignment = (p.vertical) ? (Qt::AlignBottom | secondaryAlignment) : (Qt::AlignRight | secondaryAlignment);
     }
+    drawText(painter, P(xPos(positions[0]), linePos_ * (1 + labelPosition) ).transposeIf(p.vertical),
+            edgeAlignment, labels[0]);
 
-    if (p.vertical) { // label of first tick
-        drawText(painter,
-                 QPointF(linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing), xPos(firstTickPosition)),
-                 edgeAlignment,
-                 QString::number(firstTickPosition, 'f', p.displayPrecision));
-    } else {
-        drawText(painter,
-                 QPointF(xPos(firstTickPosition), linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing)),
-                 edgeAlignment,
-                 QString::number(firstTickPosition, 'f', p.displayPrecision));
+    edgeAlignment = mainAlignment;
+
+    testRect = getBoundingRect(painter,
+                                      P(xPos(positions.last()), linePos_ * (1 + labelPosition) ).transposeIf(p.vertical),
+                                      edgeAlignment, labels.last());
+
+    testRectDimension = (p.vertical) ? testRect.y() : testRect.x();
+
+    if (testRectDimension < 0.0) {
+            edgeAlignment = (p.vertical) ? (Qt::AlignTop | secondaryAlignment) : (Qt::AlignLeft | secondaryAlignment);
+    } else if (testRectDimension += (p.vertical) ? testRect.height() : testRect.width();
+               testRectDimension > longerDimension) {
+            edgeAlignment = (p.vertical) ? (Qt::AlignBottom | secondaryAlignment) : (Qt::AlignRight | secondaryAlignment);
     }
-
-    if ((xPos(tickPos) <= 0.0) or (xPos(tickPos) >= dimension)) { // if tick is exactly on edge it is drawn with wider line, otherwise it sometimes disappears
-        pen.setWidth(2);
-        pen.setWidth(2);
-        painter.setPen(pen);
-    }
-
-    QPolygonF lastTick; // line for last tick
-    if (p.vertical) {
-        lastTick << QPointF(linePos_ * (1 - relLenghtTickLine), xPos(tickPos))
-                 << QPointF(linePos_ * (1 + relLenghtTickLine), xPos(tickPos));
-    } else {
-        lastTick << QPointF(xPos(tickPos), linePos_ * (1 - relLenghtTickLine))
-                 << QPointF(xPos(tickPos), linePos_ * (1 + relLenghtTickLine));
-    }
-    painter.drawPolyline(lastTick);
-
-    if (p.vertical) { // alignment of last tick label
-        QRectF testRect1 = getBoundingRect(painter,
-                                           QPointF(linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing), xPos(tickPos)),
-                                           edgeAlignment,
-                                           QString::number(tickPos, 'f', p.displayPrecision));
-        if (testRect1.y() < 0.0) {
-            edgeAlignment = Qt::AlignTop | Qt::AlignLeft;
-        } else if (testRect1.y() + testRect1.height() > height) {
-            edgeAlignment = Qt::AlignBottom | Qt::AlignLeft;
-        }
-    } else {
-        QRectF testRect1 = getBoundingRect(painter,
-                                           QPointF(xPos(tickPos), linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing)),
-                                           edgeAlignment,
-                                           QString::number(tickPos, 'f', p.displayPrecision));
-        if (testRect1.x() < 0.0) {
-            edgeAlignment = Qt::AlignLeft | Qt::AlignTop;
-        } else if (testRect1.x() + testRect1.width() > width) {
-            edgeAlignment = Qt::AlignRight | Qt::AlignTop;
-        }
-
-    }
-
-    if (p.vertical) { // last tick label
-        drawText(painter,
-                 QPointF(linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing), xPos(tickPos)),
-                 edgeAlignment,
-                 QString::number(tickPos, 'f', p.displayPrecision));
-    } else {
-        drawText(painter,
-                 QPointF(xPos(tickPos), linePos_ * (1 + relLenghtTickLine + labelAdditionalSpacing)),
-                 edgeAlignment,
-                 QString::number(tickPos, 'f', p.displayPrecision));
-    }
-    // painter.drawRect(QRectF(0.0, 0.0, width - 1, height - 1));
+    drawText(painter, P(xPos(positions.last()), linePos_ * (1 + labelPosition) ).transposeIf(p.vertical),
+            edgeAlignment, labels.last());
 
 }
 
 
 
-// XAxis::XAxis(XAxisProperties properties, QWidget* parent)
-//     : QWidget{parent}
-//     , p{properties}
-//     , r{(p.decreasingToRight) ? 1 : -1}
-// {
-//     initialize();
-// }
 
-// void XAxis::initialize()
-// {
-//     if (p.primaryTicksInterval == 0.0) {
-//         p.primaryTicksInterval = findInterval(std::fabs(p.left - p.right));
-//     }
-//     if (p.secondaryTicksInterval == 0.0) {
-//         p.secondaryTicksInterval = p.primaryTicksInterval / 2;
-//     }
-//     if (p.fixedDisplayPrecision) {
-//         displayPrecision = *p.fixedDisplayPrecision;
-//     } else {
-//         displayPrecision = calcDisplayPrecision(p.primaryTicksInterval);
-//     }
-// }
-
-// void XAxis::setRange(double left, double right)
-// {
-//     if (p.decreasingToRight and (left < right)) {
-//         std::swap(left, right);
-//     }
-//     if (not p.decreasingToRight and (left > right)) {
-//         std::swap(left, right);
-//     }
-
-//     p.left = left;
-//     p.right = right;
-//     p.primaryTicksInterval = 0.0;
-//     p.secondaryTicksInterval = 0.0;
-//     initialize();
-//     update();
-// }
-
-// void XAxis::setRangePoints(QPointF left, QPointF right)
-// {
-//     if (not p.decreasingToRight) return; // TODO version for increasing axis
-
-//     left = mapFromGlobal(left);
-//     right = mapFromGlobal(right);
-
-//     double newLeft = (left.x() < 0) ? p.left
-//                                     : (1 - static_cast<double>(left.x()) / width())
-//                                         * (p.left - p.right) + p.right;
-
-//     double newRight = (right.x() > width()) ? p.right
-//                                             : (1 - static_cast<double>(right.x()) / width())
-//                                         * (p.left - p.right) + p.right;
-//     setRange(newLeft, newRight);
-// }
-
-// void XAxis::paintEvent(QPaintEvent* e)
-// {
-//     QWidget::paintEvent(e);
-//     const double width = e->rect().width();
-//     const double height = e->rect().height();
-//     const double spectralWidth = std::fabs(p.left - p.right);
-//     const double lineHeight = p.lineHeight * height;
-
-//     std::function<double(double)> xPos; // converts value in ppm to x coordinate in widget
-
-//     if (p.decreasingToRight) { // would be good to put it in initialize for future!!!
-//         xPos = [width, spectralWidth, this](double x) -> double {return (1 - ((x - p.right) / spectralWidth)) * width;};
-//     } else {
-//         xPos = [width, spectralWidth, this](double x) -> double {return ((x - p.left) / spectralWidth) * width;};
-//     }
-
-//     QPainter painter(this);
-//     QPen pen;
-//     pen.setCosmetic(true); // width independent from coordinate transformations
-//     pen.setWidth(1);
-//     pen.setCapStyle(Qt::RoundCap);
-//     painter.setPen(pen);
-//     QFont font = painter.font();
-//     double diameterProportion = std::sqrt(std::pow(e->rect().width(), 2) + std::pow(e->rect().height(), 2))
-//                               / std::sqrt(std::pow(screen()->availableGeometry().size().width(), 2)
-//                               + std::pow(screen()->availableGeometry().size().height(), 2)); // to be put elsewhere not in paintevent?
-//     font.setPixelSize(p.fontSize * diameterProportion); // size increases with window size
-
-//     painter.setFont(font);
-
-//     painter.setWindow(0, 0, width, height);
-
-//     if (p.showLine) {
-//         QPolygonF baseline;
-//         baseline << QPointF(0, lineHeight)
-//                  << QPointF(width, lineHeight);
-//         painter.drawPolyline(baseline);
-//     }
-
-//     double firstTickPosition = findFirstDivisibleNumber(p.left, p.primaryTicksInterval, p.decreasingToRight);
-//     double tickPos = firstTickPosition - p.primaryTicksInterval * r;
-//     {
-//         int stepNumber = std::round(std::fabs(spectralWidth - p.primaryTicksInterval) / p.primaryTicksInterval);
-//         for (int i = 0; i < stepNumber; i++, tickPos -= p.primaryTicksInterval * r)
-//         {
-//             QPolygonF tick;
-//             tick << QPointF(xPos(tickPos), lineHeight * (1 - p.relLenghtTickLine))
-//                  << QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine));
-//             painter.drawPolyline(tick);
-
-//             drawText(painter,
-//                     QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
-//                     Qt::AlignHCenter | Qt::AlignTop,
-//                     QString::number(tickPos, 'f', displayPrecision));
-//         }
-//     }
-
-//     if ((std::fabs(0 - xPos(firstTickPosition)) < 0.0001 * width)) {
-//         pen.setWidth(2);
-//         painter.setPen(pen);
-//     }
-
-//     QPolygonF firstTick;
-//     firstTick << QPointF(xPos(firstTickPosition), lineHeight * (1 - p.relLenghtTickLine))
-//               << QPointF(xPos(firstTickPosition), lineHeight * (1 + p.relLenghtTickLine));
-//     painter.drawPolyline(firstTick);
-
-//     pen.setWidth(1);
-//     painter.setPen(pen);
-
-//     Qt::AlignmentFlag alignment = (std::fabs(0 - xPos(firstTickPosition)) < 0.01 * width) ? Qt::AlignLeft : Qt::AlignHCenter;
-
-//     drawText(painter,
-//              QPointF(xPos(firstTickPosition), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
-//              alignment | Qt::AlignTop,
-//              QString::number(firstTickPosition, 'f', displayPrecision));
-
-//     if (std::fabs(width - xPos(tickPos)) < 0.0001 * width) {
-//         pen.setWidth(2);
-//         painter.setPen(pen);
-//     }
-
-//     QPolygonF lastTick;
-//     lastTick << QPointF(xPos(tickPos), lineHeight * (1 - p.relLenghtTickLine))
-//              << QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine));
-//     painter.drawPolyline(lastTick);
-
-//     pen.setWidth(1);
-//     painter.setPen(pen);
-
-//     alignment = (std::fabs(width - xPos(tickPos)) < 0.01 * width) ? Qt::AlignRight : Qt::AlignHCenter;
-
-//     drawText(painter,
-//              QPointF(xPos(tickPos), lineHeight * (1 + p.relLenghtTickLine + p.labelAdditionalSpacing)),
-//              alignment | Qt::AlignTop,
-//              QString::number(tickPos, 'f', displayPrecision));
-
-// }

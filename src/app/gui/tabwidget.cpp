@@ -18,7 +18,7 @@ TabWidget::TabWidget(QStackedWidget* stackedSpectra, QWidget* parent)
     layout = new QVBoxLayout(this);
     setLayout(layout);
     layout->addWidget(new QLabel(tr("Open spectra"), this));
-    grid = new QGridLayout(this);
+    grid = new QGridLayout();
     layout->addLayout(grid);
     layout->setAlignment(Qt::AlignTop);
     grid->setAlignment(Qt::AlignTop);

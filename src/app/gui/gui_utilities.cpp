@@ -45,6 +45,30 @@ QRectF getBoundingRect(QPainter & painter, const QPointF & point, Qt::Alignment 
     return getBoundingRect(painter, point.x(), point.y(), flags, text);
 }
 
+QRectF getTightBoundingRect(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
+                     const QString & text)
+{
+    constexpr qreal size = 32767.0;
+    QPointF corner(x, y - size);
+    if (flags & Qt::AlignHCenter) corner.rx() -= size/2.0;
+    else if (flags & Qt::AlignRight) corner.rx() -= size;
+    if (flags & Qt::AlignVCenter) corner.ry() += size/2.0;
+    else if (flags & Qt::AlignTop) corner.ry() += size;
+    else flags |= Qt::AlignBottom;
+    QRectF rect{corner.x(), corner.y(), size, size};
+    QFontMetrics fm{painter.font()};
+    QRectF initialBounding = painter.boundingRect(rect, flags, text);
+    double correction = fm.descent() + fm.underlinePos();
+
+    return QRectF(initialBounding.x(), initialBounding.y() + 0.9 * correction, initialBounding.width(), initialBounding.height() - 1.5 * correction);
+}
+
+QRectF getTightBoundingRect(QPainter& painter, const QPointF& point, Qt::Alignment flags,
+                       const QString& text)
+{
+    return getTightBoundingRect(painter, point.x(), point.y(), flags, text);
+}
+
 void drawRangeWithMarks(QPainter& painter, const QPointF& left, const QPointF& right, double tickHeight)
 {
     {
@@ -67,3 +91,54 @@ void drawRangeWithMarks(QPainter& painter, const QPointF& left, const QPointF& r
         painter.drawPolyline(line);
     }
 }
+
+void setWidth(QPainter& painter, int width)
+{
+    QPen pen = painter.pen();
+    pen.setWidth(width);
+    painter.setPen(pen);
+}
+
+void setFontPixelSize(QPainter& painter, int size)
+{
+    QFont font = painter.font();
+    font.setPixelSize(size);
+    painter.setFont(font);
+}
+
+int fitFontPixelSize(QPainter& painter, const QPointF& point, Qt::Alignment flags,
+                       const QString& text)
+{
+    QPaintDevice* widget = painter.device();
+    assert(widget && "no painting device");
+    auto widgetRect = QRectF{0.0, 0.0, static_cast<qreal>(widget->width()), static_cast<qreal>(widget->height())};
+    painter.save();
+    int size = painter.font().pixelSize();
+    for (; size > 0; size--) {
+        setFontPixelSize(painter, size);
+        QRectF boundingRect = getTightBoundingRect(painter, point, flags, text);
+        if ((boundingRect & widgetRect) == boundingRect) break;
+    }
+    painter.restore();
+    return size;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
