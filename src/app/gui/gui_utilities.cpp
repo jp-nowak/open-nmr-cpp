@@ -114,7 +114,7 @@ int fitFontPixelSize(QPainter& painter, const QPointF& point, Qt::Alignment flag
     auto widgetRect = QRectF{0.0, 0.0, static_cast<qreal>(widget->width()), static_cast<qreal>(widget->height())};
     painter.save();
     int size = painter.font().pixelSize();
-    for (; size > 0; size--) {
+    for (; 0 <-- size;) {
         setFontPixelSize(painter, size);
         QRectF boundingRect = getTightBoundingRect(painter, point, flags, text);
         if ((boundingRect & widgetRect) == boundingRect) break;

@@ -1,7 +1,7 @@
 #include "spectrum.h"
 #include "../processing/general.h"
+#include "../processing/utils.h"
 #include "../processing/zero_filling.h"
-
 #include <QDebug>
 
 #include <algorithm>
@@ -9,6 +9,7 @@
 #include <limits>
 
 using namespace Processing;
+
 
 Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
 : info{info}
@@ -20,11 +21,22 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
               .zeroFilledTo = nextPowerOf2(fid.size()),
               .groupDelay = info.group_delay}
 {
+    using namespace Processing;
     generateSpectrum();
     if (!(info.group_delay == 0.0)) {
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
         setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});
     }
+    if (findRealMaximum(get_spectrum()) < std::fabs(findRealMinimum(get_spectrum()))) {
+        setPh0(Ph0{1});
+    }
+    constexpr double MAXIMUM_Y_VALUE = 1000000;
+    if (double maximum = findRealMaximum(get_spectrum()); maximum > MAXIMUM_Y_VALUE) {
+        double mult = 1.0 / (maximum / MAXIMUM_Y_VALUE);
+        this->fid *= mult;
+        generateSpectrum();
+    }
+
 
 #ifdef PEAK_FINDING_TEST
     autoFindPeaks();

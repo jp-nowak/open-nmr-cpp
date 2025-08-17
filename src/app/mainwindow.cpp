@@ -269,8 +269,10 @@ void MainWindow::showProcessingWidget()
         dockWidget = new QDockWidget(this);
         dockWidget->setWidget(processingWidget);
         addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+        dockWidget->resize(0, 0);
     } else {
         dockWidget->show();
+        dockWidget->resize(0, 0);
     }
     emit closeDynamicElements();
 }

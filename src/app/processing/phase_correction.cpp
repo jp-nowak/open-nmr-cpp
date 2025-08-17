@@ -1,12 +1,15 @@
 #include "phase_correction.h"
 
+
 #include <cassert>
 #include <numbers>
 #include <algorithm>
 
-void Processing::operator*= (std::vector<std::complex<double>>& lhs, Ph0 rhs)
+void Processing::operator*= (spectrumType& lhs, Ph0 rhs)
 {
     using namespace std::complex_literals;
+    if (rhs.ph0 == 0.0) return;
+    assert(std::isnormal(rhs.ph0));
     std::complex<double> firstHalf = rhs.ph0 * std::numbers::pi * 1.0i;
     firstHalf = std::exp(firstHalf);
 
@@ -15,9 +18,12 @@ void Processing::operator*= (std::vector<std::complex<double>>& lhs, Ph0 rhs)
     }
 }
 
-void Processing::operator*= (std::vector<std::complex<double>>& lhs, Ph1 rhs)
+void Processing::operator*= (spectrumType& lhs, Ph1 rhs)
 {
+    if (rhs.ph1 == 0.0) return;
     assert(lhs.size() % 2 == 0 && "size should be divisible by 2");
+    assert(std::isnormal(rhs.ph1));
+    assert((rhs.pivot >= 0.0) and (rhs.pivot <= 100));
 
     using namespace std::complex_literals;
     double pivot = -(rhs.pivot / 100 - 0.5) * 2;

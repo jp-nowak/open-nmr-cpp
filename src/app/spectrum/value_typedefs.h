@@ -16,6 +16,10 @@ typedef FidSpan SpectrumSpan;
 typedef std::span<FidComplexValue const> ConstFidSpan;
 typedef ConstFidSpan ConstSpectrumSpan;
 
+typedef std::vector<FidComplexValue> fidType;
+typedef std::vector<SpectrumComplexValue> spectrumType;
+
+
 typedef std::vector<IntegralRecord> IntegralsVector;
 
 #endif // VALUE_TYPEDEFS_H

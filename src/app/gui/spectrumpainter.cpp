@@ -1,5 +1,6 @@
 #include "spectrumpainter.h"
 #include "../processing/peak_finding.h"
+#include "../processing/utils.h"
 
 #include <algorithm>
 #include <utility>
@@ -19,13 +20,6 @@
 
 namespace
 {
-
-auto findRealMaximumFromVectorOfComplex = [](auto i){
-    return i[std::max_element(std::begin(i), std::end(i), [](auto& a, auto& b){
-        return a.real() < b.real();
-    }) - begin(i)].real();
-};
-
 }
 
 SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
@@ -37,7 +31,7 @@ SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
     , scalingFactor{1}
     , displaySelection{false}
     , selectionColor{}
-    , maximum{findRealMaximumFromVectorOfComplex(spectrum_->get_spectrum()) * 1.05}
+    , maximum{Processing::findRealMaximum(spectrum_->get_spectrum()) * 1.05}
     , startPoint_{0}
     , endPoint_{spectrum_->get_spectrum().size()}
     , currentSpectrumSize{spectrum_->get_spectrum().size()}
@@ -205,12 +199,15 @@ void SpectrumPainter::wheelEvent(QWheelEvent* e)
 {
     const double increment = 1.1;
     if (e->angleDelta().y() > 0) { // mouse wheel is turned from user, spectrum values are scaled up
+        if (scalingFactor > 1000000) return;
         scalingFactor *= increment;
         emit wheelTurned(increment);
     } else { // mouse wheel is turned towards user, spectrum values are scaled down
+        // if (scalingFactor < 0.01) return;
         scalingFactor /= increment;
         emit wheelTurned(-increment);
     }
+    qDebug() << scalingFactor;
     update();
 }
 

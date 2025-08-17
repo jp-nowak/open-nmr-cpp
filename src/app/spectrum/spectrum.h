@@ -61,9 +61,9 @@ private:
 //---------------------------------------------------------------------------------------------------------------------
 
 
-    std::vector<std::complex<double>> fid;
+    fidType fid;
 
-    std::vector<std::complex<double>> spectrum;
+    spectrumType spectrum;
 
     // applied phase correction
     Processing::Phase phaseCorrection;

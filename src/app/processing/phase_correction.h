@@ -1,8 +1,9 @@
 #ifndef PHASE_CORRECTION_H
 #define PHASE_CORRECTION_H
 
-#include <vector>
-#include <complex>
+
+#include "../spectrum/value_typedefs.h"
+
 
 namespace Processing
 {
@@ -26,11 +27,16 @@ struct Phase
     Ph1 ph1;
 };
 
-// applies in place 0th order phase correction
-void operator*= (std::vector<std::complex<double>>& a, Ph0 b);
+/*!
+ * \brief applies 0th order phase correction,
+ * that is multiplies all elements by exp(Ph0.ph0 * pi * i)
+ * \param lhs
+ * \param rhs correction to be applied in pi * rad
+ */
+void operator*= (spectrumType& lhs, Ph0 rhs);
 
 // applies in place 1st order phase correction
-void operator*= (std::vector<std::complex<double>>& a, Ph1 b);
+void operator*= (spectrumType& lhs, Ph1 rhs);
 } // Processing
 
 

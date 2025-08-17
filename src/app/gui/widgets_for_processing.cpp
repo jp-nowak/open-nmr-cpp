@@ -40,7 +40,7 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     ph0 = LabeledSlider::createWithBoxAndLabel(
-        QStringLiteral(u"ph0"), -180, 180, 90, 1,
+        QStringLiteral(u"ph0"), -360, 360, 180, 1,
         experiment->getPhase().ph0.ph0, this);
     ph1 = LabeledSlider::createWithBoxAndLabel(
         QStringLiteral(u"ph1"), -360, 360, 180, 1,

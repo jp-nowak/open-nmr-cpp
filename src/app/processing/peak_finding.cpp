@@ -92,7 +92,7 @@ std::vector<Peak> PeakFinding::simpleFindPeaks(ConstSpectrumSpan spectrum, doubl
 
     for (auto& i : peaks) {
 
-        i.zenith.x = i.leftTrough.x + indexOfMaxRealElemFromComplexArray(
+        i.zenith.x = i.leftTrough.x + indexOfRealMaximum(
             spectrum.subspan(i.leftTrough.x, i.rightTrough.x - i.leftTrough.x));
         i.zenith.y = std::real(spectrum[i.zenith.x]);
 
