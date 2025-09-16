@@ -23,7 +23,7 @@ namespace Processing
          * \brief FFT_1D_Transformer: creates object which will manage fft and buffer needed for its working
          * \param fid: data to be fourier transformed
          */
-        FFT1DTransformer(std::span<FidComplexValue const> fid, FidSizeInfo info);
+        FFT1DTransformer(std::span<Complex const> fid, FidSizeInfo info);
 
         // frees buffer
         ~FFT1DTransformer();
@@ -32,7 +32,7 @@ namespace Processing
         void transform();
 
         // returns fft transformed data as std::vector<std::complex<double>> - which is normal representation for this program
-        std::vector<SpectrumComplexValue> receive();
+        std::vector<Complex> receive();
 
         // returns fft transformed data as std::vector<kiss_fft_cpx> - which is a representation used by kissfft
         std::vector<kiss_fft_cpx> receiveRaw();

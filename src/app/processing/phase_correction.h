@@ -33,10 +33,10 @@ struct Phase
  * \param lhs
  * \param rhs correction to be applied in pi * rad
  */
-void operator*= (spectrumType& lhs, Ph0 rhs);
+void operator*= (ComplexVector& lhs, Ph0 rhs);
 
 // applies in place 1st order phase correction
-void operator*= (spectrumType& lhs, Ph1 rhs);
+void operator*= (ComplexVector& lhs, Ph1 rhs);
 } // Processing
 
 

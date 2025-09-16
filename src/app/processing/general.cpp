@@ -7,14 +7,14 @@
 #include <cassert>
 #include <numeric>
 
-std::vector<kiss_fft_cpx> Processing::perform_fft(std::span<const FidComplexValue> fid, FidSizeInfo info)
+std::vector<kiss_fft_cpx> Processing::perform_fft(std::span<const Complex> fid, FidSizeInfo info)
 {
     FFT1DTransformer t{fid, info};
     t.transform();
     return t.receiveRaw();
 }
 
-std::vector<SpectrumComplexValue> Processing::fft_to_spectrum(const std::vector<kiss_fft_cpx>& fftFid)
+std::vector<Complex> Processing::fft_to_spectrum(const std::vector<kiss_fft_cpx>& fftFid)
 {
     std::vector<std::complex<double>> spectrum{};
     spectrum.resize(fftFid.size());
@@ -29,12 +29,12 @@ std::vector<SpectrumComplexValue> Processing::fft_to_spectrum(const std::vector<
     return spectrum;
 }
 
-std::vector<SpectrumComplexValue> Processing::generate_spectrum_from_fid(std::span<FidComplexValue const> fid, FidSizeInfo info)
+std::vector<Complex> Processing::generate_spectrum_from_fid(std::span<Complex const> fid, FidSizeInfo info)
 {
     return fft_to_spectrum(perform_fft(fid, info));
 }
 
-std::vector<kiss_fft_cpx> Processing::constructFid(std::span<FidComplexValue const> fid, FidSizeInfo info)
+std::vector<kiss_fft_cpx> Processing::constructFid(std::span<Complex const> fid, FidSizeInfo info)
 {
     std::vector<kiss_fft_cpx> processedFid(info.zeroFilledTo, kiss_fft_cpx{0.0, 0.0});
 

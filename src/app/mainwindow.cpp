@@ -177,9 +177,9 @@ void MainWindow::openFileSlot()
     }
     QString selectedFile = fileDialog.selectedFiles().at(0);
     std::filesystem::path input_path{selectedFile.toStdString()};
-    FileIO::FileReadResult file_read_result = FileIO::open_experiment(input_path);
+    FileReadResult file_read_result = open_experiment(input_path);
 
-    if (not (file_read_result.file_read_status == FileIO::FileReadStatus::success_1D)) {
+    if (not (file_read_result.status == ReadStatus::success_1D)) {
         return;
     }
 

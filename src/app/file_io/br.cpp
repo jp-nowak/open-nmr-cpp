@@ -1,15 +1,10 @@
 #include "br.h"
 
-#include "big_endian.h"
-#include "little_endian.h"
-#include "string_operations.h"
 #include "general.h"
 #include "../spectrum/spectrum_info.h"
 
 #include <utility>
-#include <fstream>
 #include <vector>
-#include <complex>
 #include <cstddef>
 #include <filesystem>
 #include <cstring>
@@ -20,15 +15,17 @@
 #include <array>
 #include <QDebug>
 
+#include "file_io.h"
+
+using namespace IO;
+
 namespace
 {
 
-using namespace FileIO;
-
-struct BrFidInfo {
-    bool bigEndian;
-    DataType dataType;
-    size_t elemN;
+struct FidInfo {
+    Endian endian;
+    DataType type; // type of simple element
+    size_t elemN; // number of complex elements
 };
 
 std::optional<double> checkGroupDelay(int decim, int dspfvs)
@@ -63,16 +60,34 @@ std::optional<double> checkGroupDelay(int decim, int dspfvs)
     double groupDelay = 0.0;
     try{
         groupDelay = dspTable.at(decim).at(dspfvs - 10);
-    } catch (const std::out_of_range& e) {
+    } catch (...) {
         return {};
     }
     if (groupDelay == 0.0) return {};
     return groupDelay;
-}
+} // end of namespace
 
-std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqusFile)
+#ifndef NDEBUG
+[[maybe_unused]] Dict readFullAcqus(const String& acqusFile)
 {
-    std::unordered_map<std::string, std::string> params{
+    Dict params{};
+    StringView currentParam;
+
+    for (auto line : SplitIterator<char>(acqusFile, "\n")) {
+        if (xis<'#'>(line[0])) {
+            StringView currentParam = strip(getWord(line, 0, " "), "#=");
+            params.emplace(std::make_pair(String(currentParam), strip(line.substr(line.find(" ") + 1), R"("'<> )""\n\t\r")));
+        } else {
+            params.find(currentParam)->second.append(line);
+        }
+    }
+    return params;
+}
+#endif
+
+Dict readSelectAcqus(const String& acqusFile)
+{
+    Dict params{
         {"$O1", {}}, // center of spectrum Hz
         {"$SW_h", {}}, // spectral width Hz
         {"$BF1", {}}, // observed nucleus frequency
@@ -84,73 +99,70 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         {"$SOLVENT", {}}, // solvent
         {"$NUC1", {}}, // observed nucleus
         {"$BYTORDA", {}}, // byte order 1 - BE, 0 - LE
-        {"$DECIM", {}},
-        {"$DSPFVS", {}},
+        {"$DECIM", {}}, // value needed to calc group delay if it is not stated in $GRPDLY
+        {"$DSPFVS", {}}, // value needed to calc group delay if it is not stated in $GRPDLY
     };
 
-    std::string currentLine{};
-    std::vector<std::string> words{};
+    StringView currentParam;
+    bool hasParam = false;
 
-    std::string currentKey{};
-
-    while(std::getline(acqusFile, currentLine)) {
-        words = StringOperations::split(currentLine, " ");
-        currentKey = StringOperations::remove_chars(words[0], R"(#=)");
-        if (params.count(currentKey)) {
-            params[currentKey] = StringOperations::remove_chars(words[1], R"("<>)");
+    for (auto line : SplitIterator<char>(acqusFile, "\n")) {
+        if (xis<'#'>(line[0])) {
+            StringView currentParam = strip(getWord(line, 0, " "), "#=");
+            if (auto element = params.find(currentParam); element != params.end()) {
+                element->second = strip(line.substr(line.find(" ") + 1), R"("'<> )""\n\t\r");
+                hasParam = true;
+            } else hasParam = false;
+        } else if (hasParam) {
+            params.find(currentParam)->second.append(line);
         }
     }
+    return params;
+}
 
-    int decim, dspfvs;
+std::optional<std::pair<SpectrumInfo, FidInfo>> paramsToInfo(const Dict& params)
+{
+
+    // establishing group delay
     double groupDelay;
-    bool validGroupDelay;
+    bool validGroupDelay = false;
     try{
-        groupDelay = std::stod(params["$GRPDLY"]);
-        validGroupDelay = true;
-    } catch (const std::invalid_argument& e) {
-        validGroupDelay = false;
-    } catch(const std::out_of_range& e) {
-        validGroupDelay = false;
-    }
-    if (groupDelay < 0.0) {
-        validGroupDelay = false;
-    }
+        groupDelay = std::stod(params.at("$GRPDLY"));
+        validGroupDelay = (groupDelay < 0.0) ? false : true;
+    } catch (...) {validGroupDelay = false;}
 
     if (not validGroupDelay) {
+        int decim, dspfvs;
         try{
-            decim = std::stoi(params["$DECIM"]);
-            dspfvs = std::stoi(params["$DSPFVS"]);
-        } catch (const std::invalid_argument& e) {
-            return {};
-        } catch(const std::out_of_range& e) {
-            return {};
-        }
+            decim = std::stoi(params.at("$DECIM"));
+            dspfvs = std::stoi(params.at("$DSPFVS"));
+        } catch(...) {return {};}
         if (std::optional<double> gd = checkGroupDelay(decim, dspfvs)) {
             groupDelay = *gd;
         } else return {};
     }
 
-    double spectrumCenter{}, spectralWidthHz{}, spectralWidthPpm{}, observedNucleusFreq{},
-        irradiationFreq{}, dwellTime{};
-    int elementsNumber{};
-    bool bigEndian{};
+    double spectrumCenter, spectralWidthHz, spectralWidthPpm, observedNucleusFreq,
+           irradiationFreq, dwellTime;
+    int elementsNumber;
+    bool bigEndian;
 
     // if conversions fail file is assumed to be corrupt and empty optional is returned
     try{
-        spectrumCenter = std::stod(params["$O1"]);
-        spectralWidthHz = std::stod(params["$SW_h"]);
-        spectralWidthPpm = std::stod(params["$SW"]);
-        observedNucleusFreq = std::stod(params["$BF1"]);
-        elementsNumber = std::stoi(params["$TD"]) / 2;
-        irradiationFreq = std::stod(params["$SFO1"]);
-        bigEndian = static_cast<bool>(std::stoi(params["$BYTORDA"]));
+        spectrumCenter = std::stod(params.at("$O1"));
+        spectralWidthHz = std::stod(params.at("$SW_h"));
+        spectralWidthPpm = std::stod(params.at("$SW"));
+        observedNucleusFreq = std::stod(params.at("$BF1"));
+        elementsNumber = std::stoi(params.at("$TD")) / 2;
+        irradiationFreq = std::stod(params.at("$SFO1"));
+        bigEndian = static_cast<bool>(std::stoi(params.at("$BYTORDA")));
     } catch (const std::invalid_argument& e) {
         return {};
     } catch(const std::out_of_range& e) {
         return {};
     }
 
-    dwellTime = 1 / spectralWidthPpm / irradiationFreq;
+    dwellTime = 1 / spectralWidthPpm / irradiationFreq; // time between data points
 
     size_t elemN;
 
@@ -162,12 +174,12 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
 
     DataType dataType;
 
-    if (params["$DTYPA"] == "0") {
+    if (params.at("$DTYPA") == "0") {
         dataType = DataType::int32;
-    } else if (params["$DTYPA"] == "2") {
-        dataType = DataType::double64;
+    } else if (params.at("$DTYPA") == "2") {
+        dataType = DataType::float64;
     } else {
-        dataType = DataType::unknown;
+        return {};
     }
 
     double plotBeginHz = spectrumCenter - spectralWidthHz / 2;
@@ -184,120 +196,76 @@ std::optional<std::pair<SpectrumInfo, BrFidInfo>> parseAcqus(std::ifstream& acqu
         .dwell_time = dwellTime,
         .group_delay = groupDelay,
         .trimmed = 0.0,
-        .samplename = {}, // TODO!!!
-        .nucleus = params["$NUC1"],
-        .solvent = params["$SOLVENT"]
+        .samplename = {}, // read later from other file
+        .nucleus = params.at("$NUC1"),
+        .solvent = params.at("$SOLVENT")
     };
 
-    BrFidInfo fidInfo{
-        .bigEndian = bigEndian,
-        .dataType = dataType,
+    FidInfo fidInfo{
+        .endian = (bigEndian) ? Endian::big : Endian::little,
+        .type = dataType,
         .elemN = elemN,
     };
 
     return std::make_pair(info, fidInfo);
 }
 
-std::optional<std::vector<std::vector<std::complex<double>>>> readFidFile(std::ifstream& fidFile, BrFidInfo& fidInfo)
+std::optional<std::pair<SpectrumInfo, FidInfo>> parseAcqus(const String& acqus)
 {
-    using enum DataType;
-    using namespace FileIO;
-    const size_t fidSize = fidInfo.elemN * dataTypeSize(fidInfo.dataType) * 2;
-
-    std::vector<std::complex<double>> fid{};
-    std::vector<std::byte> buffer(fidSize, std::byte{0});
-
-    if (not fidFile.read(reinterpret_cast<char*>(buffer.data()), fidSize)) {
-        return {};
-    }
-
-    if (fidInfo.bigEndian){
-        using namespace BigEndian;
-        switch (fidInfo.dataType) {
-        case int32:
-            fid = read_fid_array_int(buffer);
-            break;
-        case double64:
-            fid = read_fid_array_double(buffer);
-            break;
-        default:
-            return {};
-        }
-    } else {
-        using namespace LittleEndian;
-        switch (fidInfo.dataType) {
-        case int32:
-            fid = read_fid_array_int(buffer);
-            break;
-        case double64:
-            fid = read_fid_array_double(buffer);
-            break;
-        default:
-            return {};
-        }
-    }
-        std::vector<std::vector<std::complex<double>>> fids{};
-        fids.push_back(fid);
-        return fids;
+    Dict params = readSelectAcqus(acqus);
+    return paramsToInfo(params);
 }
 
-std::string readTitle(const std::filesystem::path& folderPath)
+Vector<ComplexVector> readFid(const Buffer& file, const FidInfo& info)
 {
-    std::string title{};
-    if (not std::filesystem::exists(folderPath / "pdata")) return title;
+    const size_t fidSize =  info.elemN * dataTypeSize(info.type) * 2;
+    constexpr size_t fidN = 1;
+    if (fidSize * fidN > file.size()) return {};
+    Vector<ComplexVector> fids{};
+    for (size_t i = 0; i < fidN; i++) {
+        fids.push_back(readComplexArray(info.endian, info.type, file, i * fidSize, info.elemN));
+        if (fids[i].empty()) return {};
+    }
+    return fids;
+}
+
+std::string findAndReadTitle(const std::filesystem::path& folderPath)
+{
+    if (not std::filesystem::exists(folderPath / "pdata")) return {};
     auto pdataIter = std::filesystem::recursive_directory_iterator{folderPath / "pdata"};
 
     for (auto& i : pdataIter) {
         if (i.is_regular_file() && i.path().filename() == "title") {
-            std::ifstream titleFile{i.path()};
-            if (not titleFile) return title;
-            std::string currentLine{};
-            while(std::getline(titleFile, currentLine)) {
-                title.append(1, ' ').append(currentLine);
-            }
+            std::string title;
+            if (not readFileTo(title, i.path())) return {};
+            removeCharsInPlace(title, "\r");
+            std::replace(title.begin(), title.end(), '\n', ' ');
             return title;
         }
     }
 
-    return title;
+    return {};
 }
-
 
 } // end of namespace
 
-
-FileIO::FileReadResult FileIO::brParseExperimentFolder(const std::filesystem::path& folderPath)
+FileReadResult openExperimentBr(const std::filesystem::path& fidPath)
 {
-
-    FileReadResult result{};
-    result.file_type = FileType::Br;
-    result.file_read_status = FileReadStatus::unknown_failure;
-    std::ifstream acqusFile{folderPath / "acqus", std::ios::in};
-
-    if (acqusFile) {
-        std::optional<std::pair<SpectrumInfo, BrFidInfo>> info = parseAcqus(acqusFile);
-        if (info) {
-            auto [spectrumInfo, fidInfo] = *info;
-            result.info = spectrumInfo;
-            std::ifstream fidFile{folderPath / "fid", std::ios::in | std::ios::binary};
-            if (auto fids = readFidFile(fidFile, fidInfo)) {
-                result.fids = *fids;    
-                result.info.samplename = readTitle(folderPath);
-                result.file_read_status = FileReadStatus::success_1D;
-            } else {
-                result.file_read_status = FileReadStatus::invalid_fid;
-                return result;
-            }
-        } else {
-            result.file_read_status = FileReadStatus::invalidAcqus;
-            return result;
-        }
-    } else {
-        result.file_read_status = FileReadStatus::invalidAcqus;
-        return result;
+    FileReadResult r{.type = FileType::Br};
+    FidInfo fidInfo;
+    { // reading acqus ant title
+        String string;
+        if (not readFileTo(string, fidPath.parent_path() / "acqus")) {r.status = ReadStatus::invalidAcqus; return r;}
+        if (auto i = parseAcqus(string); i) std::tie(r.info, fidInfo) = *i;
+        else {r.status = ReadStatus::invalidAcqus; return r;}
+        r.info.samplename = findAndReadTitle(fidPath.parent_path());
     }
-
-
-
-    return result;
+    { // reading fid
+        Buffer buffer;
+        if (not readFileTo(buffer, fidPath)) {r.status = ReadStatus::invalid_fid; return r;}
+        r.fids = readFid(buffer, fidInfo);
+        if (r.fids.empty()){ r.status = ReadStatus::invalid_fid; return r;}
+    }
+    r.status = ReadStatus::success_1D;
+    return r;
 }

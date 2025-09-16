@@ -13,7 +13,7 @@ double PeakFinding::calcTreshold(ConstSpectrumSpan spectrum)
     ConstSpectrumSpan edge = spectrum.subspan(0, static_cast<size_t>(0.01 * spectrum.size()));
     size_t count = 0;
     double treshold = std::accumulate(edge.begin(), edge.end(), 0.0,
-        [&count](SpectrumComplexValue lhs, SpectrumComplexValue rhs) -> double {
+        [&count](Complex lhs, Complex rhs) -> double {
         if (rhs.real() > 0.0) {
             count++;
             return lhs.real() + rhs.real();

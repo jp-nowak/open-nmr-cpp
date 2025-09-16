@@ -14,7 +14,7 @@ qt_standard_project_setup()
 
 add_compile_definitions(kiss_fft_scalar=double)
 
-add_compile_definitions(DEBUG_COMP)
+
 
 # add_compile_definitions(PEAK_FINDING_TEST)
 

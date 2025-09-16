@@ -47,7 +47,7 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
 
 void Spectrum::generateSpectrum()
 {
-    spectrum = generate_spectrum_from_fid(std::span<FidComplexValue const>(this->fid), fidSizeInfo);
+    spectrum = generate_spectrum_from_fid(std::span<Complex const>(this->fid), fidSizeInfo);
     restorePhase();
 }
 
@@ -57,12 +57,12 @@ void Spectrum::restorePhase()
     spectrum *= phaseCorrection.ph1;
 }
 
-std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileIO::FileReadResult result)
+std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileReadResult result)
 {
     return std::make_unique<Spectrum>(result.info, result.fids[0]);
 }
 
-std::span<SpectrumComplexValue const> Spectrum::get_spectrum() const
+std::span<Complex const> Spectrum::get_spectrum() const
 {
     return {spectrum};
 }

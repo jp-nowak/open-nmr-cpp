@@ -2,9 +2,7 @@
 #include "ag.h"
 #include "br.h"
 
-using namespace FileIO;
-
-FileType FileIO::check_type(std::filesystem::path& folder)
+FileType check_type(std::filesystem::path& folder)
 {
     if (std::filesystem::exists(folder / "fid")){
         if (std::filesystem::exists(folder / "procpar")){
@@ -16,53 +14,24 @@ FileType FileIO::check_type(std::filesystem::path& folder)
     return FileType::U;
 }
 
-size_t FileIO::dataTypeSize(DataType t)
-{
-    using enum DataType;
-    switch (t) {
-    case unknown:
-        return 0;
-        break;
-    case short16:
-        return 2;
-        break;
-    case int32:
-        return 4;
-        break;
-    case float32:
-        return 4;
-        break;
-    case double64:
-        return 8;
-        break;
-    default:
-        return 0;
-    }
-}
-
-
-FileReadResult FileIO::open_experiment(std::filesystem::path& input_path)
+FileReadResult open_experiment(std::filesystem::path& input_path)
 {
     std::filesystem::path folder_path = input_path.parent_path();
-    FileType file_type = check_type(folder_path);
+    FileType type = check_type(folder_path);
 
     FileReadResult result;
 
-    switch (file_type){
+    switch (type){
     case FileType::Ag:
-        result = ag_parse_experiment_folder(folder_path);
+        result = openExperimentAg(input_path);
         break;
     case FileType::Br:
-        result = brParseExperimentFolder(folder_path);
+        result = openExperimentBr(input_path);
         break;
     default:
-        result.file_read_status = FileReadStatus::unknown_format;
+        result.status = ReadStatus::unknown_format;
         break;
     }
-
-#ifdef DEBUG__
-    qDebug() << result.info;
-#endif
 
     if (result.info.samplename.empty()) {
         result.info.samplename = result.info.nucleus + " experiment";

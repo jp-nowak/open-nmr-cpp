@@ -5,7 +5,7 @@
 #include <numbers>
 #include <algorithm>
 
-void Processing::operator*= (spectrumType& lhs, Ph0 rhs)
+void Processing::operator*= (ComplexVector& lhs, Ph0 rhs)
 {
     using namespace std::complex_literals;
     if (rhs.ph0 == 0.0) return;
@@ -18,7 +18,7 @@ void Processing::operator*= (spectrumType& lhs, Ph0 rhs)
     }
 }
 
-void Processing::operator*= (spectrumType& lhs, Ph1 rhs)
+void Processing::operator*= (ComplexVector& lhs, Ph1 rhs)
 {
     if (rhs.ph1 == 0.0) return;
     assert(lhs.size() % 2 == 0 && "size should be divisible by 2");

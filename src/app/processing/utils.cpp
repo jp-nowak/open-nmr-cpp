@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 
 size_t Processing::indexOfRealMaximum(ConstSpectrumSpan array)
 {
@@ -27,7 +28,7 @@ double Processing::findRealMinimum(ConstSpectrumSpan array)
     return std::real(array[indexOfRealMinimum(array)]);
 }
 
-void Processing::operator*= (fidType& lhs, double rhs)
+void Processing::operator*= (ComplexVector& lhs, double rhs)
 {
     assert(std::isnormal(rhs));
     for (auto& i : lhs) {

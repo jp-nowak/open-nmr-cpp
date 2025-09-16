@@ -15,7 +15,7 @@ double findRealMaximum(ConstSpectrumSpan array);
 
 double findRealMinimum(ConstSpectrumSpan array);
 
-void operator*= (fidType& lhs, double rhs);
+void operator*= (ComplexVector& lhs, double rhs);
 
 }
 

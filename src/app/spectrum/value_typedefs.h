@@ -3,23 +3,28 @@
 
 #include "spectrum_info.h"
 
+
 #include <complex>
 #include <vector>
 #include <span>
 
-typedef std::complex<double> FidComplexValue;
-typedef FidComplexValue SpectrumComplexValue;
-typedef std::vector<FidComplexValue> FidType;
-typedef FidType SpectrumType;
-typedef std::span<FidComplexValue> FidSpan;
+
+template <typename T>
+using Vector = std::vector<T>;
+
+using Byte = std::byte;
+using Value = double;
+using Complex = std::complex<Value>;
+using ComplexVector = Vector<Complex>;
+using String = std::string;
+using Buffer = Vector<Byte>;
+using StringView = std::string_view;
+
+typedef std::span<Complex> FidSpan;
 typedef FidSpan SpectrumSpan;
-typedef std::span<FidComplexValue const> ConstFidSpan;
+typedef std::span<Complex const> ConstFidSpan;
 typedef ConstFidSpan ConstSpectrumSpan;
 
-typedef std::vector<FidComplexValue> fidType;
-typedef std::vector<SpectrumComplexValue> spectrumType;
-
-
-typedef std::vector<IntegralRecord> IntegralsVector;
+using IntegralsVector = Vector<IntegralRecord>;
 
 #endif // VALUE_TYPEDEFS_H

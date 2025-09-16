@@ -2,10 +2,8 @@ qt_add_executable(open-nmr
     mainwindow.h mainwindow.cpp
     main.cpp
     file_io/ag.cpp file_io/ag.h
-    file_io/big_endian.cpp file_io/big_endian.h
     file_io/general.cpp file_io/general.h
     spectrum/spectrum.h spectrum/spectrum.cpp
-    file_io/string_operations.cpp file_io/string_operations.h
     3rd_party/kissfft/_kiss_fft_guts.h 3rd_party/kissfft/kiss_fft.c 3rd_party/kissfft/kiss_fft.h 3rd_party/kissfft/kiss_fft_log.h
     processing/fft_1d_transformer.h processing/fft_1d_transformer.cpp
     processing/general.h processing/general.cpp
@@ -17,7 +15,6 @@ qt_add_executable(open-nmr
     gui/spectrum_displayer_actions.h
     gui/tabwidget.h gui/tabwidget.cpp
     file_io/br.h file_io/br.cpp
-    file_io/little_endian.h file_io/little_endian.cpp
     processing/phase_correction.cpp
     processing/phase_correction.h
     gui/labeledslider.h gui/labeledslider.cpp
@@ -31,6 +28,7 @@ qt_add_executable(open-nmr
     processing/peak_finding.cpp
     processing/utils.h
     processing/utils.cpp
+    file_io/file_io.h file_io/file_io.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

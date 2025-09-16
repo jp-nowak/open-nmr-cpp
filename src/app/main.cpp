@@ -2,7 +2,7 @@
 
 #include <QApplication>
 
-#ifdef DEBUG_COMP
+#ifndef NDEBUG
 
 #include <csignal>
 #include <iostream>
@@ -24,7 +24,7 @@ extern "C" void sig_fpe_hndl(int sig)
 
 int main(int argc, char *argv[])
 {
-    #ifdef DEBUG_COMP
+    #ifndef NDEBUG
 
     std::signal(SIGSEGV, sig_segv_hndl);
     std::signal(SIGFPE, sig_fpe_hndl);

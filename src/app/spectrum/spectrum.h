@@ -18,11 +18,11 @@ class Spectrum final
 public:
 
     Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid);
-    static std::unique_ptr<Spectrum> pointer_from_file_read_result(FileIO::FileReadResult result);
+    static std::unique_ptr<Spectrum> pointer_from_file_read_result(FileReadResult result);
 
 
 
-    std::span<SpectrumComplexValue const> get_spectrum() const;
+    std::span<Complex const> get_spectrum() const;
     const Processing::Phase& getPhase() const;
     const FidSizeInfo& getFidSizeInfo() const;
 
@@ -61,9 +61,9 @@ private:
 //---------------------------------------------------------------------------------------------------------------------
 
 
-    fidType fid;
+    ComplexVector fid;
 
-    spectrumType spectrum;
+    ComplexVector spectrum;
 
     // applied phase correction
     Processing::Phase phaseCorrection;

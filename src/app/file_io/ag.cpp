@@ -1,175 +1,352 @@
 #include "ag.h"
 
-#include "big_endian.h"
-#include "string_operations.h"
-#include "general.h"
-#include "../spectrum/spectrum_info.h"
-
-#include <fstream>
-#include <vector>
-#include <complex>
-#include <cstddef>
-#include <filesystem>
+#include "file_io.h"
 #include <bitset>
-#include <cstring>
-#include <string>
-#include <stdexcept>
 #include <optional>
-#include <unordered_map>
+
+using namespace IO;
 
 namespace
 {
-    constexpr size_t FILE_HEADER_SIZE = 32;
-    constexpr size_t BLOCK_HEADER_SIZE = 28;
+constexpr size_t FILE_HEADER_SIZE = 32;
+constexpr size_t BLOCK_HEADER_SIZE = 28;
 
+//! data from file headers in Ag fid file
+struct FileHeader
+{
+    int nblocks; // number of blocks in file, if nblocks == 1 then spectrum is 1D
+    int ntraces; // number of fids in one block, havent seen it being biger then 1
+    int np; // number of simple elements in one fid, equal twice the number of complex elements
+    int ebytes; // bytes per simple element
+    int tbytes; // np * ebytes
+    int bbytes; // ntraces * tbytes + nbheaders * 28
+    short vers_id; // version of VnmrJ which operated device
+    std::bitset<16> status; // explained later
+    int nbheaders; // number of block headers per block, 1 in case of simple experiments, 2 in 2D hypercomplex
+};
 
-
-    //! data from file headers in Ag fid file
-    struct FileHeader
-    {
-        int nblocks; // number of blocks in file, if nblocks == 1 then spectrum is 1D
-        int ntraces; // number of fids in one block, havent seen it being biger then 1
-        int np; // number of simple elements in one fid, equal twice the number of complex elements
-        int ebytes; // bytes per simple element
-        int tbytes; // np * ebytes
-        int bbytes; // ntraces * tbytes + nbheaders*28
-        short vers_id; // version of VnmrJ which operated device
-        std::bitset<16> status; // explained later
-        int nbheaders; // number of block headers per block, 1 in case of simple experiments, 2 in 2D hypercomplex
+//! creates FileHeader from bytes
+FileHeader readFileHeader(const Buffer& buffer, size_t begin)
+{
+    return FileHeader{
+        .nblocks   = beTo<int>(buffer, begin),
+        .ntraces   = beTo<int>(buffer, begin + 4),
+        .np        = beTo<int>(buffer, begin + 8),
+        .ebytes    = beTo<int>(buffer, begin + 12),
+        .tbytes    = beTo<int>(buffer, begin + 16),
+        .bbytes    = beTo<int>(buffer, begin + 20),
+        .vers_id   = beTo<short>(buffer, begin + 24),
+        .status    = beTo<char16_t>(buffer, begin + 26),
+        .nbheaders = beTo<int>(buffer, begin + 28),
     };
+}
 
-    #ifdef DEBUG_COMP
-    //! data from block header; seems not really relevant, will be cut off in release versions
-    struct BlockHeader
-    {
-        short scale;
-        std::bitset<16> status;
-        short index;
-        short mode;
-        int ctcount;
-        float lpval;
-        float rpval;
-        float lvl;
-        float tlt;
+//! meanings of bits of FileHeader status
+enum FHStatus
+{
+    S_Data = 0,
+    S_Spec = 1,
+    S_32 = 2,
+    S_Float = 3,
+    S_Complex = 4,
+    S_Hyper = 5,
+    S_Acqpar = 7,
+    S_Secnd = 8,
+    S_Transf = 9,
+    S_NP = 11,
+    S_NF = 12,
+    S_NI = 13,
+    S_NI2 = 14,
+};
+
+#ifndef NDEBUG
+[[maybe_unused]] void printFileHeader(const FileHeader& f)
+{
+    printf("FileHeader: %p \n", (void*)&f);
+    printf("nblocks: %d \n", f.nblocks);
+    printf("ntraces: %d \n", f.ntraces);
+    printf("np: %d \n", f.np);
+    printf("ebytes: %d \n", f.ebytes);
+    printf("tbytes: %d \n", f.tbytes);
+    printf("bbytes: %d \n", f.bbytes);
+    printf("vers_id: %d \n", f.vers_id);
+    printf("status: %s \n", f.status.to_string().c_str());
+    printf("\t S_Data: %d \n", f.status[S_Data]);
+    printf("\t S_Spec: %d \n", f.status[S_Spec]);
+    printf("\t S_32: %d \n", f.status[S_32]);
+    printf("\t S_Float: %d \n", f.status[S_Float]);
+    printf("\t S_Complex: %d \n", f.status[S_Complex]);
+    printf("\t S_Hyper: %d \n", f.status[S_Hyper]);
+    printf("\t S_Acqpar: %d \n", f.status[S_Acqpar]);
+    printf("\t S_Secnd: %d \n", f.status[S_Secnd]);
+    printf("\t S_Transf: %d \n", f.status[S_Transf]);
+    printf("\t S_NP: %d \n", f.status[S_NP]);
+    printf("\t S_NF: %d \n", f.status[S_NF]);
+    printf("\t S_NI: %d \n", f.status[S_NI]);
+    printf("\t S_NI2: %d \n", f.status[S_NI2]);
+    printf("nbheaders: %d \n", f.nbheaders);
+}
+#endif
+
+//! data from block header; seems not really relevant
+struct BlockHeader
+{
+    short scale;
+    std::bitset<16> status;
+    short index;
+    short mode;
+    int ctcount;
+    float lpval;
+    float rpval;
+    float lvl;
+    float tlt;
+};
+
+//! creates BlockHeader from bytes
+BlockHeader readBlockHeader(const Buffer& buffer, size_t begin)
+{
+    return BlockHeader{
+        .scale   = beTo<short>(buffer, begin),
+        .status  = beTo<char16_t>(buffer, begin + 2),
+        .index   = beTo<short>(buffer, begin + 4),
+        .mode    = beTo<short>(buffer, begin + 6),
+        .ctcount = beTo<int>(buffer, begin + 8),
+        .lpval   = beTo<float>(buffer, begin + 16),
+        .rpval   = beTo<float>(buffer, begin + 20),
+        .lvl     = beTo<float>(buffer, begin + 24),
+        .tlt     = beTo<float>(buffer, begin + 28),
     };
-    #endif
+}
 
-    /*!
-     * @brief read_file_header creates FileHeader out of vector of big endian bytes
-     * @param buffer vector containing big endian bytes corresponding to header, read from fid file of Ag type
-     * @param begin position from which reading of header starts
-     * @return FileHeader struct with information from file header
-     */
-    FileHeader read_file_header(const std::vector<std::byte>& buffer, size_t begin)
-    {
-        using namespace BigEndian;
-        return FileHeader{
-        .nblocks   = to_int(buffer, begin + 0),
-        .ntraces   = to_int(buffer, begin + 4),
-        .np        = to_int(buffer, begin + 8),
-        .ebytes    = to_int(buffer, begin + 12),
-        .tbytes    = to_int(buffer, begin + 16),
-        .bbytes    = to_int(buffer, begin + 20),
-        .vers_id   = to_short(buffer, begin + 24),
-        .status    = std::bitset<16>(to_short(buffer, begin+26)),
-        .nbheaders = to_int(buffer, begin + 28)
-        };
+enum BHStatus
+{
+    B_Data = 0,
+    B_Spec = 1,
+    B_32 = 2,
+    B_Float = 3,
+    B_Complex = 4,
+    B_Hyper = 5,
+    More_blocks = 7,
+    NP_Cmplx = 8,
+    NF_Cmplx = 9,
+    NI_Cmplx = 10,
+    NI2_Cmplx = 11,
+};
+
+#ifndef NDEBUG
+[[maybe_unused]] void printBlockHeader(const BlockHeader& x)
+{
+    printf("BlockHeader: %p \n", (void*)&x);
+    printf("scale: %d \n", x.scale);
+    printf("status: %s \n", x.status.to_string().c_str());
+    printf("\t B_Data: %d \n", x.status[B_Data]);
+    printf("\t B_Spec: %d \n", x.status[B_Spec]);
+    printf("\t B_32: %d \n", x.status[B_32]);
+    printf("\t B_Float: %d \n", x.status[B_Float]);
+    printf("\t B_Complex: %d \n", x.status[B_Complex]);
+    printf("\t B_Hyper: %d \n", x.status[B_Hyper]);
+    printf("\t More_blocks: %d \n", x.status[More_blocks]);
+    printf("\t NP_Cmplx: %d \n", x.status[NP_Cmplx]);
+    printf("\t NF_Cmplx: %d \n", x.status[NF_Cmplx]);
+    printf("\t S_NPNI_Cmplx %d \n", x.status[NI_Cmplx]);
+    printf("\t NI2_Cmplx: %d \n", x.status[NI2_Cmplx]);
+    printf("index: %d \n", x.index);
+    printf("mode: %d \n", x.mode);
+    printf("ctcount: %d \n", x.ctcount);
+    printf("lpval: %f \n", x.lpval);
+    printf("rpval: %f \n", x.rpval);
+    printf("lvl: %f \n", x.lvl);
+    printf("tlt: %f \n", x.tlt);
+}
+#endif
+
+struct HyperCmplxHeader
+{
+    short s_spare1l;
+    std::bitset<16> status;
+    short s_spare2;
+    short s_spare3;
+    int l_spare1;
+    float lpval1;
+    float rpval1;
+    float f_spare1;
+    float f_spare2;
+};
+
+HyperCmplxHeader readHyperCmplxHeader(const Buffer& buffer, size_t begin)
+{
+    return HyperCmplxHeader{
+        .s_spare1l = beTo<short>(buffer, begin),
+        .status    = beTo<char16_t>(buffer, begin + 2),
+        .s_spare2  = beTo<short>(buffer, begin + 4),
+        .s_spare3  = beTo<short>(buffer, begin + 6),
+        .l_spare1  = beTo<int>(buffer, begin + 8),
+        .lpval1    = beTo<float>(buffer, begin + 16),
+        .rpval1    = beTo<float>(buffer, begin + 20),
+        .f_spare1  = beTo<float>(buffer, begin + 24),
+        .f_spare2  = beTo<float>(buffer, begin + 28),
+    };
+}
+
+enum HCHStatus
+{
+    NP_PHmode = 0,
+    NP_AVmode = 1,
+    NP_PWRmode = 2,
+    NF_PHmode = 4,
+    NF_AVmode = 5,
+    NF_PWRmode = 6,
+    NI_PHmode = 8,
+    NI_AVmode = 9,
+    NI_PWRmode = 10,
+    NI2_PHmode = 12,
+    NI2_AVmode = 13,
+    NI2_PWRmode = 14,
+
+};
+
+Vector<ComplexVector> readFidFile(const Buffer& buffer)
+{
+    size_t pos = 0;
+    auto fileHeader = readFileHeader(buffer, pos);
+    pos += FILE_HEADER_SIZE;
+    DataType dataType;
+    if (fileHeader.status[S_Float]) {
+        dataType = DataType::float32;
+    } else if (fileHeader.status[S_32]) {
+        dataType = DataType::int32;
+    } else {
+        dataType = DataType::int16;
     }
+    size_t cElemN = fileHeader.np / 2;
+    int traceSize = fileHeader.np * dataTypeSize(dataType);
 
-    #ifdef DEBUG_COMP
-    /*!
-     * @brief read_block_header creates BlockHeader out of vector of big endian bytes, will be cut off in release
-     * version as those informations doesnt seem important
-     * @param buffer vector containing big endian bytes corresponding to header, read from fid file of Ag type
-     * @param begin position from which reading of header starts
-     * @return BlockHeader struct with information from file header
-     */
-    BlockHeader read_block_header(const std::vector<std::byte>& buffer, size_t begin)
-    {
-        using namespace BigEndian;
-        return BlockHeader{
-        .scale   = to_short(buffer, begin + 0),
-        .status  = std::bitset<16>(to_short(buffer, begin + 2)),
-        .index   = to_short(buffer, begin + 4),
-        .mode    = to_short(buffer, begin + 6),
-        .ctcount = to_int(buffer, begin + 8),
-        .lpval   = to_float(buffer, begin + 12),
-        .rpval   = to_float(buffer, begin + 16),
-        .lvl     = to_float(buffer, begin + 20),
-        .tlt     = to_float(buffer, begin + 24)
-        };
+    if ((traceSize != fileHeader.tbytes)
+    or fileHeader.nblocks > 1
+    or fileHeader.nbheaders > 1
+    or (static_cast<int>(dataTypeSize(dataType)) != fileHeader.ebytes)
+    or not fileHeader.status[S_Data]
+    or fileHeader.status[S_Spec]
+    or fileHeader.status[S_Hyper]
+    or not fileHeader.status[S_Acqpar]
+    or fileHeader.status[S_Secnd]
+    or fileHeader.status[S_Transf]
+    or fileHeader.status[S_NP]
+    or fileHeader.status[S_NF]
+    or fileHeader.status[S_NI]
+    or fileHeader.status[S_NI2]
+    or fileHeader.status[S_Complex]
+    ) return {};
+
+    Vector<ComplexVector> fids{};
+
+    for (int i = 0; i < fileHeader.nblocks; i++) {
+        [[maybe_unused]] auto blockHeader = readBlockHeader(buffer, pos);
+        pos += BLOCK_HEADER_SIZE;
+        if (fileHeader.nbheaders == 2) {
+            [[maybe_unused]] auto hyperHeader = readHyperCmplxHeader(buffer,pos);
+            pos += BLOCK_HEADER_SIZE;
+        } else if (fileHeader.nbheaders != 1) return {};
+        for (int j = 0; j < fileHeader.ntraces; j++) {
+            ComplexVector trace = readComplexArray(Endian::big, dataType, buffer, pos, cElemN);
+            if (trace.empty()) return {};
+            pos += traceSize;
+            fids.push_back(trace);
+        }
     }
-    #endif
+    return fids;
+}
 
-    /*!
-     * \brief parse_procpar parses procpar file present in folder of Ag experiments
-     * \param procpar_file std::ifstream& (text) corresponding to procpar file from experiment folder, function does not check if it is in correct state
-     * \return std::optional<SpectrumInfo>, containing SpectrumInfo or empty if any problems arouse
-     */
-    std::optional<SpectrumInfo> parse_procpar(std::ifstream& procpar_file)
-    {
-        //!
-        //! \brief map containing as keys params which are to be extracted from procpar file,
-        //! their values are placed as items of corresponding keys
-        //!
-        std::unordered_map<std::string, std::string> params{
-            {"solvent", {}},
-            {"samplename", {}},
-            {"tn", {}},
-            {"sw", {}},
-            {"sfrq", {}},
-            {"at", {}},
-            {"reffrq", {}},
-            {"np", {}},
-            {"samplename", {}},
-            {"tn", {}},
-            {"solvent", {}}
-        };
+#ifndef NDEBUG
+//! reads all params from String containing procpar file
+[[maybe_unused]] Dict readFullProcpar(const String& procpar)
+{
+    auto lines = SplitIterator<char>(procpar, "\n");
+    Dict params;
+    StringView name_;
 
-        std::string current_line{};
-        std::vector<std::string> words{};
-        bool found_param = false;
-        std::string current_key{};
-
-        while(std::getline(procpar_file, current_line)) {
-            words = StringOperations::split(current_line, " ");
-            if (found_param) {
-                params[current_key] = StringOperations::remove_chars(words[1], R"(")");
-                found_param = false;
+    for (auto line : lines) {
+        Vector<StringView> words = split(line, " ");
+        if (xisDigit(words[0][0]) or xis<'"'>(words[0][0])) {
+            if (xisNumber(words[0])) words[0] = {};
+            if (not params.contains(name_)) {
+                params.emplace(std::make_pair(String(name_), join(words, " ", &strip)));
             } else {
-                if (params.count(words[0])) {
-                    found_param = true;
-                    current_key = words[0];
-                }
+                params.find(name_)->second.append(join(words, " ", &strip));
             }
-
+        } else {
+            name_ = words[0];
         }
+    }
+    return params;
+}
+#endif
 
-        // checks whether any key remained empty
-        if (params.contains(std::string{})) {
-            return {};
+//! reads params necessary for processing from String containing procpar file
+Dict readSelectProcpar(const String& procpar)
+{
+    Dict params{
+        {"solvent", {}},
+        {"samplename", {}},
+        {"tn", {}},
+        {"sw", {}},
+        {"sfrq", {}},
+        {"at", {}},
+        {"reffrq", {}},
+        {"np", {}},
+        {"samplename", {}},
+        {"tn", {}},
+    };
+
+    bool foundParam = false;
+    StringView name_;
+
+    for (auto line : SplitIterator<char>(procpar, "\n")) {
+        StringView firstWord = getWord(line, 0, " ");
+        if (foundParam) {
+            if (xisDigit(firstWord[0]) or xis<'"'>(firstWord[0])) {
+                Vector<StringView> words = split(line, " ");
+                if (xisNumber(words[0])) words[0] = {};
+                if (auto& paramValue = params.find(name_)->second; paramValue.empty()) {
+                    paramValue = join(words, " ", &strip);
+                } else {
+                    paramValue.append(join(words, " ", &strip));
+                }
+            } else foundParam = false;
         }
-
-        double zero_freq{}, obs_nucleus_freq{}, spectral_width{}, elements_number{}, acquisition_time{};
-
-        // if conversions fail file is assumed to be corrupt and empty optional is returned
-        try{
-            zero_freq = std::stod(params["reffrq"]);
-            obs_nucleus_freq = std::stod(params["sfrq"]);
-            spectral_width  = std::stod(params["sw"]);
-            elements_number = std::stod(params["np"]) / 2;
-            acquisition_time = std::stod(params["at"]);
-        } catch (const std::invalid_argument& e) {
-            return {};
-        } catch(const std::out_of_range& e) {
-            return {};
+        if (params.contains(firstWord)) {
+            foundParam = true;
+            name_ = firstWord;
         }
+    }
+    return params;
+}
 
-        double irradiation_freq = std::fabs((zero_freq - obs_nucleus_freq) * 1000000);
-        double plot_begin = irradiation_freq - spectral_width / 2;
-        double plot_end = irradiation_freq + spectral_width / 2;
+std::optional<SpectrumInfo> paramsToInfo(const Dict& params)
+{
+    double zero_freq, obs_nucleus_freq, spectral_width, elements_number, acquisition_time;
+    // if conversions fail file is assumed to be corrupt and empty optional is returned
+    try{
+        zero_freq = std::stod(params.at("reffrq"));
+        obs_nucleus_freq = std::stod(params.at("sfrq"));
+        spectral_width  = std::stod(params.at("sw"));
+        elements_number = std::stod(params.at("np")) / 2;
+        acquisition_time = std::stod(params.at("at"));
+    } catch (...) {
+        return {};
+    }
 
-        SpectrumInfo info{
+    if (not params.contains("samplename")
+    or not params.contains("tn")
+    or not params.contains("solvent")
+    or obs_nucleus_freq == 0.0
+    or elements_number == 0.0) return {};
+
+    double irradiation_freq = std::fabs((zero_freq - obs_nucleus_freq) * 1000000);
+    double plot_begin = irradiation_freq - spectral_width / 2;
+    double plot_end = irradiation_freq + spectral_width / 2;
+
+    return SpectrumInfo{
         .plot_right_Hz = plot_begin,
         .plot_left_Hz = plot_end,
         .plot_right_ppm = plot_begin / obs_nucleus_freq,
@@ -180,155 +357,33 @@ namespace
         .dwell_time = acquisition_time / elements_number,
         .group_delay = 0.0,
         .trimmed = 0.0,
-        .samplename = params["samplename"],
-        .nucleus = params["tn"],
-        .solvent = params["solvent"]
-        };
-
-        return info;
-    }
-
-    /*!
-     * \brief read_fid_file reads fid file and returns fids present in it
-     * \param fid_file  std::ifstream& (binary) corresponding to fid file from experiment folder, function does not check if it is in correct state
-     * \return optional vector of fids (vector of complex<double>) as 2D spectrum contains more then one. If any error occured empty optional is returned
-     */
-    std::optional<std::vector<std::vector<std::complex<double>>>> read_fid_file(std::ifstream& fid_file)
-    {
-        using namespace FileIO;
-        // reading of file header, which contains information necessary for further processing
-        std::vector<std::byte> buffer(FILE_HEADER_SIZE, std::byte{0});
-        if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), FILE_HEADER_SIZE)) {
-            return {};
-        }
-        FileHeader file_header = read_file_header(buffer, 0);
-
-        // extracting information about data type, there are only three options
-        DataType data_type{};
-        if (file_header.status[3]){
-            data_type = DataType::float32;
-        } else if (file_header.status[2]){
-            data_type = DataType::int32;
-        } else {
-            data_type = DataType::short16;
-        }
-
-        std::vector<std::vector<std::complex<double>>> fids{};
-
-        const size_t fid_array_byte_size = file_header.np * file_header.ebytes;
-
-        if (file_header.ebytes != static_cast<int>(dataTypeSize(data_type))) {
-            return {};
-        }
-
-        if (fid_array_byte_size != static_cast<size_t>(file_header.tbytes)) {
-            return {};
-        }
-
-        // reading of remaining part of file
-
-        for (size_t i = 0; i < static_cast<size_t>(file_header.nblocks); i++) { // loop over blocks
-
-            #ifdef DEBUG_COMP
-            buffer.resize(BLOCK_HEADER_SIZE);
-
-            if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
-                return {};
-            }
-            [[maybe_unused]] BlockHeader block_header = read_block_header(buffer, 0);
-            #endif // DEBUG_COMP
-            #ifndef DEBUG_COMP
-                fid_file.ignore(BLOCK_HEADER_SIZE);
-            #endif
-
-            if (file_header.nbheaders == 2) { // there may exist second block header in more complicated experiments
-
-                #ifdef DEBUG_COMP
-                buffer.resize(BLOCK_HEADER_SIZE);
-
-                if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), BLOCK_HEADER_SIZE)) {
-                    return {};
-                }
-
-                [[maybe_unused]] BlockHeader additional_block_header = read_block_header(buffer, 0);
-                #endif // DEBUG_COMP
-                #ifndef DEBUG_COMP
-                fid_file.ignore(BLOCK_HEADER_SIZE);
-                #endif
-            }
-
-            // reading fid from current block
-            std::vector<std::complex<double>> fid{};
-            buffer.resize(fid_array_byte_size);
-
-            if (not fid_file.read(reinterpret_cast<char*>(buffer.data()), fid_array_byte_size)) {
-                return {};
-            }
-
-            switch (data_type) {
-            case DataType::float32:
-                fid = BigEndian::read_fid_array_float(buffer);
-                break;
-            case DataType::int32:
-                fid = BigEndian::read_fid_array_int(buffer);
-                break;
-            case DataType::short16:
-                fid = BigEndian::read_fid_array_short(buffer);
-                break;
-            default:
-                return {};
-            }
-            fids.push_back(fid);
-        }
-        return fids;
-    }
-
+        .samplename = params.at("samplename"),
+        .nucleus = params.at("tn"),
+        .solvent = params.at("solvent")
+    };
+}
 
 } // end of namespace
 
-/*!
- * \brief FileIO::ag_parse_experiment_folder function that handles opening and reading of Ag experiment folder
- * containing fid and procpar files
- * \param folder_path
- * \return FileReadResult, containing extracted informations. If error occured FileReadResult.file_read_status is set to
- * corresponding error enum.
- */
-FileIO::FileReadResult FileIO::ag_parse_experiment_folder(const std::filesystem::path& folder_path)
+FileReadResult openExperimentAg(const std::filesystem::path& fidPath)
 {
-    std::ifstream fid_file{folder_path / "fid", std::ios::in | std::ios::binary};
-    std::ifstream procpar_file{folder_path / "procpar", std::ios::in};
-
-    FileReadResult result{};
-    result.file_type = FileType::Ag;
-    result.file_read_status = FileReadStatus::unknown_failure;
-
-    if (fid_file) {
-        std::optional<std::vector<std::vector<std::complex<double>>>> fids = read_fid_file(fid_file);
-        if (fids) {
-            result.fids = fids.value();
-            result.file_read_status = FileReadStatus::success_1D;
-        } else {
-            result.file_read_status = FileReadStatus::invalid_fid;
+    FileReadResult result{.type = FileType::Ag};
+    {
+        Buffer buffer{};
+        if (readFileTo(buffer, fidPath)) {
+            result.fids = readFidFile(buffer);
         }
-    } else {
-        result.file_read_status = FileReadStatus::invalid_fid;
+        if (result.fids.empty()) return FileReadResult{.status = ReadStatus::invalid_fid};
     }
-
-    if (procpar_file) {
-        std::optional<SpectrumInfo> info = parse_procpar(procpar_file);
-        if (info) {
-            result.info = info.value();
-            result.file_read_status = FileReadStatus::success_1D;
-        } else {
-            result.file_read_status = FileReadStatus::invalid_procpar;
-        }
-    } else {
-        result.file_read_status = FileReadStatus::invalid_procpar;
+    {
+        String buffer{};
+        auto procparPath = fidPath.parent_path() / "procpar";
+        if (not std::filesystem::exists(procparPath)) return FileReadResult{.status = ReadStatus::invalid_procpar};
+        if (not readFileTo(buffer, procparPath)) return FileReadResult{.status = ReadStatus::invalid_procpar};
+        Dict params = readSelectProcpar(buffer);
+        if (auto info = paramsToInfo(params); info) result.info = *info;
+        else return FileReadResult{.status = ReadStatus::invalid_procpar};
     }
-
-
-
+    result.status = ReadStatus::success_1D;
     return result;
 }
-
-
