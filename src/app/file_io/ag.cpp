@@ -222,7 +222,6 @@ Vector<ComplexVector> readFidFile(const Buffer& buffer)
     int traceSize = fileHeader.np * dataTypeSize(dataType);
 
     if ((traceSize != fileHeader.tbytes)
-    or fileHeader.nblocks > 1
     or fileHeader.nbheaders > 1
     or (static_cast<int>(dataTypeSize(dataType)) != fileHeader.ebytes)
     or not fileHeader.status[S_Data]
@@ -384,6 +383,6 @@ FileReadResult openExperimentAg(const std::filesystem::path& fidPath)
         if (auto info = paramsToInfo(params); info) result.info = *info;
         else return FileReadResult{.status = ReadStatus::invalid_procpar};
     }
-    result.status = ReadStatus::success_1D;
+    result.status = (result.fids.size() > 1) ? ReadStatus::success_2D : ReadStatus::success_1D;
     return result;
 }

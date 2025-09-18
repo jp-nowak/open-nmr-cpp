@@ -26,10 +26,29 @@
 #include <QList>
 #include <QDockWidget>
 #include <QShortcut>
+#include <QMessageBox>
 
 #include <filesystem>
 
 void qt_set_sequence_auto_mnemonic(bool b);
+
+namespace
+{
+    QString readErrorMessage(ReadStatus s)
+    {
+        using enum ReadStatus;
+        switch (s) {
+            case unknown_failure: return QStringLiteral("unknown failure has occured when opening file");
+            case success_1D: return QStringLiteral("1D experiment opened successfuly");
+            case success_2D: return QStringLiteral("2D experiments are not supported yet");
+            case unknown_format: return QStringLiteral("uknown file format");
+            case invalid_fid: return QStringLiteral("fid file is corrupted");
+            case invalid_procpar: return QStringLiteral("procpar file is corrupted");
+            case invalidAcqus: return QStringLiteral("acqus file is corrupted");
+        }
+        assert(false);
+    }
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -166,7 +185,6 @@ void MainWindow::createKeyShortcuts()
     });
 }
 
-
 void MainWindow::openFileSlot()
 {
     QFileDialog fileDialog(this, tr("Open File"));
@@ -180,6 +198,10 @@ void MainWindow::openFileSlot()
     FileReadResult file_read_result = open_experiment(input_path);
 
     if (not (file_read_result.status == ReadStatus::success_1D)) {
+        QMessageBox msg{};
+        msg.setWindowTitle(QStringLiteral("Error"));
+        msg.setText(readErrorMessage(file_read_result.status));
+        msg.exec();
         return;
     }
 
@@ -247,8 +269,6 @@ void MainWindow::resetIntegralsSlot()
         p->update();
     emit closeDynamicElements();
 }
-
-
 
 void MainWindow::spectrumChangedSlot(int i)
 {
