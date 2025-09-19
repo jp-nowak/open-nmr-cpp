@@ -13,13 +13,14 @@ class XAxis;
 class IntegralsDisplayer;
 class UniversalAxis;
 
-// widget that governs fully display of spectrum
-//
-// layout:
-//
-// SpectrumPainter    | YAxis
-// XAxis              | -----
-// IntegralsDisplayer | placeholder
+enum class DisplayerAction{None, Zoom, Integrate};
+
+//! widget that governs fully display of spectrum
+//! layout:
+//!
+//! SpectrumPainter    | YAxis
+//! XAxis              | -----
+//! IntegralsDisplayer | placeholder
 class SpectrumDisplayer : public QWidget
 {
     Q_OBJECT

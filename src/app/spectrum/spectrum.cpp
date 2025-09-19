@@ -25,15 +25,15 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
     generateSpectrum();
     if (!(info.group_delay == 0.0)) {
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
-        setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});
+        setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});  // correcting phase distortion caused by group delay
     }
     if (findRealMaximum(get_spectrum()) < std::fabs(findRealMinimum(get_spectrum()))) {
-        setPh0(Ph0{1});
+        setPh0(Ph0{1}); // if highest point is negative flip spectrum
     }
     constexpr double MAXIMUM_Y_VALUE = 1000000;
     if (double maximum = findRealMaximum(get_spectrum()); maximum > MAXIMUM_Y_VALUE) {
         double mult = 1.0 / (maximum / MAXIMUM_Y_VALUE);
-        this->fid *= mult;
+        this->fid *= mult; // downscaling fid if spectrum y values are too big
         generateSpectrum();
     }
 
@@ -42,7 +42,7 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
     autoFindPeaks();
 #endif
 
-    return;
+
 }
 
 void Spectrum::generateSpectrum()

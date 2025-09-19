@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "gui/spectrum_displayer_actions.h"
 #include "gui/tabwidget.h"
 
 #include <QMainWindow>
@@ -13,6 +12,8 @@ class Spectrum;
 class TabWidget;
 class PhaseCorrectionWidget;
 class ZeroFillingWidget;
+
+enum class DisplayerAction;
 
 class QPushButton;
 class QStackedWidget;

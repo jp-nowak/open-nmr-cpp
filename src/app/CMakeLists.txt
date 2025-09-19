@@ -12,7 +12,7 @@ qt_add_executable(open-nmr
     gui/spectrumdisplayer.h gui/spectrumdisplayer.cpp
     gui/xaxis.h gui/xaxis.cpp
     gui/gui_utilities.h gui/gui_utilities.cpp
-    gui/spectrum_displayer_actions.h
+
     gui/tabwidget.h gui/tabwidget.cpp
     file_io/br.h file_io/br.cpp
     processing/phase_correction.cpp

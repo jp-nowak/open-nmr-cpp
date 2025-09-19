@@ -63,9 +63,6 @@ MainWindow::MainWindow(QWidget *parent)
     activateWindow();
 
     setWindowState(Qt::WindowMaximized);
-    #ifdef DEBUG__
-        qDebug() << "DEBUG__";
-    #endif
 
     setWindowTitle(tr("Open NMR"));
     createActions();
