@@ -32,10 +32,18 @@ QColor mapDisplayerActionToColor(DisplayerAction action)
 }
 }
 
+ASpectrumDisplayer::ASpectrumDisplayer(const SpectrumInfo& info, QWidget* parent)
+    : QWidget{parent}
+    , info{info}
+{}
 
+ASpectrumDisplayer::~ASpectrumDisplayer()
+{
+
+}
 
 SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
-    : QWidget{parent}
+    : ASpectrumDisplayer{new_experiment->info, parent}
     , experiment{std::move(new_experiment)}
     , spainter{new SpectrumPainter{experiment.get(), this}}
     , idisplayer{new IntegralsDisplayer{experiment.get(), this}}
@@ -152,7 +160,7 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
 
     // double clicking on spectrum shall have no effect
     if (mouseMoveStartPoint.x() == mouseMoveEndPoint.x()) {
-        mainWindow->setCurrentAction(None);
+        mainWindow->finishAction();
         spainter->resetSelection();
         return;
     }
@@ -165,7 +173,7 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
             xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
             idisplayer->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
         }
-        mainWindow->setCurrentAction(DisplayerAction::None);
+        mainWindow->finishAction();
         break;
 
     case Integrate:
@@ -173,7 +181,7 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
         spainter->resetSelection();
         auto [left, right] = spainter->selectionRangeToDataPointsOfSpectrum(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
         experiment->integrate(left, right);
-        mainWindow->setCurrentAction(DisplayerAction::None);
+        mainWindow->finishAction();
         idisplayer->update();
         break;
     }

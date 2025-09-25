@@ -6,6 +6,7 @@
 #include <QMainWindow>
 
 #include <tuple>
+#include <array>
 
 class Spectrum;
 
@@ -20,6 +21,9 @@ class QStackedWidget;
 class QFrame;
 class QDockWidget;
 
+enum ButtonNames{openFileB, zoomB, zoomResetB, integrateB, integralsResetB, ActiveButton, NumberOfButtons};
+enum ActionNames{openFileA, closeAppA, phaseCorrectionA, zeroFillingA, NumberofActions};
+
 class MainWindow final : public QMainWindow
 {
     Q_OBJECT
@@ -30,7 +34,7 @@ public:
 
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void setCurrentAction(DisplayerAction action);
+
 
 signals:
 
@@ -51,18 +55,22 @@ private:
     QFrame* actionsFrame;
     QMenuBar* topMenuBar;
 
-    QAction* openFileAction;
-    QAction* closeAppAction;
-    QAction* phaseCorrectionAction;
-    QAction* zeroFillingAction;
+    // QAction* openFileAction;
+    // QAction* closeAppAction;
+    // QAction* phaseCorrectionAction;
+    // QAction* zeroFillingAction;
 
     QStackedWidget* mainStackedWidget;
 
-    QPushButton* openFileButton;
-    QPushButton* zoomButton;
-    QPushButton* zoomResetButton;
-    QPushButton* integrateButton;
-    QPushButton* resetIntegralsButton;
+
+    std::array<QPushButton*, NumberOfButtons> buttons = {};
+    std::array<QAction*, NumberofActions> actions = {};
+
+    // QPushButton* openFileButton;
+    // QPushButton* zoomButton;
+    // QPushButton* zoomResetButton;
+    // QPushButton* integrateButton;
+    // QPushButton* integralsResetButton;
 
     TabWidget* tabWidget;
 
@@ -101,6 +109,7 @@ private slots:
 
 public slots:
     void refreshCurrentDisplayerSlot();
+    void finishAction();
 
 };
 

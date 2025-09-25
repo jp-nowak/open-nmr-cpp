@@ -207,7 +207,6 @@ void SpectrumPainter::wheelEvent(QWheelEvent* e)
         scalingFactor /= increment;
         emit wheelTurned(-increment);
     }
-    qDebug() << scalingFactor;
     update();
 }
 

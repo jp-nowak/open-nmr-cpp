@@ -6,6 +6,7 @@
 #include "gui/spectrumdisplayer.h"
 #include "gui/widgets_for_processing.h"
 
+
 #include <QScreen>
 #include <QMenu>
 #include <QPushButton>
@@ -34,7 +35,8 @@ void qt_set_sequence_auto_mnemonic(bool b);
 
 namespace
 {
-    QString readErrorMessage(ReadStatus s)
+
+    const QString readErrorMessage(ReadStatus s)
     {
         using enum ReadStatus;
         switch (s) {
@@ -45,6 +47,19 @@ namespace
             case invalid_fid: return QStringLiteral("fid file is corrupted");
             case invalid_procpar: return QStringLiteral("procpar file is corrupted");
             case invalidAcqus: return QStringLiteral("acqus file is corrupted");
+        }
+        assert(false);
+    }
+
+    constexpr std::array BUTTONS_NEEDING_SPECTRUM{zoomB, zoomResetB, integrateB, integralsResetB};
+    constexpr std::array ACTIONS_NEEDING_SPECTRUM{phaseCorrectionA, zeroFillingA};
+    consteval DisplayerAction buttonToDisplayerAction(ButtonNames n)
+    {
+        using enum DisplayerAction;
+        switch (n) {
+        case zoomB: return Zoom;
+        case integrateB : return Integrate;
+        default : return None;
         }
         assert(false);
     }
@@ -88,6 +103,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mainStackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::spectrumChangedSlot);
     connect(this, &MainWindow::displayedSpectrumChanged, this, [this](){emit closeDynamicElements();});
 
+    // disabling things that need open spectrum
+    for (auto i : ACTIONS_NEEDING_SPECTRUM) {actions[i]->setEnabled(false);}
+    for (auto i : BUTTONS_NEEDING_SPECTRUM) {buttons[i]->setEnabled(false);}
+
 }
 
 MainWindow::~MainWindow()
@@ -96,27 +115,30 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions()
 {
-    openFileAction = new QAction(tr("Open File"), this);
-    connect(openFileAction, &QAction::triggered, this, &MainWindow::openFileSlot);
-    closeAppAction = new QAction(tr("Close App"), this);
-    connect(closeAppAction, &QAction::triggered, this, &MainWindow::close);
-    phaseCorrectionAction = new QAction(tr("Phase Correction"), this);
-    connect(phaseCorrectionAction, &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
-    zeroFillingAction = new QAction(tr("Zero Filling"), this);
-    connect(zeroFillingAction, &QAction::triggered, this, &MainWindow::zeroFillingSlot);
+    actions[openFileA] = new QAction(tr("Open File"), this);
+    connect(actions[openFileA], &QAction::triggered, this, &MainWindow::openFileSlot);
+
+    actions[closeAppA] = new QAction(tr("Close App"), this);
+    connect(actions[closeAppA], &QAction::triggered, this, &MainWindow::close);
+
+    actions[phaseCorrectionA] = new QAction(tr("Phase Correction"), this);
+    connect(actions[phaseCorrectionA], &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
+
+    actions[zeroFillingA] = new QAction(tr("Zero Filling"), this);
+    connect(actions[zeroFillingA], &QAction::triggered, this, &MainWindow::zeroFillingSlot);
 }
 
 void MainWindow::createTopMenuBar()
 {
     topMenuBar = menuBar();
-
+    connect(topMenuBar, &QMenuBar::triggered, this, &MainWindow::finishAction);
     QMenu* fileMenu = topMenuBar->addMenu(tr("File"));
-    fileMenu->addAction(openFileAction);
-    fileMenu->addAction(closeAppAction);
+    fileMenu->addAction(actions[openFileA]);
+    fileMenu->addAction(actions[closeAppA]);
 
     QMenu* processingMenu = topMenuBar->addMenu(tr("Processing"));
-    processingMenu->addAction(phaseCorrectionAction);
-    processingMenu->addAction(zeroFillingAction);
+    processingMenu->addAction(actions[phaseCorrectionA]);
+    processingMenu->addAction(actions[zeroFillingA]);
 }
 
 void MainWindow::createActionsFrame()
@@ -124,29 +146,29 @@ void MainWindow::createActionsFrame()
     actionsFrame = new QFrame(this);
     QVBoxLayout* actionsLayout = new QVBoxLayout(actionsFrame);
 
-    openFileButton = new QPushButton(tr("Open File"), actionsFrame);
-    connect(openFileButton, &QPushButton::clicked, this, &MainWindow::openFileSlot);
+    buttons[openFileB] = new QPushButton(tr("Open File"), actionsFrame);
+    connect(buttons[openFileB], &QPushButton::clicked, this, &MainWindow::openFileSlot);
 
 
-    zoomButton = new QPushButton(tr("Zoom"), actionsFrame);
-    zoomButton->setCheckable(true);
-    connect(zoomButton, &QPushButton::clicked, this, &MainWindow::zoomSlot);
+    buttons[zoomB] = new QPushButton(tr("Zoom"), actionsFrame);
+    buttons[zoomB]->setCheckable(true);
+    connect(buttons[zoomB], &QPushButton::clicked, this, &MainWindow::zoomSlot);
 
-    zoomResetButton = new QPushButton(tr("Reset Zoom"), actionsFrame);
-    connect(zoomResetButton, &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
+    buttons[zoomResetB] = new QPushButton(tr("Reset Zoom"), actionsFrame);
+    connect(buttons[zoomResetB], &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
 
-    integrateButton = new QPushButton(tr("&Integrate"), actionsFrame);
-    integrateButton->setCheckable(true);
-    connect(integrateButton, &QPushButton::clicked, this, &MainWindow::integrateSlot);
+    buttons[integrateB] = new QPushButton(tr("Integrate"), actionsFrame);
+    buttons[integrateB]->setCheckable(true);
+    connect(buttons[integrateB], &QPushButton::clicked, this, &MainWindow::integrateSlot);
 
-    resetIntegralsButton = new QPushButton(tr("Reset Integrals"), actionsFrame);
-    connect(resetIntegralsButton, &QPushButton::clicked, this, &MainWindow::resetIntegralsSlot);
+    buttons[integralsResetB] = new QPushButton(tr("Reset Integrals"), actionsFrame);
+    connect(buttons[integralsResetB], &QPushButton::clicked, this, &MainWindow::resetIntegralsSlot);
 
-    actionsLayout->addWidget(openFileButton);
-    actionsLayout->addWidget(zoomButton);
-    actionsLayout->addWidget(zoomResetButton);
-    actionsLayout->addWidget(integrateButton);
-    actionsLayout->addWidget(resetIntegralsButton);
+    actionsLayout->addWidget(buttons[openFileB]);
+    actionsLayout->addWidget(buttons[zoomB]);
+    actionsLayout->addWidget(buttons[zoomResetB]);
+    actionsLayout->addWidget(buttons[integrateB]);
+    actionsLayout->addWidget(buttons[integralsResetB]);
 
     actionsFrame->setLayout(actionsLayout);
 }
@@ -155,15 +177,7 @@ void MainWindow::createKeyShortcuts()
 {
     // Z - zoom
     auto zoomShorcut = new QShortcut(Qt::Key_Z, this);
-    connect(zoomShorcut, &QShortcut::activated, this, [this](){
-        if (zoomButton->isChecked()) {
-            setCurrentAction(DisplayerAction::None);
-        } else {
-            zoomButton->setChecked(true);
-            zoomSlot();
-        }
-        emit closeDynamicElements();
-    });
+    connect(zoomShorcut, &QShortcut::activated, this, &MainWindow::zoomSlot);
 
     // F - reset zoom
     auto resetZoomShortcut = new QShortcut(Qt::Key_F, this);
@@ -171,15 +185,7 @@ void MainWindow::createKeyShortcuts()
 
     // I - integrate
     auto integrateShortCut = new QShortcut(Qt::Key_I, this);
-    connect(integrateShortCut, &QShortcut::activated, this, [this](){
-        if (integrateButton->isChecked()) {
-            setCurrentAction(DisplayerAction::None);
-        } else {
-            integrateButton->setChecked(true);
-            integrateSlot();
-        }
-        emit closeDynamicElements();
-    });
+    connect(integrateShortCut, &QShortcut::activated, this, &MainWindow::integrateSlot);
 }
 
 void MainWindow::openFileSlot()
@@ -194,7 +200,7 @@ void MainWindow::openFileSlot()
     std::filesystem::path input_path{selectedFile.toStdString()};
     FileReadResult file_read_result = open_experiment(input_path);
 
-    if (not (file_read_result.status == ReadStatus::success_1D)) {
+    if (file_read_result.status != ReadStatus::success_1D) {
         QMessageBox msg{};
         msg.setWindowTitle(QStringLiteral("Error"));
         msg.setText(readErrorMessage(file_read_result.status));
@@ -213,39 +219,45 @@ void MainWindow::openFileSlot()
 
 }
 
-void MainWindow::setCurrentAction(DisplayerAction action)
+#define UNCHECK_ACTIVE_BUTTON() do {                \
+if (buttons[ActiveButton]) {                        \
+        buttons[ActiveButton]->setChecked(false); } \
+    buttons[ActiveButton] = nullptr;                \
+} while (0)
+
+void MainWindow::finishAction()
 {
-    using enum DisplayerAction;
-    if (currentAction_ == action) {return;}
-
-    switch(currentAction_)
-    {
-    case Zoom:
-        zoomButton->setChecked(false);
-        break;
-    case Integrate:
-        integrateButton->setChecked(false);
-        break;
-    case None:
-        break;
-    }
-
-    currentAction_ = action;
-
-    if (mainStackedWidget->count() == 1) {
-        setCurrentAction(None);
-    }
+    UNCHECK_ACTIVE_BUTTON();
+    currentAction_ = DisplayerAction::None;
 }
+
+#define CHANGE_MUTUALLY_EXCLUSIVE_BUTTON(x)         \
+do {                                                \
+if (buttons[ActiveButton] == buttons[x]) {          \
+    buttons[ActiveButton] = nullptr;                \
+    buttons[x]->setChecked(false);                  \
+    finishAction();                                 \
+} else {                                            \
+    if (buttons[ActiveButton]) {                    \
+        buttons[ActiveButton]->setChecked(false);}  \
+    buttons[ActiveButton] = buttons[x];             \
+    buttons[x]->setChecked(true);                   \
+    currentAction_ = buttonToDisplayerAction(x);    \
+}                                                   \
+} while (0)
+
 
 void MainWindow::zoomSlot()
 {
-    setCurrentAction(DisplayerAction::Zoom);
+    CHANGE_MUTUALLY_EXCLUSIVE_BUTTON(zoomB);
     emit closeDynamicElements();
 }
 
+
 void MainWindow::resetZoomSlot()
 {
-    setCurrentAction(DisplayerAction::None);
+    UNCHECK_ACTIVE_BUTTON();
+    finishAction();
     if (mainStackedWidget->count() == 1) {return;}
     qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
     emit closeDynamicElements();
@@ -253,13 +265,14 @@ void MainWindow::resetZoomSlot()
 
 void MainWindow::integrateSlot()
 {
-    setCurrentAction(DisplayerAction::Integrate);
+    CHANGE_MUTUALLY_EXCLUSIVE_BUTTON(integrateB);
     emit closeDynamicElements();
 }
 
 void MainWindow::resetIntegralsSlot()
 {
-    setCurrentAction(DisplayerAction::None);
+    UNCHECK_ACTIVE_BUTTON();
+    finishAction();
     if (mainStackedWidget->count() == 1) {return;}
         auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
         resetIntegrals(p->experiment->integrals);
@@ -267,11 +280,21 @@ void MainWindow::resetIntegralsSlot()
     emit closeDynamicElements();
 }
 
+//! slot called when active widget in mainStackedWidget is changed
 void MainWindow::spectrumChangedSlot(int i)
 {
+    UNCHECK_ACTIVE_BUTTON();
+    finishAction();
+    // checks if active widget is SpectrumDisplayer or empty widget at the bottom of mainStackedWidget
     if (auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))) {
+        // enabling actions and buttons needing spectrum
+        for (auto i : ACTIONS_NEEDING_SPECTRUM) {actions[i]->setEnabled(true);}
+        for (auto i : BUTTONS_NEEDING_SPECTRUM) {buttons[i]->setEnabled(true);}
         emit displayedSpectrumChanged(p->experiment.get());
-        emit closeDynamicElements();
+        emit closeDynamicElements(); // closing open dock widgets
+    } else { // no spectrum visible, disabling action and buttons needing spectrum
+        for (auto i : ACTIONS_NEEDING_SPECTRUM) {actions[i]->setEnabled(false);}
+        for (auto i : BUTTONS_NEEDING_SPECTRUM) {buttons[i]->setEnabled(false);}
     }
 }
 

@@ -13,6 +13,8 @@
 #include <utility>
 #include <cmath>
 
+// TODO fix: when zooming into integral label is not displayed
+
 namespace
 {
 // finds integral from integrals which middle point was closest to xCoord
