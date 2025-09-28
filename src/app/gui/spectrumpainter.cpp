@@ -143,6 +143,7 @@ std::pair<size_t, size_t> SpectrumPainter::selectionRangeToDataPointsOfSpectrum(
 
 void SpectrumPainter::paintEvent(QPaintEvent* e)
 {
+    // TODO maybe when number of points is huge it should draw every second/third one
     recalculateDisplayRange();
     auto spectrum = pointerToSpectrum->get_spectrum().subspan(startPoint_, endPoint_ - startPoint_);
     QPainter painter(this);
