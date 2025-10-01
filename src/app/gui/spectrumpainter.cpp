@@ -22,7 +22,7 @@ namespace
 {
 }
 
-SpectrumPainter::SpectrumPainter(const Spectrum* spectrum_, QWidget* parent)
+SpectrumPainter::SpectrumPainter(const Spectrum_1D* spectrum_, QWidget* parent)
     : QWidget{parent}
     , pointerToSpectrum{spectrum_}
     , selectedRegion{0, 0, 0, static_cast<qreal>(height())}

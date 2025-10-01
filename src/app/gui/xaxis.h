@@ -6,7 +6,7 @@
 #include <QPen>
 
 
-class SpectrumDisplayer;
+class SpectrumDisplayer_1D;
 
 
 struct AxisProperties

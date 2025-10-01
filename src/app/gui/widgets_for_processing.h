@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QWidget>
 
-class Spectrum;
+class Spectrum_1D;
 class MainWindow;
 
 class ProcessingWidget : public QWidget
@@ -12,16 +12,16 @@ class ProcessingWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProcessingWidget(Spectrum* experiment, QWidget *parent = nullptr);
+    explicit ProcessingWidget(Spectrum_1D* experiment, QWidget *parent = nullptr);
 
 public slots:
-    virtual void changeActiveExperiment(Spectrum* experiment) = 0;
+    virtual void changeActiveExperiment(Spectrum_1D* experiment) = 0;
 
 signals:
     void signalToRefreshDisplayedExperiment();
 
 protected:
-    Spectrum* experiment;
+    Spectrum_1D* experiment;
     MainWindow* mainWindowPointer;
 };
 
@@ -36,9 +36,9 @@ class PhaseCorrectionWidget final : public ProcessingWidget
 
 public:
 
-    explicit PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent = nullptr);
+    explicit PhaseCorrectionWidget(Spectrum_1D* experiment, QWidget *parent = nullptr);
 
-    void changeActiveExperiment(Spectrum* experiment) override;
+    void changeActiveExperiment(Spectrum_1D* experiment) override;
 
 private:
     std::tuple<QWidget*, LabeledSlider*, QDoubleSpinBox*> ph0;
@@ -62,9 +62,9 @@ class ZeroFillingWidget final : public ProcessingWidget
 
 public:
 
-    explicit ZeroFillingWidget(Spectrum* experiment, QWidget *parent = nullptr);
+    explicit ZeroFillingWidget(Spectrum_1D* experiment, QWidget *parent = nullptr);
 
-    void changeActiveExperiment(Spectrum* experiment) override;
+    void changeActiveExperiment(Spectrum_1D* experiment) override;
 
 private:
     QListWidget* list;

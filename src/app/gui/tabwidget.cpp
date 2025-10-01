@@ -28,7 +28,7 @@ TabWidget::TabWidget(QStackedWidget* stackedSpectra, QWidget* parent)
     stackedSpectra->addWidget(new QWidget(this));
 }
 
-void TabWidget::addTab(SpectrumDisplayer* newSpectrum)
+void TabWidget::addTab(SpectrumDisplayer_1D* newSpectrum)
 {
     QPushButton* newButton = new QPushButton(QString::fromStdString(newSpectrum->experiment->info.samplename), this);
 

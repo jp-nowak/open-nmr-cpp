@@ -44,7 +44,7 @@ IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
 }
 }
 
-IntegralsDisplayer::IntegralsDisplayer(const Spectrum* experiment, QWidget *parent)
+IntegralsDisplayer::IntegralsDisplayer(const Spectrum_1D* experiment, QWidget *parent)
     : QWidget{parent}
     , experiment{experiment}
     , integralEditField{nullptr}

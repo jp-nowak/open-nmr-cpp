@@ -8,7 +8,7 @@ class QStackedWidget;
 class QVBoxLayout;
 class QGridLayout;
 
-class SpectrumDisplayer;
+class SpectrumDisplayer_1D;
 
 class TabWidget : public QWidget
 {
@@ -16,7 +16,7 @@ class TabWidget : public QWidget
 public:
     TabWidget(QStackedWidget* stackedSpectra, QWidget* parent);
 
-    void addTab(SpectrumDisplayer* newSpectrum);
+    void addTab(SpectrumDisplayer_1D* newSpectrum);
 
 
 

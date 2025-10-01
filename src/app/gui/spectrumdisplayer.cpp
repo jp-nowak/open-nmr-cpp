@@ -4,7 +4,7 @@
 #include "spectrumpainter.h"
 #include "xaxis.h"
 #include "integralsdisplayer.h"
-#include "../processing/utils.h"
+#include "../processing/phase_correction.h"
 
 #include <cassert>
 
@@ -32,9 +32,10 @@ QColor mapDisplayerActionToColor(DisplayerAction action)
 }
 }
 
-ASpectrumDisplayer::ASpectrumDisplayer(const SpectrumInfo& info, QWidget* parent)
-    : QWidget{parent}
-    , info{info}
+ASpectrumDisplayer::ASpectrumDisplayer(const SpectrumInfo& info, const FidSizeInfo& fidInfo, QWidget* parent)
+: QWidget{parent}
+, info{info}
+, fidInfo{fidInfo}
 {}
 
 ASpectrumDisplayer::~ASpectrumDisplayer()
@@ -42,14 +43,13 @@ ASpectrumDisplayer::~ASpectrumDisplayer()
 
 }
 
-SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent)
-    : ASpectrumDisplayer{new_experiment->info, parent}
-    , experiment{std::move(new_experiment)}
-    , spainter{new SpectrumPainter{experiment.get(), this}}
-    , idisplayer{new IntegralsDisplayer{experiment.get(), this}}
-    , mouseMoveStartPoint{0, 0}
-    , mainWindow{MainWindow::findFrom(this)}
-
+SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_experiment, QWidget* parent)
+: ASpectrumDisplayer{new_experiment->info, new_experiment->getFidSizeInfo(), parent}
+, experiment{std::move(new_experiment)}
+, spainter{new SpectrumPainter{experiment.get(), this}}
+, idisplayer{new IntegralsDisplayer{experiment.get(), this}}
+, mouseMoveStartPoint{0, 0}
+, mainWindow{MainWindow::findFrom(this)}
 {
     assert(mainWindow && "nullptr to main window");
     assert(parent && "nullptr to parent");
@@ -138,12 +138,12 @@ SpectrumDisplayer::SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment,
 
 }
 
-SpectrumDisplayer::~SpectrumDisplayer()
+SpectrumDisplayer_1D::~SpectrumDisplayer_1D()
 {
 
 }
 
-void SpectrumDisplayer::mousePressEvent(QMouseEvent* e)
+void SpectrumDisplayer_1D::mousePressEvent(QMouseEvent* e)
 {
     mouseMoveStartPoint = e->pos();
 
@@ -152,7 +152,7 @@ void SpectrumDisplayer::mousePressEvent(QMouseEvent* e)
     spainter->setSelectionStart(mapToGlobal(mouseMoveStartPoint), mapDisplayerActionToColor(mainWindow->currentAction));
 }
 
-void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
+void SpectrumDisplayer_1D::mouseReleaseEvent(QMouseEvent* e)
 {
     mouseMoveEndPoint = e->pos();
 
@@ -190,21 +190,20 @@ void SpectrumDisplayer::mouseReleaseEvent(QMouseEvent* e)
     }
 }
 
-void SpectrumDisplayer::mouseMoveEvent(QMouseEvent* e)
+void SpectrumDisplayer_1D::mouseMoveEvent(QMouseEvent* e)
 {
     if (mainWindow->currentAction == DisplayerAction::None) return;
     spainter->changeSelectionWidth(mapToGlobal(e->pos()), mapToGlobal(mouseMoveStartPoint));
 }
 
-
-void SpectrumDisplayer::resetZoom()
+void SpectrumDisplayer_1D::resetZoom()
 {
     spainter->resetZoom();
     idisplayer->resetZoom();
     xAxis->setRange(experiment->info.plot_left_ppm, experiment->info.plot_right_ppm);
 }
 
-void SpectrumDisplayer::updateAll()
+void SpectrumDisplayer_1D::updateAll()
 {
     spainter->update();
     xAxis->update();

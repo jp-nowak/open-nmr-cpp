@@ -12,13 +12,13 @@
 #include <memory>
 #include <span>
 
-class Spectrum final
+class Spectrum_1D final
 {
 
 public:
 
-    Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid);
-    static std::unique_ptr<Spectrum> pointer_from_file_read_result(FileReadResult result);
+    Spectrum_1D(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid);
+    static std::unique_ptr<Spectrum_1D> pointer_from_file_read_result(FileReadResult result);
 
 
 

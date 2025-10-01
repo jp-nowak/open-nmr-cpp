@@ -208,9 +208,9 @@ void MainWindow::openFileSlot()
         return;
     }
 
-    std::unique_ptr<Spectrum> experiment = Spectrum::pointer_from_file_read_result(file_read_result);
+    std::unique_ptr<Spectrum_1D> experiment = Spectrum_1D::pointer_from_file_read_result(file_read_result);
 
-    SpectrumDisplayer* spectrumDisplayer = new SpectrumDisplayer(std::move(experiment), this);
+    SpectrumDisplayer_1D* spectrumDisplayer = new SpectrumDisplayer_1D(std::move(experiment), this);
 
 
     size_t i = mainStackedWidget->addWidget(spectrumDisplayer);
@@ -259,7 +259,7 @@ void MainWindow::resetZoomSlot()
     UNCHECK_ACTIVE_BUTTON();
     finishAction();
     if (mainStackedWidget->count() == 1) {return;}
-    qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->resetZoom();
+    qobject_cast<SpectrumDisplayer_1D*>(mainStackedWidget->currentWidget())->resetZoom();
     emit closeDynamicElements();
 }
 
@@ -274,7 +274,7 @@ void MainWindow::resetIntegralsSlot()
     UNCHECK_ACTIVE_BUTTON();
     finishAction();
     if (mainStackedWidget->count() == 1) {return;}
-        auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget());
+        auto p = qobject_cast<SpectrumDisplayer_1D*>(mainStackedWidget->currentWidget());
         resetIntegrals(p->experiment->integrals);
         p->update();
     emit closeDynamicElements();
@@ -285,8 +285,8 @@ void MainWindow::spectrumChangedSlot(int i)
 {
     UNCHECK_ACTIVE_BUTTON();
     finishAction();
-    // checks if active widget is SpectrumDisplayer or empty widget at the bottom of mainStackedWidget
-    if (auto p = qobject_cast<SpectrumDisplayer*>(mainStackedWidget->widget(i))) {
+    // checks if active widget is SpectrumDisplayer_1D or empty widget at the bottom of mainStackedWidget
+    if (auto p = qobject_cast<SpectrumDisplayer_1D*>(mainStackedWidget->widget(i))) {
         // enabling actions and buttons needing spectrum
         for (auto i : ACTIONS_NEEDING_SPECTRUM) {actions[i]->setEnabled(true);}
         for (auto i : BUTTONS_NEEDING_SPECTRUM) {buttons[i]->setEnabled(true);}
@@ -305,7 +305,7 @@ void MainWindow::showProcessingWidget()
     if (auto& dockWidget = std::get<QDockWidget*>(std::get<std::tuple<T*, QDockWidget*>>(processingWidgets));
     not dockWidget) {
         auto& processingWidget = std::get<T*>(std::get<std::tuple<T*, QDockWidget*>>(processingWidgets));
-        processingWidget = new T(qobject_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->experiment.get(), this);
+        processingWidget = new T(qobject_cast<SpectrumDisplayer_1D*>(mainStackedWidget->currentWidget())->experiment.get(), this);
         dockWidget = new QDockWidget(this);
         dockWidget->setWidget(processingWidget);
         addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
@@ -329,7 +329,7 @@ void MainWindow::zeroFillingSlot()
 
 void MainWindow::refreshCurrentDisplayerSlot()
 {
-    reinterpret_cast<SpectrumDisplayer*>(mainStackedWidget->currentWidget())->update();
+    mainStackedWidget->currentWidget()->update();
     emit closeDynamicElements();
 }
 

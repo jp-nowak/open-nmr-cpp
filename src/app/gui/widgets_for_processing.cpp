@@ -23,7 +23,7 @@
 
 //------------------------------------------------------------------------------------------------------------------------
 
-ProcessingWidget::ProcessingWidget(Spectrum* experiment, QWidget *parent)
+ProcessingWidget::ProcessingWidget(Spectrum_1D* experiment, QWidget *parent)
 : QWidget{parent}
 , experiment{experiment}
 , mainWindowPointer{MainWindow::findFrom(parent)}
@@ -35,7 +35,7 @@ ProcessingWidget::ProcessingWidget(Spectrum* experiment, QWidget *parent)
 
 //------------------------------------------------------------------------------------------------------------------------
 
-PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *parent)
+PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum_1D* experiment, QWidget *parent)
     : ProcessingWidget{experiment, parent}
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -63,7 +63,7 @@ PhaseCorrectionWidget::PhaseCorrectionWidget(Spectrum* experiment, QWidget *pare
     PhaseCorrectionWidget::changeActiveExperiment(experiment);
 }
 
-void PhaseCorrectionWidget::changeActiveExperiment(Spectrum* experiment)
+void PhaseCorrectionWidget::changeActiveExperiment(Spectrum_1D* experiment)
 {
     this->experiment = experiment;
     LabeledSlider::changeValues(ph0, experiment->getPhase().ph0.ph0 * RAD_TO_DEG);
@@ -87,7 +87,7 @@ void PhaseCorrectionWidget::ph1Slot(double phase)
 
 //------------------------------------------------------------------------------------------------------------------------
 
-ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
+ZeroFillingWidget::ZeroFillingWidget(Spectrum_1D* experiment, QWidget *parent)
     : ProcessingWidget{experiment, parent}
 {
 
@@ -126,7 +126,7 @@ ZeroFillingWidget::ZeroFillingWidget(Spectrum* experiment, QWidget *parent)
     ZeroFillingWidget::changeActiveExperiment(experiment);
 }
 
-void ZeroFillingWidget::changeActiveExperiment(Spectrum* experiment)
+void ZeroFillingWidget::changeActiveExperiment(Spectrum_1D* experiment)
 {
     using namespace Processing;
     QSignalBlocker a{list};

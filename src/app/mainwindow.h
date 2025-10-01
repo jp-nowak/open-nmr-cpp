@@ -8,7 +8,7 @@
 #include <tuple>
 #include <array>
 
-class Spectrum;
+class Spectrum_1D;
 
 class TabWidget;
 class PhaseCorrectionWidget;
@@ -38,7 +38,7 @@ public:
 
 signals:
 
-    void displayedSpectrumChanged(Spectrum* experiment);
+    void displayedSpectrumChanged(Spectrum_1D* experiment);
     void closeDynamicElements();
 
 private:

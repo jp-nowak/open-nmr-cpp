@@ -9,15 +9,15 @@
 #include <QPen>
 #include <QColor>
 
-class SpectrumDisplayer;
+class SpectrumDisplayer_1D;
 
 class SpectrumPainter : public QWidget
 {
     Q_OBJECT
 public:
-    SpectrumPainter(const Spectrum* spectrum_, QWidget* parent = nullptr);
+    SpectrumPainter(const Spectrum_1D* spectrum_, QWidget* parent = nullptr);
 
-    friend SpectrumDisplayer;
+    friend SpectrumDisplayer_1D;
 
     void paintEvent(QPaintEvent* e) override;
     void wheelEvent(QWheelEvent* e) override;
@@ -42,7 +42,7 @@ private:
 
     void initialize();
 
-    const Spectrum* pointerToSpectrum;
+    const Spectrum_1D* pointerToSpectrum;
 
     QPen spectrumPen;
     QRectF selectedRegion;

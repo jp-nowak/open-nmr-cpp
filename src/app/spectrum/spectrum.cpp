@@ -11,7 +11,7 @@
 using namespace Processing;
 
 
-Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
+Spectrum_1D::Spectrum_1D(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid)
 : info{info}
 , fid{fid}
 , phaseCorrection{Ph0{.ph0 = 0},
@@ -45,46 +45,46 @@ Spectrum::Spectrum(const SpectrumInfo& info, const std::vector<std::complex<doub
 
 }
 
-void Spectrum::generateSpectrum()
+void Spectrum_1D::generateSpectrum()
 {
     spectrum = generate_spectrum_from_fid(std::span<Complex const>(this->fid), fidSizeInfo);
     restorePhase();
 }
 
-void Spectrum::restorePhase()
+void Spectrum_1D::restorePhase()
 {
     spectrum *= phaseCorrection.ph0;
     spectrum *= phaseCorrection.ph1;
 }
 
-std::unique_ptr<Spectrum> Spectrum::pointer_from_file_read_result(FileReadResult result)
+std::unique_ptr<Spectrum_1D> Spectrum_1D::pointer_from_file_read_result(FileReadResult result)
 {
-    return std::make_unique<Spectrum>(result.info, result.fids[0]);
+    return std::make_unique<Spectrum_1D>(result.info, result.fids[0]);
 }
 
-std::span<Complex const> Spectrum::get_spectrum() const
+std::span<Complex const> Spectrum_1D::get_spectrum() const
 {
     return {spectrum};
 }
 
-const Phase& Spectrum::getPhase() const
+const Phase& Spectrum_1D::getPhase() const
 {
     return phaseCorrection;
 }
 
-const FidSizeInfo& Spectrum::getFidSizeInfo() const
+const FidSizeInfo& Spectrum_1D::getFidSizeInfo() const
 {
     return fidSizeInfo;
 }
 
-void Spectrum::setPh0(const Ph0& phase)
+void Spectrum_1D::setPh0(const Ph0& phase)
 {
     spectrum *= Ph0(phase.ph0 - phaseCorrection.ph0.ph0);
     phaseCorrection.ph0.ph0 = phase.ph0;
     refreshDependentMembers(spectrum.size());
 }
 
-void Spectrum::setPh1(const Ph1& phase)
+void Spectrum_1D::setPh1(const Ph1& phase)
 {
     if (phase.pivot == phaseCorrection.ph1.pivot) {
         spectrum *= Ph1(phase.ph1 - phaseCorrection.ph1.ph1, phase.pivot);
@@ -97,7 +97,7 @@ void Spectrum::setPh1(const Ph1& phase)
     refreshDependentMembers(spectrum.size());
 }
 
-void Spectrum::zeroFill(size_t n)
+void Spectrum_1D::zeroFill(size_t n)
 {
     assert(std::find(POWERS_OF_TWO.begin(), POWERS_OF_TWO.end(), n) != POWERS_OF_TWO.end());
     const size_t size = spectrum.size();
@@ -120,7 +120,7 @@ void Spectrum::zeroFill(size_t n)
     refreshDependentMembers(size);
 }
 
-void Spectrum::truncate(size_t n)
+void Spectrum_1D::truncate(size_t n)
 {
     assert(n <= fidSizeInfo.initialSize);
     const size_t size = spectrum.size();
@@ -132,7 +132,7 @@ void Spectrum::truncate(size_t n)
     refreshDependentMembers(size);
 }
 
-void Spectrum::integrate(size_t start, size_t end) const
+void Spectrum_1D::integrate(size_t start, size_t end) const
 {
     double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
     if (integrals.empty()) {
@@ -154,7 +154,7 @@ void Spectrum::integrate(size_t start, size_t end) const
                                     .relativeValue = relativeValue});
 }
 
-void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
+void Spectrum_1D::recalcIntegrals(size_t previousSpectrumSize) const
 {
     if (integrals.empty()) return;
     const double mult = static_cast<double>(spectrum.size()) / previousSpectrumSize;
@@ -173,13 +173,13 @@ void Spectrum::recalcIntegrals(size_t previousSpectrumSize) const
     }
 }
 
-void Spectrum::refreshDependentMembers(size_t previousSpectrumSize) const
+void Spectrum_1D::refreshDependentMembers(size_t previousSpectrumSize) const
 {
     recalcIntegrals(previousSpectrumSize);
     autoFindPeaks();
 }
 
-void Spectrum::autoFindPeaks() const
+void Spectrum_1D::autoFindPeaks() const
 {
     using namespace PeakFinding;
     autoPeakList = simpleFindPeaks(get_spectrum(), calcTreshold(get_spectrum()));

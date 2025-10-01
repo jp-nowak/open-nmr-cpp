@@ -7,7 +7,7 @@
 #include <QColor>
 #include <QFont>
 
-class Spectrum;
+class Spectrum_1D;
 class QDoubleSpinBox;
 class IntegralRecord;
 
@@ -26,7 +26,7 @@ class IntegralsDisplayer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit IntegralsDisplayer(const Spectrum* integrals, QWidget *parent);
+    explicit IntegralsDisplayer(const Spectrum_1D* integrals, QWidget *parent);
 
     void setRange(size_t begin, size_t end);
     void zoom(QPointF startPos, QPointF endPos);
@@ -41,7 +41,7 @@ public:
 
 
 private:
-    const Spectrum* experiment;
+    const Spectrum_1D* experiment;
 
     QDoubleSpinBox* integralEditField;
     IntegralRecord* editedIntegral;

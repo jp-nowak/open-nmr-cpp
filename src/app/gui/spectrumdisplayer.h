@@ -6,13 +6,15 @@
 #include <QWidget>
 #include <QPointF>
 
-class Spectrum;
+class Spectrum_1D;
 class MainWindow;
 class SpectrumPainter;
 class XAxis;
 class IntegralsDisplayer;
 class UniversalAxis;
 struct SpectrumInfo;
+struct FidSizeInfo;
+struct Phase;
 
 enum class DisplayerAction{None, Zoom, Integrate};
 
@@ -21,17 +23,18 @@ class ASpectrumDisplayer : public QWidget
 {
     Q_OBJECT
 public:
-    ASpectrumDisplayer(const SpectrumInfo& info, QWidget* parent);
+    ASpectrumDisplayer(const SpectrumInfo& info, const FidSizeInfo& fidInfo, QWidget* parent);
     virtual ~ASpectrumDisplayer();
     virtual void resetZoom() = 0;
     virtual void updateAll() = 0;
 
     const SpectrumInfo& info;
+    const FidSizeInfo& fidInfo;
 
 };
 
 //! widget that governs fully display of spectrum
-class SpectrumDisplayer final : public ASpectrumDisplayer
+class SpectrumDisplayer_1D final : public ASpectrumDisplayer
 {
     // layout:
     //
@@ -40,14 +43,14 @@ class SpectrumDisplayer final : public ASpectrumDisplayer
     // IntegralsDisplayer | placeholder
     Q_OBJECT
 public:
-    SpectrumDisplayer(std::unique_ptr<Spectrum>&& new_experiment, QWidget* parent);
-    ~SpectrumDisplayer();
+    SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_experiment, QWidget* parent);
+    ~SpectrumDisplayer_1D();
 
     void mousePressEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
     void mouseMoveEvent(QMouseEvent* e) override;
 
-    std::unique_ptr<Spectrum> experiment;
+    std::unique_ptr<Spectrum_1D> experiment;
     void resetZoom() override;
 
     void updateAll() override;
