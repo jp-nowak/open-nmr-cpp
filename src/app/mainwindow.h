@@ -40,6 +40,7 @@ signals:
 
     void displayedSpectrumChanged(Spectrum_1D* experiment);
     void closeDynamicElements();
+    void allSpectraClosed();
 
 private:
 

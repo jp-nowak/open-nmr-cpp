@@ -295,6 +295,7 @@ void MainWindow::spectrumChangedSlot(int i)
     } else { // no spectrum visible, disabling action and buttons needing spectrum
         for (auto i : ACTIONS_NEEDING_SPECTRUM) {actions[i]->setEnabled(false);}
         for (auto i : BUTTONS_NEEDING_SPECTRUM) {buttons[i]->setEnabled(false);}
+        emit allSpectraClosed();
     }
 }
 
@@ -308,11 +309,14 @@ void MainWindow::showProcessingWidget()
         processingWidget = new T(qobject_cast<SpectrumDisplayer_1D*>(mainStackedWidget->currentWidget())->experiment.get(), this);
         dockWidget = new QDockWidget(this);
         dockWidget->setWidget(processingWidget);
+        // hides processing widgets when all spectra are closed
+        connect(this, &MainWindow::allSpectraClosed, dockWidget, &QDockWidget::hide);
+
         addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
-        dockWidget->resize(0, 0);
+
     } else {
         dockWidget->show();
-        dockWidget->resize(0, 0);
+
     }
     emit closeDynamicElements();
 }
