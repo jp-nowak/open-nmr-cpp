@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QGridLayout>
+#include <QDoubleSpinBox>
 
 namespace
 {
@@ -30,6 +31,10 @@ QColor mapDisplayerActionToColor(DisplayerAction action)
     }
     return QColor(0, 0, 0, 100);
 }
+
+constexpr double idisplayerPos = 0.90;
+constexpr double idisplayerHeight = 0.1;
+
 }
 
 ASpectrumDisplayer::ASpectrumDisplayer(const SpectrumInfo& info, const FidSizeInfo& fidInfo, QWidget* parent)
@@ -98,16 +103,26 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
         yAxis->update();
     });
 
+    // painting integral displayer causes spectrum painter to be repainted, otherwise there is a blank space in borders of integral displayer
+    connect(idisplayer, &IntegralsDisplayer::updated, this, [this](){spainter->update();});
+
+    connect(mainWindow, &MainWindow::closeDynamicElements, this, [this](){spainter->resetSelection();});
+
     QLabel* rightBottomEdge = new QLabel(tr("ppm"), this);
     rightBottomEdge->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
 
     auto* layout = new QGridLayout();
     layout->addWidget(spainter, 0, 0);
     auto* xAxisLayout = new QVBoxLayout();
-    xAxisLayout->addWidget(idisplayer);
+    // xAxisLayout->addWidget(idisplayer);
     xAxisLayout->addWidget(xAxis);
-    xAxisLayout->setStretchFactor(idisplayer, 1);
+    // xAxisLayout->setStretchFactor(idisplayer, 1);
     xAxisLayout->setStretchFactor(xAxis, 2);
+
+    idisplayer->show();
+    idisplayer->move(spainter->geometry().x(), spainter->height() * idisplayerPos);
+    idisplayer->resize(spainter->width(), spainter->height() * idisplayerHeight);
+
     layout->addLayout(xAxisLayout, 1, 0);
     layout->addWidget(yAxis, 0, 1);
     layout->addWidget(rightBottomEdge, 1, 1);
@@ -149,6 +164,7 @@ void SpectrumDisplayer_1D::mousePressEvent(QMouseEvent* e)
 
     if (mainWindow->currentAction == DisplayerAction::None) return;
 
+    spainter->resetSelection();
     spainter->setSelectionStart(mapToGlobal(mouseMoveStartPoint), mapDisplayerActionToColor(mainWindow->currentAction));
 }
 
@@ -196,18 +212,25 @@ void SpectrumDisplayer_1D::mouseMoveEvent(QMouseEvent* e)
     spainter->changeSelectionWidth(mapToGlobal(e->pos()), mapToGlobal(mouseMoveStartPoint));
 }
 
+void SpectrumDisplayer_1D::resizeEvent(QResizeEvent* e)
+{
+    QWidget::resizeEvent(e);
+    idisplayer->move(spainter->geometry().x(), spainter->height() * idisplayerPos);
+    idisplayer->resize(spainter->width(), spainter->height() * idisplayerHeight);
+}
+
 void SpectrumDisplayer_1D::resetZoom()
 {
-    spainter->resetZoom();
     idisplayer->resetZoom();
+    spainter->resetZoom();
     xAxis->setRange(experiment->info.plot_left_ppm, experiment->info.plot_right_ppm);
 }
 
 void SpectrumDisplayer_1D::updateAll()
 {
+    idisplayer->update();
     spainter->update();
     xAxis->update();
-    idisplayer->update();
     update();
 }
 

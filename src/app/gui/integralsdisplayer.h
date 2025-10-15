@@ -37,13 +37,17 @@ public:
     void paintEvent(QPaintEvent* e) override;
     void mousePressEvent(QMouseEvent* e) override;
     void mouseMoveEvent(QMouseEvent* e) override;
+    // void leaveEvent(QEvent* e) override;
 
+    QDoubleSpinBox* integralEditField;
 
+signals:
+    void updated();
 
 private:
     const Spectrum_1D* experiment;
 
-    QDoubleSpinBox* integralEditField;
+
     IntegralRecord* editedIntegral;
 
     QPointF mousePosition;

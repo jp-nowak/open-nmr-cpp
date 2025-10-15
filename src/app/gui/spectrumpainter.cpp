@@ -53,19 +53,20 @@ void SpectrumPainter::changeSelectionWidth(QPointF x, QPointF origin)
         selectedRegion.setX(mapFromGlobal(x).x());
         selectedRegion.setWidth(newWidth);
     }
+    displaySelection = true;
     update();
 }
 
 void SpectrumPainter::setSelectionStart(QPointF x, const QColor& selectionColor)
 {
     selectedRegion.setX(mapFromGlobal(x).x());
-    displaySelection = true;
+    displaySelection = false;
     this->selectionColor = selectionColor;
 }
 
 void SpectrumPainter::resetSelection()
 {
-    selectedRegion.setWidth(0.0);
+    selectedRegion = QRect{};
     displaySelection = false;
     update();
 }

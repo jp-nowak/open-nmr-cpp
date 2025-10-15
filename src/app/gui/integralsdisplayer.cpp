@@ -13,12 +13,12 @@
 #include <utility>
 #include <cmath>
 
-// TODO fix: when zooming into integral label is not displayed
+// TODO fix: when zooming into integral label, it is not displayed
 
 namespace
 {
-// finds integral from integrals which middle point was closest to xCoord
-// if clicled on point didnt overlap with any integral returns nullptr
+//! finds integral from integrals which middle point was closest to xCoord
+//! if clicled on point didnt overlap with any integral returns nullptr
 IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
 {
     std::vector<IntegralRecord*> fittingIntegrals{};
@@ -46,8 +46,8 @@ IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
 
 IntegralsDisplayer::IntegralsDisplayer(const Spectrum_1D* experiment, QWidget *parent)
     : QWidget{parent}
-    , experiment{experiment}
     , integralEditField{nullptr}
+    , experiment{experiment}
     , editedIntegral{nullptr}
     , startPoint_{0}
     , endPoint_{experiment->get_spectrum().size()}
@@ -63,6 +63,10 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum_1D* experiment, QWidget *p
     connect(MainWindow::findFrom(parent), &MainWindow::closeDynamicElements,
             this, &IntegralsDisplayer::closeIntegralEditField);
 
+    setStyleSheet("background-color: rgba(0,0,0,0)");
+    setWindowFlags(Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_TranslucentBackground);
 }
 
 void IntegralsDisplayer::setRange(size_t begin, size_t end)
@@ -127,11 +131,11 @@ void IntegralsDisplayer::recalculateDisplayRange()
 
 void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 {
+
     QWidget::mouseDoubleClickEvent(e);
+
     delete integralEditField; integralEditField = nullptr;
     editedIntegral = nullptr;
-
-    update();
 
     QPointF position = e->pos();
 
@@ -153,6 +157,7 @@ void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 
 void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 {
+    //
     QWidget::paintEvent(e);
     recalculateDisplayRange();
 
@@ -174,17 +179,27 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
         return static_cast<size_t>(x * (endPoint - startPoint) / width + startPoint);
     };
 
+    // checking if mouse points on any integral in both horizontal and vertical dimension
+    // TODO : check only if mouse is close to integral not if it is exactly pointing on it
+    IntegralRecord* pointedIntegral = nullptr;
+    if (std::fabs(mousePosition.y() - height * baselineHeight) < 0.2 * height) {
+        size_t mouseDataPoint = xPosToDataPoint(mousePosition.x());
+        pointedIntegral = findClickedOnIntegral(mouseDataPoint, experiment->integrals);
+    }
+
     for (const auto& i : experiment->integrals) {
 
         painter.setPen(pen);
 
         if ((i.rightEdge <= startPoint_) or (i.leftEdge > endPoint_)) continue; // omits integrals not visible in current view range
 
-        drawRangeWithMarks(painter,
-                           QPointF(xPos(i.leftEdge), height * (1 - baselineHeight)),
-                           QPointF(xPos(i.rightEdge), height * (1 - baselineHeight)),
-                           tickHeight * height
-        );
+        if (pointedIntegral != &i) { // integral range which is pointed on is drawed differently
+            drawRangeWithMarks(painter,
+                               QPointF(xPos(i.leftEdge), height * (1 - baselineHeight)),
+                               QPointF(xPos(i.rightEdge), height * (1 - baselineHeight)),
+                               tickHeight * height
+                               );
+        }
 
         auto text = QString::number(i.relativeValue, 'f', displayPrecision);
 
@@ -202,17 +217,15 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
         painter.setPen(QColor("black"));
 
+        if (editedIntegral == &i) continue; // label of currently edited integral is not drawn
+
         drawText(painter,
                  point,
                  alignment | Qt::AlignTop,
                  text);
     }
 
-    size_t mouseDataPoint = xPosToDataPoint(mousePosition.x());
-    IntegralRecord* pointedIntegral = findClickedOnIntegral(mouseDataPoint, experiment->integrals);
-
-    if ((std::fabs(mousePosition.y() - height * (1 - baselineHeight)) < 15)
-        and pointedIntegral) {
+    if (pointedIntegral) { // integral pointed by mouse is highlighted
         painter.save();
         QPen pen{};
         pen.setCosmetic(true);
@@ -228,7 +241,7 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
         painter.restore();
     }
 
-    mousePosition = {0, 0};
+    // mousePosition = {0, 0}; what was it for?
 
     if (editedIntegral and not integralEditField) { // block for showing integral edit field
         integralEditField = new QDoubleSpinBox{this};
@@ -271,22 +284,36 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
            editedIntegral = nullptr;
            update();
         });
+        //integralEditField->setEnabled(true);
+        //integralEditField->setWindowFlags(Qt::WindowStaysOnTopHint);
+        integralEditField->selectAll();
+        integralEditField->setFocus();
         integralEditField->show();
     }
+    emit updated();
 }
 
 void IntegralsDisplayer::mousePressEvent(QMouseEvent* e)
 {
+
     QWidget::mousePressEvent(e);
     closeIntegralEditField();
 }
 
 void IntegralsDisplayer::mouseMoveEvent(QMouseEvent* e)
 {
+
     QWidget::mouseMoveEvent(e);
     mousePosition = e->pos();
     update();
 }
+
+// void IntegralsDisplayer::leaveEvent(QEvent* e)
+// {
+//     if (rect().contains(mapFromGlobal(QCursor::pos()))) return;
+
+// }
+
 
 void IntegralsDisplayer::closeIntegralEditField()
 {

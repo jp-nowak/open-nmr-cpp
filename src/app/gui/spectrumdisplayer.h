@@ -49,6 +49,7 @@ public:
     void mousePressEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
     void mouseMoveEvent(QMouseEvent* e) override;
+    void resizeEvent(QResizeEvent* e) override;
 
     std::unique_ptr<Spectrum_1D> experiment;
     void resetZoom() override;
