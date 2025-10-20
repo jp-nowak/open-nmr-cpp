@@ -5,10 +5,10 @@
 #include <QRectF>
 
 // https://github.com/KubaO/stackoverflown/tree/master/questions/alignments-24831484
-void drawText(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
+void drawText(QPainter & painter, double x, double y, Qt::Alignment flags,
               const QString & text, QRectF * boundingRect)
 {
-   constexpr qreal size = 32767.0;
+   constexpr double size = 32767.0;
    QPointF corner(x, y - size);
    if (flags & Qt::AlignHCenter) corner.rx() -= size/2.0;
    else if (flags & Qt::AlignRight) corner.rx() -= size;
@@ -19,16 +19,35 @@ void drawText(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
    painter.drawText(rect, flags, text, boundingRect);
 }
 
+void drawRotatedText90R(QPainter & painter, double x, double y, Qt::Alignment flags,
+                        const QString & text, QRectF * boundingRect)
+{
+    constexpr double size = 32767.0;
+    QPointF corner(x, y - size);
+    QFlags<Qt::AlignmentFlag> alignment{};
+    if (flags & Qt::AlignLeft) alignment |= Qt::AlignBottom;
+    if (flags & Qt::AlignHCenter) {corner.rx() -= size/2.0; alignment |= Qt::AlignVCenter;}
+    else if (flags & Qt::AlignRight) {corner.rx() -= size; alignment |= Qt::AlignTop;}
+    if (flags & Qt::AlignVCenter) {corner.ry() += size/2.0; alignment |= Qt::AlignHCenter;}
+    else if (flags & Qt::AlignTop) {corner.ry() += size; alignment |= Qt::AlignLeft;}
+    else {flags |= Qt::AlignBottom; alignment |= Qt::AlignRight;}
+    QRectF rect{corner.y(), -corner.x() - size, size, size};
+    painter.save();
+    painter.rotate(90);
+    painter.drawText(rect, alignment, text, boundingRect);
+    painter.restore();
+}
+
 void drawText(QPainter & painter, const QPointF & point, Qt::Alignment flags,
               const QString & text, QRectF * boundingRect)
 {
    drawText(painter, point.x(), point.y(), flags, text, boundingRect);
 }
 
-QRectF getBoundingRect(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
+QRectF getBoundingRect(QPainter & painter, double x, double y, Qt::Alignment flags,
                      const QString & text)
 {
-    constexpr qreal size = 32767.0;
+    constexpr double size = 32767.0;
     QPointF corner(x, y - size);
     if (flags & Qt::AlignHCenter) corner.rx() -= size/2.0;
     else if (flags & Qt::AlignRight) corner.rx() -= size;
@@ -45,10 +64,10 @@ QRectF getBoundingRect(QPainter & painter, const QPointF & point, Qt::Alignment 
     return getBoundingRect(painter, point.x(), point.y(), flags, text);
 }
 
-QRectF getTightBoundingRect(QPainter & painter, qreal x, qreal y, Qt::Alignment flags,
+QRectF getTightBoundingRect(QPainter & painter, double x, double y, Qt::Alignment flags,
                      const QString & text)
 {
-    constexpr qreal size = 32767.0;
+    constexpr double size = 32767.0;
     QPointF corner(x, y - size);
     if (flags & Qt::AlignHCenter) corner.rx() -= size/2.0;
     else if (flags & Qt::AlignRight) corner.rx() -= size;
@@ -111,7 +130,7 @@ int fitFontPixelSize(QPainter& painter, const QPointF& point, Qt::Alignment flag
 {
     QPaintDevice* widget = painter.device();
     assert(widget && "no painting device");
-    auto widgetRect = QRectF{0.0, 0.0, static_cast<qreal>(widget->width()), static_cast<qreal>(widget->height())};
+    auto widgetRect = QRectF{0.0, 0.0, static_cast<double>(widget->width()), static_cast<double>(widget->height())};
     painter.save();
     int size = painter.font().pixelSize();
     for (; 0 <-- size;) {

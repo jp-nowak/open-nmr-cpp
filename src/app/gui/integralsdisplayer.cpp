@@ -219,10 +219,10 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
         if (editedIntegral == &i) continue; // label of currently edited integral is not drawn
 
-        drawText(painter,
-                 point,
-                 alignment | Qt::AlignTop,
-                 text);
+         drawRotatedText90R(painter,
+                point.x(), point.y() + 10,
+                alignment | Qt::AlignTop,
+                text);
     }
 
     if (pointedIntegral) { // integral pointed by mouse is highlighted

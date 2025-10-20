@@ -32,8 +32,8 @@ QColor mapDisplayerActionToColor(DisplayerAction action)
     return QColor(0, 0, 0, 100);
 }
 
-constexpr double idisplayerPos = 0.90;
-constexpr double idisplayerHeight = 0.1;
+constexpr double idisplayerPos = 0.85;
+constexpr double idisplayerHeight = 0.2;
 
 }
 
