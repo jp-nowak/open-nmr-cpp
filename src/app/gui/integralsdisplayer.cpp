@@ -157,7 +157,6 @@ void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 
 void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 {
-    //
     QWidget::paintEvent(e);
     recalculateDisplayRange();
 
@@ -279,8 +278,7 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
         connect(integralEditField, &QDoubleSpinBox::editingFinished, this, [this](){
            double valueOfOne = (integralEditField->value() != 0.0) ? editedIntegral->absoluteValue / integralEditField->value() : 0.0;
            recalcRelativeIntegralsValues(experiment->integrals, valueOfOne);
-           delete integralEditField;
-           integralEditField = nullptr;
+           delete integralEditField; integralEditField = nullptr;
            editedIntegral = nullptr;
            update();
         });
