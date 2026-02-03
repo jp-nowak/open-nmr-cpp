@@ -38,9 +38,9 @@ class SpectrumDisplayer_1D final : public ASpectrumDisplayer
 {
     // layout:
     //
-    // SpectrumPainter    | YAxis
-    // XAxis              | -----
-    // IntegralsDisplayer | placeholder
+    // SpectrumPainter (idisplayer as overlay)   | YAxis
+    // XAxis                                     | -----
+    //                                           | placeholder
     Q_OBJECT
 public:
     SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_experiment, QWidget* parent);
@@ -54,6 +54,7 @@ public:
     std::unique_ptr<Spectrum_1D> experiment;
     void resetZoom() override;
 
+    //! correct order of updating children widgets, solves problems with blinking when idisplayer is updated
     void updateAll() override;
 
 

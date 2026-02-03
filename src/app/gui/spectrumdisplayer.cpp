@@ -104,9 +104,9 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
     });
 
     // painting integral displayer causes spectrum painter to be repainted, otherwise there is a blank space in borders of integral displayer
-    connect(idisplayer, &IntegralsDisplayer::updated, this, [this](){spainter->update();});
+    connect(idisplayer, &IntegralsDisplayer::updated, this, [this](){spainter->update(); xAxis->update();});
 
-    connect(mainWindow, &MainWindow::closeDynamicElements, this, [this](){spainter->resetSelection();});
+    connect(mainWindow, &MainWindow::closeDynamicElements, this, [this](){spainter->resetSelection(); updateAll();});
 
     QLabel* rightBottomEdge = new QLabel(tr("ppm"), this);
     rightBottomEdge->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
@@ -228,10 +228,9 @@ void SpectrumDisplayer_1D::resetZoom()
 
 void SpectrumDisplayer_1D::updateAll()
 {
-    idisplayer->update();
-    spainter->update();
-    xAxis->update();
-    update();
+    idisplayer->update(); // causes update of spainter and xaxis as well
+    //spainter->update();
+    //xAxis->update();
 }
 
 
