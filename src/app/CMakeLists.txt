@@ -29,6 +29,8 @@ qt_add_executable(open-nmr
     processing/utils.h
     processing/utils.cpp
     file_io/file_io.h file_io/file_io.cpp
+    file_io/i.h
+    file_io/i.cpp
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)

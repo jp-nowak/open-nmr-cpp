@@ -1,6 +1,7 @@
 #include "br.h"
 
 #include "general.h"
+#include "file_io.h"
 #include "../spectrum/spectrum_info.h"
 
 #include <utility>
@@ -15,7 +16,6 @@
 #include <array>
 #include <QDebug>
 
-#include "file_io.h"
 
 using namespace IO;
 

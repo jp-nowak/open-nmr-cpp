@@ -1,22 +1,46 @@
 #ifndef FILE_IO_H
 #define FILE_IO_H
 
+#include <algorithm>
 #include <filesystem>
 #include <cstddef>
 #include <complex>
 #include <vector>
 #include <string_view>
 #include <unordered_map>
+#include <array>
+#include <cstdint>
+#include <type_traits>
 
 namespace IO
 {
 
+typedef int8_t  i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+
+typedef uint8_t  u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef float f32;
+typedef double f64;
+
 template <typename T>
 using Vector = std::vector<T>;
 
-using Byte = std::byte;
-using Value = double;
-using Complex = std::complex<Value>;
+template <typename T, size_t N>
+using Array = std::array<T, N>;
+
+template <size_t N>
+using FixedString = std::array<char, N>;
+
+using Byte = u8;
+
+using NumericValueType = double;
+using Complex = std::complex<NumericValueType>;
 using ComplexVector = Vector<Complex>;
 using String = std::string;
 using Buffer = Vector<Byte>;
@@ -40,8 +64,24 @@ template <typename Container> //! reads contents of file to buffer, returns bool
  * \param begin position of first byte to be used in creating return value
  * \return
  */
-template <typename ValueT>
-ValueT beTo(const Buffer& buffer, size_t begin);
+template <typename Value>
+Value beTo(const Buffer& buffer, size_t begin)
+{
+    char temp[sizeof(Value)];
+    memcpy(&temp, &buffer[begin], sizeof(Value));
+    std::ranges::reverse(temp);
+    Value value;
+    memcpy(&value, &temp, sizeof(Value));
+    if constexpr (std::is_same_v<Value, Complex>) {
+        return Value{value.imag, value.real};
+    }
+    if constexpr (std::is_aggregate_v<Value>) {
+        std::ranges::reverse(value);
+    }
+    return value;
+}
+
+
 
 /*!
  * \brief returns value of type ValueT created from little endian bytes
@@ -49,8 +89,20 @@ ValueT beTo(const Buffer& buffer, size_t begin);
  * \param begin position of first byte to be used in creating return value
  * \return
  */
-template <typename ValueT>
-ValueT leTo(const Buffer& buffer, size_t begin);
+template <typename Value>
+Value leTo(const Buffer& buffer, size_t begin)
+{
+    Value value;
+    memcpy(&value, &buffer[begin], sizeof(Value));
+    return value;
+}
+
+template <typename Value>
+Value bytesTo(const Buffer& buffer, size_t begin, bool bigEndian)
+{
+    if (bigEndian) return beTo<Value>(buffer, begin);
+    else return leTo<Value>(buffer, begin);
+}
 
 //! reads binary array of complex values
 ComplexVector readComplexArray(Endian endian, DataType type, const Buffer& buffer, size_t begin, size_t cElemN);
@@ -60,6 +112,15 @@ ComplexVector readBeComplexArray(const Buffer& buffer, size_t begin, size_t cEle
 
 template <typename ValueT>
 ComplexVector readLeComplexArray(const Buffer& buffer, size_t begin, size_t cElemN);
+
+//! reads binary array of simple values
+Vector<NumericValueType> readSimpleArray(Endian endian, DataType type, const Buffer& buffer, size_t begin, size_t elemN);
+
+template <typename ValueT>
+Vector<NumericValueType> readBeSimpleArray(const Buffer& buffer, size_t begin, size_t elemN);
+
+template <typename ValueT>
+Vector<NumericValueType> readLeSimpleArray(const Buffer& buffer, size_t begin, size_t elemN);
 
 /*!
  * \brief removes in place all characters specified in chars from string s
@@ -104,6 +165,14 @@ StringView strip(StringView s);
 bool xisDigit(char c);
 
 bool xisNumber(StringView s);
+
+char ASCItoUpper(char c);
+
+String ASCItoUpper(StringView sv);
+
+char ASCItoLower(char c);
+
+String ASCItoLower(StringView sv);
 
 template <auto X>
 bool xis(decltype(X) x)

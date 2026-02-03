@@ -1,32 +1,41 @@
 #include "general.h"
 #include "ag.h"
 #include "br.h"
+#include "i.h"
 
-FileType check_type(std::filesystem::path& folder)
+FileType check_type(const std::filesystem::path& file)
 {
-    if (std::filesystem::exists(folder / "fid")){
+    using enum FileType;
+
+    if (file.extension() == ".jdf") return I;
+
+    if (file.filename() == "fid"){
+        std::filesystem::path folder = file.parent_path();
         if (std::filesystem::exists(folder / "procpar")){
-            return FileType::Ag;
+            return Ag;
         } else if (std::filesystem::exists(folder / "acqus")){
-            return FileType::Br;
+            return Br;
         }
     }
-    return FileType::U;
+    return U;
 }
 
-FileReadResult open_experiment(std::filesystem::path& input_path)
+FileReadResult open_experiment(const std::filesystem::path& input_path)
 {
-    std::filesystem::path folder_path = input_path.parent_path();
-    FileType type = check_type(folder_path);
+    using enum FileType;
+    FileType type = check_type(input_path);
 
     FileReadResult result;
 
     switch (type){
-    case FileType::Ag:
+    case Ag:
         result = openExperimentAg(input_path);
         break;
-    case FileType::Br:
+    case Br:
         result = openExperimentBr(input_path);
+        break;
+    case I:
+        result = openExperimentI(input_path);
         break;
     default:
         result.status = ReadStatus::unknown_format;

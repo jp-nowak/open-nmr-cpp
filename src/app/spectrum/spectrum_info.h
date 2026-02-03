@@ -58,7 +58,7 @@ struct SpectrumInfo
     double plot_left_ppm; // [ppm] value of x axis at left edge of spectrum
     double spectral_width; // [Hz] width of x axis
     double acquisition_time; // [s] time of acquisition, x axis of fid starts at 0 and ends at this value
-    double obs_nucleus_freq; // [MHz] Larmor frequency of measured nucleus
+    double obs_nucleus_freq; // [MHz] Larmor frequency of measured nucleus, that is frequency of 0 ppm
     double dwell_time; // [s] time between two data points of fid
     double group_delay;
     double trimmed;
@@ -67,43 +67,55 @@ struct SpectrumInfo
     std::string solvent; // solvent in which sample was solubilized
     enum class Type{_1D, _2D};
     Type type{SpectrumInfo::Type::_1D};
-
+    enum class Vendor{Br, Ag, I_1, I_2};
 
     #ifndef NDEBUG
-    friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& m)
+    friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& s)
     {
-        return os << "SpectrumInfo" << "\n"
-        << "plot_right_Hz: " << m.plot_right_Hz << "\n"
-        << "plot_left_Hz: " << m.plot_left_Hz << "\n"
-        << "plot_right_ppm: " << m.plot_right_ppm << "\n"
-        << "plot_left_ppm: " << m.plot_left_ppm << "\n"
-        << "spectral_width: " << m.spectral_width << "\n"
-        << "acquisition_time: " << m.acquisition_time << "\n"
-        << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
-        << "dwell_time: " << m.dwell_time << "\n"
-        << "group_delay: " << m.group_delay << "\n"
-        << "trimmed: " << m.trimmed << "\n"
-        << "samplename: " << m.samplename << "\n"
-        << "nucleus: " << m.nucleus << "\n"
-        << "solvent: " << m.solvent << "\n";
+        os << "SpectrumInfo\n";
+        os << "-------------------------\n";
+        os << "plot_right_Hz      : " << s.plot_right_Hz << " Hz\n";
+        os << "plot_left_Hz       : " << s.plot_left_Hz << " Hz\n";
+        os << "plot_right_ppm     : " << s.plot_right_ppm << " ppm\n";
+        os << "plot_left_ppm      : " << s.plot_left_ppm << " ppm\n";
+        os << "spectral_width     : " << s.spectral_width << " Hz\n";
+        os << "acquisition_time   : " << s.acquisition_time << " s\n";
+        os << "obs_nucleus_freq   : " << s.obs_nucleus_freq << " MHz\n";
+        os << "dwell_time         : " << s.dwell_time << " s\n";
+        os << "group_delay        : " << s.group_delay << '\n';
+        os << "trimmed            : " << s.trimmed << '\n';
+        os << "samplename         : " << s.samplename << '\n';
+        os << "nucleus            : " << s.nucleus << '\n';
+        os << "solvent            : " << s.solvent << '\n';
+        os << "type               : "
+           << (s.type == SpectrumInfo::Type::_1D ? "_1D" : "_2D") << '\n';
+        os << "-------------------------";
+
+        return os;
     }
 
-    friend QDebug operator<<(QDebug os, SpectrumInfo const& m)
+    friend QDebug operator<<(QDebug os, SpectrumInfo const& s)
     {
-        return os << "SpectrumInfo" << "\n"
-        << "plot_right_Hz: " << m.plot_right_Hz << "\n"
-        << "plot_left_Hz: " << m.plot_left_Hz << "\n"
-        << "plot_right_ppm: " << m.plot_right_ppm << "\n"
-        << "plot_left_ppm: " << m.plot_left_ppm << "\n"
-        << "spectral_width: " << m.spectral_width << "\n"
-        << "acquisition_time: " << m.acquisition_time << "\n"
-        << "obs_nucleus_freq: " << m.obs_nucleus_freq << "\n"
-        << "dwell_time: " << m.dwell_time << "\n"
-        << "group_delay: " << m.group_delay << "\n"
-        << "trimmed: " << m.trimmed << "\n"
-        << "samplename: " << m.samplename << "\n"
-        << "nucleus: " << m.nucleus << "\n"
-        << "solvent: " << m.solvent << "\n";
+        os << "SpectrumInfo\n";
+        os << "-------------------------\n";
+        os << "plot_right_Hz      : " << s.plot_right_Hz << " Hz\n";
+        os << "plot_left_Hz       : " << s.plot_left_Hz << " Hz\n";
+        os << "plot_right_ppm     : " << s.plot_right_ppm << " ppm\n";
+        os << "plot_left_ppm      : " << s.plot_left_ppm << " ppm\n";
+        os << "spectral_width     : " << s.spectral_width << " Hz\n";
+        os << "acquisition_time   : " << s.acquisition_time << " s\n";
+        os << "obs_nucleus_freq   : " << s.obs_nucleus_freq << " MHz\n";
+        os << "dwell_time         : " << s.dwell_time << " s\n";
+        os << "group_delay        : " << s.group_delay << '\n';
+        os << "trimmed            : " << s.trimmed << '\n';
+        os << "samplename         : " << s.samplename << '\n';
+        os << "nucleus            : " << s.nucleus << '\n';
+        os << "solvent            : " << s.solvent << '\n';
+        os << "type               : "
+           << (s.type == SpectrumInfo::Type::_1D ? "_1D" : "_2D") << '\n';
+        os << "-------------------------";
+
+        return os;
     }
     #endif
 

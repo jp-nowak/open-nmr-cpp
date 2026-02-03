@@ -11,12 +11,12 @@
 /*!
 * \brief The ReadStatus enum contains possible results of attempt of opening experiment
 */
-enum class ReadStatus{unknown_failure, success_1D, success_2D, unknown_format, invalid_fid, invalid_procpar, invalidAcqus};
+enum class ReadStatus{unknown_failure, success_1D, success_2D, unknown_format, invalid_fid, invalid_procpar, invalidAcqus, invalidJDF};
 
 /*!
 * \brief The FileType enum: types of experiment files
 */
-enum class FileType{U, Ag, Br};
+enum class FileType{U, Ag, Br, I};
 
 struct FileReadResult
 {
@@ -27,8 +27,8 @@ struct FileReadResult
 
 };
 
-FileType check_type(std::filesystem::path& folder);
-FileReadResult open_experiment(std::filesystem::path& input_path);
+FileType check_type(const std::filesystem::path& folder);
+FileReadResult open_experiment(const std::filesystem::path& input_path);
 
 
 

@@ -47,42 +47,7 @@ bool readFileTo(Container& buffer, const std::filesystem::path& path)
 template bool readFileTo<String>(String& buffer, const std::filesystem::path& path);
 template bool readFileTo<Buffer>(Buffer& buffer, const std::filesystem::path& path);
 
-template <typename Value>
-Value beTo(const Buffer& buffer, size_t begin)
-{
-    char temp[sizeof(Value)];
-    std::memcpy(&temp, &buffer[begin], sizeof(Value));
-    std::ranges::reverse(temp);
-    Value value;
-    std::memcpy(&value, &temp, sizeof(Value));
-    return value;
-}
-#define declare(x) template x beTo<x>(const Buffer& buffer, size_t begin);
-declare(short)
-declare(int)
-declare(long long)
-declare(float)
-declare(double)
-declare(char16_t)
-declare(char32_t)
-#undef declare
 
-template <typename Value>
-Value leTo(const Buffer& buffer, size_t begin)
-{
-    Value value;
-    std::memcpy(&value, &buffer[begin], sizeof(Value));
-    return value;
-}
-#define declare(x) template x leTo<x>(const Buffer& buffer, size_t begin);
-declare(short)
-declare(int)
-declare(long long)
-declare(float)
-declare(double)
-declare(char16_t)
-declare(char32_t)
-#undef declare
 
 ComplexVector readComplexArray(Endian endian, DataType type, const Buffer& buffer, size_t begin, size_t cElemN)
 {
@@ -158,6 +123,84 @@ ComplexVector readLeComplexArray(const Buffer& buffer, size_t begin, size_t cEle
     return cArray;
 }
 #define declare(x) template ComplexVector readLeComplexArray<x>(const Buffer& buffer, size_t begin, size_t ElemN);
+declare(short)
+declare(int)
+declare(long long)
+declare(float)
+declare(double)
+#undef declare
+
+Vector<NumericValueType> readSimpleArray(Endian endian, DataType type, const Buffer& buffer, size_t begin, size_t elemN)
+{
+    switch (endian) {
+    case Endian::little:
+        switch (type) {
+        case DataType::int16:
+            return readLeSimpleArray<short>(buffer, begin, elemN);
+        case DataType::int32:
+            return readLeSimpleArray<int>(buffer, begin, elemN);
+        case DataType::int64:
+            return readLeSimpleArray<long long>(buffer, begin, elemN);
+        case DataType::float32:
+            return readLeSimpleArray<float>(buffer, begin, elemN);
+        case DataType::float64:
+            return readLeSimpleArray<double>(buffer, begin, elemN);
+        } break;
+    case Endian::big:
+        switch (type) {
+        case DataType::int16:
+            return readBeSimpleArray<short>(buffer, begin, elemN);
+        case DataType::int32:
+            return readBeSimpleArray<int>(buffer, begin, elemN);
+        case DataType::int64:
+            return readBeSimpleArray<long long>(buffer, begin, elemN);
+        case DataType::float32:
+            return readBeSimpleArray<float>(buffer, begin, elemN);
+        case DataType::float64:
+            return readBeSimpleArray<double>(buffer, begin, elemN);
+        }
+    }
+    assert(false);
+}
+
+template <typename Value>
+Vector<NumericValueType> readBeSimpleArray(const Buffer& buffer, size_t begin, size_t elemN)
+{
+    Vector<NumericValueType> array;
+    array.resize(elemN);
+    using ValueType = Vector<NumericValueType>::value_type;
+    if (elemN * sizeof(Value) > buffer.size() - begin) return array;
+    for (size_t i = 0; i < elemN; i++) {
+        std::array<char, sizeof(Value)> value;
+        std::memcpy(&value, &buffer[begin + i * sizeof(Value)], sizeof(Value));
+        std::ranges::reverse(value);
+        array[i] = ValueType(std::bit_cast<Value>(value));
+    }
+    return array;
+}
+#define declare(x) template Vector<NumericValueType> readBeSimpleArray<x>(const Buffer& buffer, size_t begin, size_t elemN);
+declare(short)
+declare(int)
+declare(long long)
+declare(float)
+declare(double)
+#undef declare
+
+template <typename Value>
+Vector<NumericValueType> readLeSimpleArray(const Buffer& buffer, size_t begin, size_t elemN)
+{
+    Vector<NumericValueType> array;
+    array.resize(elemN);
+    using ValueType = Vector<NumericValueType>::value_type;
+    if (elemN * sizeof(Value) > buffer.size() - begin) return array;
+    for (size_t i = 0; i < elemN; i++) {
+        std::array<char, sizeof(Value)> value;
+        std::memcpy(&value, &buffer[begin + i * sizeof(Value)], sizeof(Value));
+        array[i] = ValueType(std::bit_cast<Value>(value));
+    }
+    return array;
+}
+#define declare(x) template Vector<NumericValueType> readLeSimpleArray<x>(const Buffer& buffer, size_t begin, size_t elemN);
 declare(short)
 declare(int)
 declare(long long)
@@ -293,7 +336,7 @@ StringView strip(StringView s, StringView chars)
 
 StringView strip(StringView s)
 {
-    return strip(s, R"("' )""\n\t\r");
+    return strip(s, {R"("' )""\n\t\r\0", 7});
 }
 
 bool xisDigit(char c)
@@ -308,6 +351,42 @@ bool xisNumber(StringView s)
         if (not xisDigit(c)) return false;
     }
     return true;
+}
+
+char ASCItoUpper(char c)
+{
+    if (c >= 'a' && c <= 'z') return c & ~32;
+    else return c;
+}
+
+String ASCItoUpper(StringView sv)
+{
+    String result;
+    result.resize(sv.size());
+    for (size_t i = 0; i < sv.size(); i++)
+    {
+        if (sv[i] >= 'a' && sv[i] <= 'z') result[i] = sv[i] & ~32;
+        else result[i] = sv[i];
+    }
+    return result;
+}
+
+char ASCItoLower(char c)
+{
+    if (c >= 'A' && c <= 'Z') return c | 32;
+    else return c;
+}
+
+String ASCItoLower(StringView sv)
+{
+    String result;
+    result.resize(sv.size());
+    for (size_t i = 0; i < sv.size(); i++)
+    {
+        if (sv[i] >= 'A' && sv[i] <= 'Z') result[i] = sv[i] | 32;
+        else result[i] = sv[i];
+    }
+    return result;
 }
 
 //---------------SHash---------------------------------------------------------------------------------------------------------------------------------------------
