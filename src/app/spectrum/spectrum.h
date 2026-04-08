@@ -19,7 +19,7 @@ public:
 
     Spectrum_1D(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid);
     static std::unique_ptr<Spectrum_1D> pointer_from_file_read_result(FileReadResult result);
-
+    static std::unique_ptr<Spectrum_1D> uPtrFromReadResult(ReadResult result);
 
 
     std::span<Complex const> get_spectrum() const;

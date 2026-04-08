@@ -358,7 +358,9 @@ std::optional<SpectrumInfo> paramsToInfo(const Dict& params)
         .trimmed = 0.0,
         .samplename = params.at("samplename"),
         .nucleus = params.at("tn"),
-        .solvent = params.at("solvent")
+        .solvent = params.at("solvent"),
+        .vendor = Vendor::Ag,
+        .type = ExperimentType::U,
     };
 }
 
@@ -386,3 +388,30 @@ FileReadResult openExperimentAg(const std::filesystem::path& fidPath)
     result.status = (result.fids.size() > 1) ? ReadStatus::success_2D : ReadStatus::success_1D;
     return result;
 }
+
+ReadResult openExperimentAg_(const std::filesystem::path& fidPath)
+{
+    NMRExperiment result;
+    {
+        Buffer buffer{};
+        if (readFileTo(buffer, fidPath)) {
+            result.fids = readFidFile(buffer);
+        }
+        if (result.fids.empty()) return std::unexpected(ReadError::invalidFid);
+    }
+    {
+        String buffer{};
+        std::filesystem::path procparPath = fidPath.parent_path() / "procpar";
+        if (not std::filesystem::exists(procparPath)) return std::unexpected(ReadError::invalidProcpar);
+        if (not readFileTo(buffer, procparPath)) return std::unexpected(ReadError::invalidProcpar);
+        Dict params = readSelectProcpar(buffer);
+        if (auto info = paramsToInfo(params); info) result.info = *info;
+        else return std::unexpected(ReadError::invalidProcpar);
+    }
+    result.info.type = (result.fids.size() == 1) ? ExperimentType::simple1D : ExperimentType::U;
+    if (result.info.samplename.empty()) {
+        result.info.samplename = result.info.nucleus + " experiment";
+    }
+    return result;
+}
+

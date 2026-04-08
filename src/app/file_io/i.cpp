@@ -577,6 +577,9 @@ std::optional<SpectrumInfo> paramsToInfo(const FullHeader& header, const ParamsD
         return {};
     }
 
+    info.vendor = Vendor::I;
+    info.type = ExperimentType::U;
+
     return info;
 }
 
@@ -669,5 +672,39 @@ FileReadResult openExperimentI(const std::filesystem::path& filePath)
 
 }
 
-// repair ppm shifts for jdf
+ReadResult openExperimentI_(const std::filesystem::path& filePath)
+{
+    NMRExperiment result;
+    Buffer buffer;
+
+    if (not readFileTo(buffer, filePath)) return std::unexpected(ReadError::invalidJDF);
+    auto header = readFullFileHeader(buffer, 0);
+    if (not header) return std::unexpected(ReadError::invalidJDF);
+
+    bool bigEndian = !header->endian;
+    u32 paramSize = bytesTo<u32>(buffer, header->paramStart, bigEndian);
+    if (paramSize != 64) return std::unexpected(ReadError::invalidJDF);
+    u32 lowIndex = bytesTo<u32>(buffer, header->paramStart + 4, bigEndian);
+    if (lowIndex != 0) return std::unexpected(ReadError::invalidJDF);
+    u32 highIndex = bytesTo<u32>(buffer, header->paramStart + 8, bigEndian);
+    [[maybe_unused]] u32 paramTotalSize = bytesTo<u32>(buffer, header->paramStart + 12, bigEndian);
+
+    auto params = readParams(buffer, highIndex, header->paramStart + 16, bigEndian);
+    if (not params) return std::unexpected(ReadError::invalidJDF);
+
+    auto info = paramsToInfo(header.value(), params.value());
+    if (not info) return std::unexpected(ReadError::invalidJDF);
+
+    auto fid = readFid(buffer, header.value());
+    if (not fid.size()) return std::unexpected(ReadError::invalidJDF);
+
+    result.fids = {fid};
+    result.info = info.value();
+    if (result.info.samplename.empty()) {
+        result.info.samplename = result.info.nucleus + " experiment";
+    }
+    return result;
+}
+
+// TODO repair ppm shifts for jdf
 

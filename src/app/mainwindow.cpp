@@ -51,6 +51,21 @@ namespace
         assert(false);
     }
 
+    const QString readErrorMessage(ReadError s)
+    {
+        using enum ReadError;
+        switch(s) {
+            case unknownFailure: return QStringLiteral("unknown failure has occured when opening file");
+            case unknownFormat: return QStringLiteral("uknown file format");
+            case noParamsFile: return QStringLiteral("There is no file with params, in addition to fid");
+            case invalidFid: return QStringLiteral("Error while reading fid file");
+            case invalidProcpar: return QStringLiteral("Error while reading procpar file");
+            case invalidAcqus: return QStringLiteral("Error while reading acqus file");
+            case invalidJDF: return QStringLiteral("Error while reading jdf file");
+        }
+        assert(false);
+    }
+
     constexpr std::array BUTTONS_NEEDING_SPECTRUM{zoomB, zoomResetB, integrateB, integralsResetB};
     constexpr std::array ACTIONS_NEEDING_SPECTRUM{phaseCorrectionA, zeroFillingA};
     consteval DisplayerAction buttonToDisplayerAction(ButtonNames n)
@@ -188,6 +203,7 @@ void MainWindow::createKeyShortcuts()
     connect(integrateShortCut, &QShortcut::activated, this, &MainWindow::integrateSlot);
 }
 
+//! slot responsible for opening files
 void MainWindow::openFileSlot()
 {
     QFileDialog fileDialog(this, tr("Open File"));
@@ -197,18 +213,20 @@ void MainWindow::openFileSlot()
         return;
     }
     QString selectedFile = fileDialog.selectedFiles().at(0);
-    std::filesystem::path input_path{selectedFile.toStdString()};
-    FileReadResult file_read_result = open_experiment(input_path);
+    std::filesystem::path inputPath{selectedFile.toStdString()};
+    ReadResult fileReadResult = open_experiment_(inputPath);
 
-    if (file_read_result.status != ReadStatus::success_1D) {
+    // displaying errror message when fileReadResult indicates error
+    if (not fileReadResult) {
         QMessageBox msg{};
         msg.setWindowTitle(QStringLiteral("Error"));
-        msg.setText(readErrorMessage(file_read_result.status));
+        msg.setText(readErrorMessage(fileReadResult.error()));
         msg.exec();
         return;
     }
 
-    std::unique_ptr<Spectrum_1D> experiment = Spectrum_1D::pointer_from_file_read_result(file_read_result);
+
+    std::unique_ptr<Spectrum_1D> experiment = Spectrum_1D::uPtrFromReadResult(fileReadResult);
 
     SpectrumDisplayer_1D* spectrumDisplayer = new SpectrumDisplayer_1D(std::move(experiment), this);
 

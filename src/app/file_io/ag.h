@@ -5,4 +5,6 @@
 
 FileReadResult openExperimentAg(const std::filesystem::path&);
 
+ReadResult openExperimentAg_(const std::filesystem::path&);
+
 #endif // AG_H

@@ -48,3 +48,17 @@ FileReadResult open_experiment(const std::filesystem::path& input_path)
 
     return result;
 }
+
+ReadResult open_experiment_(const std::filesystem::path& inputPath)
+{
+    using enum FileType;
+
+    switch (check_type(inputPath)) {
+    case Ag: return openExperimentAg_(inputPath);
+    case Br: return openExperimentBr_(inputPath);
+    case I : return openExperimentI_(inputPath);
+    case U : return std::unexpected(ReadError::unknownFormat);
+    default: throw std::runtime_error("Unexpected switch value");
+    }
+}
+

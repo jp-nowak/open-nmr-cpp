@@ -8,6 +8,11 @@
 #include <QDebug>
 #endif
 
+enum class Vendor{U, Ag, Br, I};
+
+enum class ExperimentType{U, simple1D, simple2D};
+
+
 struct IntegralRecord
 {
     size_t leftEdge; // left edge of integral range as data point number (0 - left edge)
@@ -65,9 +70,9 @@ struct SpectrumInfo
     std::string samplename;
     std::string nucleus; // measured nucleus of format XXNN X-nucleus symbol NN-mass
     std::string solvent; // solvent in which sample was solubilized
-    enum class Type{_1D, _2D};
-    Type type{SpectrumInfo::Type::_1D};
-    enum class Vendor{Br, Ag, I_1, I_2};
+    Vendor vendor{Vendor::U};
+    ExperimentType type{ExperimentType::U};
+
 
     #ifndef NDEBUG
     friend std::ostream& operator<<(std::ostream& os, SpectrumInfo const& s)
@@ -87,8 +92,6 @@ struct SpectrumInfo
         os << "samplename         : " << s.samplename << '\n';
         os << "nucleus            : " << s.nucleus << '\n';
         os << "solvent            : " << s.solvent << '\n';
-        os << "type               : "
-           << (s.type == SpectrumInfo::Type::_1D ? "_1D" : "_2D") << '\n';
         os << "-------------------------";
 
         return os;
@@ -111,8 +114,6 @@ struct SpectrumInfo
         os << "samplename         : " << s.samplename << '\n';
         os << "nucleus            : " << s.nucleus << '\n';
         os << "solvent            : " << s.solvent << '\n';
-        os << "type               : "
-           << (s.type == SpectrumInfo::Type::_1D ? "_1D" : "_2D") << '\n';
         os << "-------------------------";
 
         return os;

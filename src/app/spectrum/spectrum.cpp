@@ -62,6 +62,11 @@ std::unique_ptr<Spectrum_1D> Spectrum_1D::pointer_from_file_read_result(FileRead
     return std::make_unique<Spectrum_1D>(result.info, result.fids[0]);
 }
 
+std::unique_ptr<Spectrum_1D> Spectrum_1D::uPtrFromReadResult(ReadResult result)
+{
+    return std::make_unique<Spectrum_1D>(result.value().info, result.value().fids[0]);
+}
+
 std::span<Complex const> Spectrum_1D::get_spectrum() const
 {
     return {spectrum};

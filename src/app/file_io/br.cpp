@@ -198,7 +198,9 @@ std::optional<std::pair<SpectrumInfo, FidInfo>> paramsToInfo(const Dict& params)
         .trimmed = 0.0,
         .samplename = {}, // read later from other file
         .nucleus = params.at("$NUC1"),
-        .solvent = params.at("$SOLVENT")
+        .solvent = params.at("$SOLVENT"),
+        .vendor = Vendor::Br,
+        .type = ExperimentType::U,
     };
 
     FidInfo fidInfo{
@@ -268,4 +270,27 @@ FileReadResult openExperimentBr(const std::filesystem::path& fidPath)
     }
     r.status = ReadStatus::success_1D;
     return r;
+}
+
+ReadResult openExperimentBr_(const std::filesystem::path& fidPath)
+{
+    NMRExperiment result;
+    FidInfo fidInfo;
+    { // reading acqus and title
+        String string;
+        if (not readFileTo(string, fidPath.parent_path() / "acqus")) return std::unexpected(ReadError::invalidAcqus);
+        if (auto i = parseAcqus(string); i) std::tie(result.info, fidInfo) = *i;
+        else return std::unexpected(ReadError::invalidAcqus);
+        result.info.samplename = findAndReadTitle(fidPath.parent_path());
+    }
+    { // reading fid
+        Buffer buffer;
+        if (not readFileTo(buffer, fidPath)) return std::unexpected(ReadError::invalidFid);
+        result.fids = readFid(buffer, fidInfo);
+        if (result.fids.empty()) return std::unexpected(ReadError::invalidFid);
+    }
+    if (result.info.samplename.empty()) {
+        result.info.samplename = result.info.nucleus + " experiment";
+    }
+    return result;
 }

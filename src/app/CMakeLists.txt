@@ -31,6 +31,7 @@ qt_add_executable(open-nmr
     file_io/file_io.h file_io/file_io.cpp
     file_io/i.h
     file_io/i.cpp
+    typedefs.h
 )
 
 target_link_libraries(open-nmr PRIVATE Qt6::Widgets)
