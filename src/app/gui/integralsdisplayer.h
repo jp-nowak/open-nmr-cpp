@@ -41,6 +41,10 @@ public:
 
     QDoubleSpinBox* integralEditField;
 
+public slots:
+    //! stops editing of integral
+    void closeIntegralEditField();
+
 signals:
     void updated();
 
@@ -63,7 +67,10 @@ private:
 
 private slots:
 
-    void closeIntegralEditField();
+
+
+    //! function responsible for right click context menu
+    void showContextMenu(const QPoint &pos);
 
 };
 

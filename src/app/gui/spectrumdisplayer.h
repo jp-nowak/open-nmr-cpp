@@ -46,6 +46,19 @@ public:
     SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_experiment, QWidget* parent);
     ~SpectrumDisplayer_1D();
 
+    friend class IntegralsDisplayer;
+
+    static SpectrumDisplayer_1D* findFrom(QWidget* widget) {
+        while (widget) {
+            SpectrumDisplayer_1D* foo = qobject_cast<SpectrumDisplayer_1D*>(widget);
+            if (foo) {
+                return foo;
+            }
+            widget = widget->parentWidget();
+        }
+        return nullptr;
+    }
+
     void mousePressEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
     void mouseMoveEvent(QMouseEvent* e) override;
@@ -69,6 +82,9 @@ private:
 
     MainWindow* const mainWindow;
 
+private slots:
+    //! function responsible for right click context menu
+    void showContextMenu(const QPoint &pos);
 
 };
 

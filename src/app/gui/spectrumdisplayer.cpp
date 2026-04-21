@@ -4,7 +4,6 @@
 #include "spectrumpainter.h"
 #include "xaxis.h"
 #include "integralsdisplayer.h"
-#include "../processing/phase_correction.h"
 
 #include <cassert>
 
@@ -14,6 +13,7 @@
 #include <QMouseEvent>
 #include <QGridLayout>
 #include <QDoubleSpinBox>
+#include <QMenu>
 
 namespace
 {
@@ -62,6 +62,9 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
     // QVBoxLayout* spectrumAndXAxis = new QVBoxLayout();
 
     auto& info = experiment->info;
+
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &SpectrumDisplayer_1D::customContextMenuRequested, this, &SpectrumDisplayer_1D::showContextMenu);
 
     xAxis = new UniversalAxis{AxisProperties{
                 .minimum = info.plot_right_ppm,
@@ -162,6 +165,11 @@ void SpectrumDisplayer_1D::mousePressEvent(QMouseEvent* e)
 {
     mouseMoveStartPoint = e->pos();
 
+    // checks if mouse was clicked on part of widget not overlapping with idisplayer
+    if (not idisplayer->rect().contains(idisplayer->mapFromGlobal(mapToGlobal(e->pos())))) {
+        idisplayer->closeIntegralEditField(); // stops editing of integral
+    }
+
     if (mainWindow->currentAction == DisplayerAction::None) return;
 
     spainter->resetSelection();
@@ -233,4 +241,19 @@ void SpectrumDisplayer_1D::updateAll()
     //xAxis->update();
 }
 
+void SpectrumDisplayer_1D::showContextMenu(const QPoint &pos)
+{
+    QMenu contextMenu(this);
 
+    MainWindow* mainWindow = MainWindow::findFrom(this);
+
+    assert(mainWindow && "nullptr to main window");
+    if (not mainWindow) return;
+
+    contextMenu.addAction(mainWindow->actions[zoomA]);
+    contextMenu.addAction(mainWindow->actions[zoomResetA]);
+    contextMenu.addAction(mainWindow->actions[integrateA]);
+    contextMenu.addAction(mainWindow->actions[integralsResetA]);
+    contextMenu.exec(mapToGlobal(pos));
+
+}

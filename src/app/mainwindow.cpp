@@ -30,27 +30,12 @@
 #include <QMessageBox>
 
 #include <filesystem>
+#include <type_traits>
 
 void qt_set_sequence_auto_mnemonic(bool b);
 
 namespace
 {
-
-    const QString readErrorMessage(ReadStatus s)
-    {
-        using enum ReadStatus;
-        switch (s) {
-            case unknown_failure: return QStringLiteral("unknown failure has occured when opening file");
-            case success_1D: return QStringLiteral("1D experiment opened successfuly");
-            case success_2D: return QStringLiteral("2D experiments are not supported yet");
-            case unknown_format: return QStringLiteral("uknown file format");
-            case invalid_fid: return QStringLiteral("fid file is corrupted");
-            case invalid_procpar: return QStringLiteral("procpar file is corrupted");
-            case invalidAcqus: return QStringLiteral("acqus file is corrupted");
-        }
-        assert(false);
-    }
-
     const QString readErrorMessage(ReadError s)
     {
         using enum ReadError;
@@ -128,19 +113,52 @@ MainWindow::~MainWindow()
 {
 }
 
+const QString MainWindow::actionToName(ActionNames a)
+{
+    switch (a) {
+    case openFileA: return QStringLiteral("Open File");
+    case zoomA: return QStringLiteral("Zoom");
+    case zoomResetA: return QStringLiteral("Reset Zoom");
+    case integrateA: return QStringLiteral("Integrate");
+    case integralsResetA: return QStringLiteral("Reset Integrals");
+    case closeAppA: return QStringLiteral("Close App");
+    case phaseCorrectionA: return QStringLiteral("Phase Correction");
+    case zeroFillingA: return QStringLiteral("Zero Filling/Truncation");
+    default:
+    assert(false && "Not covered enum value in:" && __func__);
+    }
+}
+
 void MainWindow::createActions()
 {
-    actions[openFileA] = new QAction(tr("Open File"), this);
-    connect(actions[openFileA], &QAction::triggered, this, &MainWindow::openFileSlot);
+    // makeAction creates action in actions array with position specified by ActionNames and text by actionToName,
+    // connects it to slot passed as second argument
+    auto makeAction = [this](ActionNames a, auto slot)
+    {
+        actions[a] = new QAction(actionToName(a), this);
+        connect(actions[a], &QAction::triggered, this, slot);
+    };
 
-    actions[closeAppA] = new QAction(tr("Close App"), this);
-    connect(actions[closeAppA], &QAction::triggered, this, &MainWindow::close);
+    makeAction(openFileA, &MainWindow::openFileSlot);
+    makeAction(zoomA, &MainWindow::zoomSlot);
+    makeAction(zoomResetA, &MainWindow::zoomResetSlot);
+    makeAction(integrateA, &MainWindow::integrateSlot);
+    makeAction(integralsResetA, &MainWindow::integralsResetSlot);
+    makeAction(closeAppA, &MainWindow::close);
+    makeAction(phaseCorrectionA, &MainWindow::phaseCorrectionSlot);
+    makeAction(zeroFillingA, &MainWindow::zeroFillingSlot);
 
-    actions[phaseCorrectionA] = new QAction(tr("Phase Correction"), this);
-    connect(actions[phaseCorrectionA], &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
+    // actions[openFileA] = new QAction(tr("Open File"), this);
+    // connect(actions[openFileA], &QAction::triggered, this, &MainWindow::openFileSlot);
 
-    actions[zeroFillingA] = new QAction(tr("Zero Filling"), this);
-    connect(actions[zeroFillingA], &QAction::triggered, this, &MainWindow::zeroFillingSlot);
+    // actions[closeAppA] = new QAction(tr("Close App"), this);
+    // connect(actions[closeAppA], &QAction::triggered, this, &MainWindow::close);
+
+    // actions[phaseCorrectionA] = new QAction(tr("Phase Correction"), this);
+    // connect(actions[phaseCorrectionA], &QAction::triggered, this, &MainWindow::phaseCorrectionSlot);
+
+    // actions[zeroFillingA] = new QAction(tr("Zero Filling"), this);
+    // connect(actions[zeroFillingA], &QAction::triggered, this, &MainWindow::zeroFillingSlot);
 }
 
 void MainWindow::createTopMenuBar()
@@ -170,14 +188,14 @@ void MainWindow::createActionsFrame()
     connect(buttons[zoomB], &QPushButton::clicked, this, &MainWindow::zoomSlot);
 
     buttons[zoomResetB] = new QPushButton(tr("Reset Zoom"), actionsFrame);
-    connect(buttons[zoomResetB], &QPushButton::clicked, this, &MainWindow::resetZoomSlot);
+    connect(buttons[zoomResetB], &QPushButton::clicked, this, &MainWindow::zoomResetSlot);
 
     buttons[integrateB] = new QPushButton(tr("Integrate"), actionsFrame);
     buttons[integrateB]->setCheckable(true);
     connect(buttons[integrateB], &QPushButton::clicked, this, &MainWindow::integrateSlot);
 
     buttons[integralsResetB] = new QPushButton(tr("Reset Integrals"), actionsFrame);
-    connect(buttons[integralsResetB], &QPushButton::clicked, this, &MainWindow::resetIntegralsSlot);
+    connect(buttons[integralsResetB], &QPushButton::clicked, this, &MainWindow::integralsResetSlot);
 
     actionsLayout->addWidget(buttons[openFileB]);
     actionsLayout->addWidget(buttons[zoomB]);
@@ -196,7 +214,7 @@ void MainWindow::createKeyShortcuts()
 
     // F - reset zoom
     auto resetZoomShortcut = new QShortcut(Qt::Key_F, this);
-    connect(resetZoomShortcut, &QShortcut::activated, this, &MainWindow::resetZoomSlot);
+    connect(resetZoomShortcut, &QShortcut::activated, this, &MainWindow::zoomResetSlot);
 
     // I - integrate
     auto integrateShortCut = new QShortcut(Qt::Key_I, this);
@@ -272,7 +290,7 @@ void MainWindow::zoomSlot()
 }
 
 
-void MainWindow::resetZoomSlot()
+void MainWindow::zoomResetSlot()
 {
     UNCHECK_ACTIVE_BUTTON();
     finishAction();
@@ -287,7 +305,7 @@ void MainWindow::integrateSlot()
     emit closeDynamicElements();
 }
 
-void MainWindow::resetIntegralsSlot()
+void MainWindow::integralsResetSlot()
 {
     UNCHECK_ACTIVE_BUTTON();
     finishAction();

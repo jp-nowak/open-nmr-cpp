@@ -11,6 +11,7 @@
 #include <complex>
 #include <memory>
 #include <span>
+#include <set>
 
 class Spectrum_1D final
 {
@@ -18,7 +19,6 @@ class Spectrum_1D final
 public:
 
     Spectrum_1D(const SpectrumInfo& info, const std::vector<std::complex<double>>& fid);
-    static std::unique_ptr<Spectrum_1D> pointer_from_file_read_result(FileReadResult result);
     static std::unique_ptr<Spectrum_1D> uPtrFromReadResult(ReadResult result);
 
 
@@ -44,10 +44,13 @@ public:
 //---------------------------------------------------------------------------------------------------------------------
     SpectrumInfo info;
 
-    mutable IntegralsVector integrals;
-
+    //! integrals store integrals of measured on spectrum, it is modified by other classes and functions
+    //! without oversight from spectrum
+    //! position [0] stores absolute value corresponding to relative value of one
+    mutable std::vector<IntegralRecord> integrals;
+    mutable double integralRelativeOneValue = 0.0;
     mutable std::vector<PeakFinding::Peak> autoPeakList;
-
+    // those members have no impact on state of class so they are mutable
 
 private:
 
@@ -78,12 +81,14 @@ private:
 //---------------------------------------------------------------------------------------------------------------------
 
 
-// recalculates .relativeValue in IntegralRecord's in integrals according to .relativeValue = .absoluteValue / valueOfOne
-void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne);
+//! recalculates .relativeValue in IntegralRecord's in integrals according to .relativeValue = .absoluteValue / valueOfOne
+void recalcRelativeIntegralsValues(const Spectrum_1D* spectrum, double valueOfOne);
 
-// calls .clear() on integrals
-void resetIntegrals(IntegralsVector& integrals);
+//! calls .clear() on integrals
+void resetIntegrals(std::vector<IntegralRecord>& integrals);
 
+//! deletes deletedIntegral from integrals record
+void deleteIntegral(std::vector<IntegralRecord>& integrals, IntegralRecord* deletedIntegral);
 
 
 #endif // SPECTRUM_H

@@ -90,7 +90,7 @@ void PhaseCorrectionWidget::ph1Slot(double phase)
 ZeroFillingWidget::ZeroFillingWidget(Spectrum_1D* experiment, QWidget *parent)
     : ProcessingWidget{experiment, parent}
 {
-
+    // TODO make so that increasing zero filling restores truncation
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
     mainLayout->addWidget(new QLabel{tr("Truncation"), this});

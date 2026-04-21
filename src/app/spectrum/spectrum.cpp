@@ -57,11 +57,6 @@ void Spectrum_1D::restorePhase()
     spectrum *= phaseCorrection.ph1;
 }
 
-std::unique_ptr<Spectrum_1D> Spectrum_1D::pointer_from_file_read_result(FileReadResult result)
-{
-    return std::make_unique<Spectrum_1D>(result.info, result.fids[0]);
-}
-
 std::unique_ptr<Spectrum_1D> Spectrum_1D::uPtrFromReadResult(ReadResult result)
 {
     return std::make_unique<Spectrum_1D>(result.value().info, result.value().fids[0]);
@@ -140,16 +135,13 @@ void Spectrum_1D::truncate(size_t n)
 void Spectrum_1D::integrate(size_t start, size_t end) const
 {
     double absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(start, end-start));
+
     if (integrals.empty()) {
-        integrals.push_back(IntegralRecord{
-                                        .leftEdge = 0,
-                                        .rightEdge = 0,
-                                        .absoluteValue = absoluteValue,
-                                        .relativeValue = 1.0});
+        integralRelativeOneValue = absoluteValue;
     }
 
-    double relativeValue = (integrals[0].absoluteValue != 0.0)
-                         ? absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue
+    double relativeValue = (integralRelativeOneValue != 0.0)
+                         ? absoluteValue / integralRelativeOneValue
                          : 0.0;
 
     integrals.push_back(IntegralRecord{
@@ -164,16 +156,16 @@ void Spectrum_1D::recalcIntegrals(size_t previousSpectrumSize) const
     if (integrals.empty()) return;
     const double mult = static_cast<double>(spectrum.size()) / previousSpectrumSize;
 
-    integrals[0].absoluteValue *= mult; // increasing size by two by zero filling causes two fold increase
+    integralRelativeOneValue *= mult; // increasing size by two by zero filling causes two fold increase
     // of y values in spectrum. To preserve integral values absolute value corresponding to 1.00 relative is
     // changed
 
-    for (auto& i : std::span(integrals).subspan(1, integrals.size() - 1)) {
-        i.leftEdge *= mult;
+    for (auto& i : integrals) {
+        i.leftEdge *= mult; // position also changes
         i.rightEdge *= mult;
         i.absoluteValue = integrateByTrapezoidRule(get_spectrum().subspan(i.leftEdge, i.rightEdge - i.leftEdge));
-        i.relativeValue = (integrals[0].absoluteValue != 0.0)
-                        ? i.absoluteValue / integrals[0].absoluteValue * integrals[0].relativeValue
+        i.relativeValue = (integralRelativeOneValue != 0.0)
+                        ? i.absoluteValue / integralRelativeOneValue
                         : 0.0;
     }
 }
@@ -193,25 +185,35 @@ void Spectrum_1D::autoFindPeaks() const
 // free functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void recalcRelativeIntegralsValues(IntegralsVector& integrals, double valueOfOne)
+void recalcRelativeIntegralsValues(const Spectrum_1D* spectrum, double valueOfOne)
 {
-    if (integrals.empty()) return;
+    if (spectrum->integrals.empty()) return;
 
-    integrals[0].absoluteValue = valueOfOne;
+    spectrum->integralRelativeOneValue = valueOfOne;
 
     if (valueOfOne == 0.0) {
-        for (auto& i : integrals) {
+        for (auto& i : spectrum->integrals) {
             i.relativeValue = 0.0;
-    }
+        }
         return;
     }
 
-    for (auto& i : integrals) {
+    for (auto& i : spectrum->integrals) {
         i.relativeValue = i.absoluteValue / valueOfOne;
     }
 }
 
-void resetIntegrals(IntegralsVector& integrals)
+void resetIntegrals(std::vector<IntegralRecord>& integrals)
 {
     integrals.clear();
 }
+
+void deleteIntegral(std::vector<IntegralRecord>& integrals, IntegralRecord* delIntegral)
+{
+    assert(delIntegral);
+    if (not delIntegral) return;
+    auto found = std::find(integrals.cbegin(), integrals.cend(), *delIntegral);
+    if (found == integrals.end()) return;
+    integrals.erase(found);
+}
+

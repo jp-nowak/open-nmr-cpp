@@ -20,35 +20,6 @@ FileType check_type(const std::filesystem::path& file)
     return U;
 }
 
-FileReadResult open_experiment(const std::filesystem::path& input_path)
-{
-    using enum FileType;
-    FileType type = check_type(input_path);
-
-    FileReadResult result;
-
-    switch (type){
-    case Ag:
-        result = openExperimentAg(input_path);
-        break;
-    case Br:
-        result = openExperimentBr(input_path);
-        break;
-    case I:
-        result = openExperimentI(input_path);
-        break;
-    default:
-        result.status = ReadStatus::unknown_format;
-        break;
-    }
-
-    if (result.info.samplename.empty()) {
-        result.info.samplename = result.info.nucleus + " experiment";
-    }
-
-    return result;
-}
-
 ReadResult open_experiment_(const std::filesystem::path& inputPath)
 {
     using enum FileType;

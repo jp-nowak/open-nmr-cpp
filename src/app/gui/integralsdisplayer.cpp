@@ -3,23 +3,24 @@
 #include "../spectrum/spectrum.h"
 #include "gui_utilities.h"
 #include "../mainwindow.h"
+#include "spectrumdisplayer.h"
 
 #include <QPainter>
 #include <QPaintEvent>
 #include <QHBoxLayout>
 #include <QDoubleSpinBox>
 #include <QFontMetrics>
+#include <QMenu>
 
 #include <utility>
 #include <cmath>
 
-// TODO fix: when zooming into integral label, it is not displayed
 
 namespace
 {
 //! finds integral from integrals which middle point was closest to xCoord
 //! if clicled on point didnt overlap with any integral returns nullptr
-IntegralRecord* findClickedOnIntegral(size_t xCoord, IntegralsVector& integrals)
+IntegralRecord* findClickedOnIntegral(size_t xCoord, std::vector<IntegralRecord>& integrals)
 {
     std::vector<IntegralRecord*> fittingIntegrals{};
     for (auto& i : integrals) {
@@ -54,6 +55,7 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum_1D* experiment, QWidget *p
     , currentSpectrumSize{endPoint_}
     , pen{}
 {
+    assert(experiment);
     setMouseTracking(true);
     pen.setCosmetic(true);
     pen.setWidth(2);
@@ -67,6 +69,9 @@ IntegralsDisplayer::IntegralsDisplayer(const Spectrum_1D* experiment, QWidget *p
     setWindowFlags(Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
+
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &IntegralsDisplayer::customContextMenuRequested, this, &IntegralsDisplayer::showContextMenu);
 }
 
 void IntegralsDisplayer::setRange(size_t begin, size_t end)
@@ -131,7 +136,7 @@ void IntegralsDisplayer::recalculateDisplayRange()
 
 void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 {
-
+    qDebug() << __PRETTY_FUNCTION__;
     QWidget::mouseDoubleClickEvent(e);
 
     delete integralEditField; integralEditField = nullptr;
@@ -139,11 +144,11 @@ void IntegralsDisplayer::mouseDoubleClickEvent(QMouseEvent* e)
 
     QPointF position = e->pos();
 
-    const double startPoint = startPoint_; // TODO create uniform struct with setting for IntegralsDisplayer and XAxis
-    const double endPoint = endPoint_;
-    const double width = this->width();
+    // TODO create uniform struct with setting for IntegralsDisplayer and XAxis
 
-    auto xPosToDataPoint = [startPoint, endPoint, width](double x) -> size_t {
+    auto xPosToDataPoint = [startPoint = startPoint_,
+                            endPoint = endPoint_,
+                            width = this->width()](double x) -> size_t {
         return static_cast<size_t>(x * (endPoint - startPoint) / width + startPoint);
     };
 
@@ -206,13 +211,16 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
         auto alignment = Qt::AlignHCenter;
 
-        if (i.leftEdge < startPoint_) { // integrals stretching outside view range have labels aligned to internal side
+
+        if ((i.leftEdge < startPoint_) and (i.rightEdge > endPoint_)) {
+            alignment = Qt::AlignHCenter;
+        } else if (i.leftEdge < startPoint_) { // integrals stretching outside view range have labels aligned to internal side
             point.setX(xPos(i.rightEdge));
             alignment = Qt::AlignRight;
         } else if (i.rightEdge > endPoint_) {
             point.setX(xPos(i.leftEdge));
             alignment = Qt::AlignLeft;
-        }
+        } // TODO change so label is in the middle of visible part
 
         painter.setPen(QColor("black"));
 
@@ -271,13 +279,13 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
         connect(integralEditField, &QDoubleSpinBox::valueChanged, this, [this](double d){
             double valueOfOne = (d != 0.0) ? editedIntegral->absoluteValue / d : 0.0;
-           recalcRelativeIntegralsValues(experiment->integrals, valueOfOne);
+           recalcRelativeIntegralsValues(experiment, valueOfOne);
            update();
         });
 
         connect(integralEditField, &QDoubleSpinBox::editingFinished, this, [this](){
            double valueOfOne = (integralEditField->value() != 0.0) ? editedIntegral->absoluteValue / integralEditField->value() : 0.0;
-           recalcRelativeIntegralsValues(experiment->integrals, valueOfOne);
+           recalcRelativeIntegralsValues(experiment, valueOfOne);
            delete integralEditField; integralEditField = nullptr;
            editedIntegral = nullptr;
            update();
@@ -293,7 +301,7 @@ void IntegralsDisplayer::paintEvent(QPaintEvent* e)
 
 void IntegralsDisplayer::mousePressEvent(QMouseEvent* e)
 {
-
+    qDebug() << __PRETTY_FUNCTION__;
     QWidget::mousePressEvent(e);
     closeIntegralEditField();
 }
@@ -312,11 +320,52 @@ void IntegralsDisplayer::mouseMoveEvent(QMouseEvent* e)
 
 // }
 
-
 void IntegralsDisplayer::closeIntegralEditField()
 {
     delete integralEditField; integralEditField = nullptr;
     editedIntegral = nullptr;
     update();
+}
+
+void IntegralsDisplayer::showContextMenu(const QPoint &pos)
+{
+    qDebug() << __PRETTY_FUNCTION__;
+
+    auto xPosToDataPoint = [startPoint = startPoint_,
+                            endPoint = endPoint_,
+                            width = this->width()](double x) -> size_t {
+        return static_cast<size_t>(x * (endPoint - startPoint) / width + startPoint);
+    };
+
+    size_t dataPoint = xPosToDataPoint(pos.x());
+    IntegralRecord* integral = findClickedOnIntegral(dataPoint, experiment->integrals);
+
+    if (not integral) { // no integral is clicked, contextMenu from SpectrumDisplayer is shown
+        SpectrumDisplayer_1D* displayer = SpectrumDisplayer_1D::findFrom(parentWidget());
+        assert(displayer && "nullptr");
+        if (not displayer) return;
+        displayer->showContextMenu(mapTo(displayer, pos));
+        return;
+    }
+
+    MainWindow* mainWindow = MainWindow::findFrom(parentWidget());
+
+    assert(mainWindow && "nullptr to main window");
+    if (not mainWindow) return;
+
+    QMenu contextMenu(SpectrumDisplayer_1D::findFrom(parentWidget()));
+
+    QAction editIntegral(QStringLiteral("Edit Integral"), this);
+    connect(&editIntegral, &QAction::triggered, this, [this, &integral](){editedIntegral = integral;});
+
+    QAction deleteIntegralA(QStringLiteral("Delete Integral"), this);
+    connect(&deleteIntegralA, &QAction::triggered, this, [this, &integral](){
+    deleteIntegral(experiment->integrals, integral); update();
+    });
+
+    contextMenu.addAction(&editIntegral);
+    contextMenu.addAction(&deleteIntegralA);
+    contextMenu.addAction(mainWindow->actions[integralsResetA]);
+    contextMenu.exec(mapToGlobal(pos));
 }
 

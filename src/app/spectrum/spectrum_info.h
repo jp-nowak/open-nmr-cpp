@@ -20,10 +20,15 @@ struct IntegralRecord
     double absoluteValue; // absolute value of integral
     double relativeValue; // relative value of integral = absolute / valueOfOne
 
-    // static bool comparator(IntegralRecord a, IntegralRecord b)
-    // {
-    //     return ((a.leftEdge != b.leftEdge) ? (a.leftEdge < b.leftEdge) : (a.rightEdge < b.rightEdge));
-    // }
+    bool operator<(const IntegralRecord& rhs) const
+    {
+        return ((leftEdge != rhs.leftEdge) ? (leftEdge < rhs.leftEdge) : (rightEdge < rhs.rightEdge));
+    }
+
+    bool operator==(const IntegralRecord& rhs) const
+    {
+        return ((leftEdge == rhs.leftEdge) and (rightEdge == rhs.rightEdge));
+    }
 
     #ifndef NDEBUG
     friend std::ostream& operator<<(std::ostream& os, IntegralRecord const& m)
@@ -46,6 +51,8 @@ struct IntegralRecord
     #endif
 
 };
+
+
 
 struct FidSizeInfo
 {

@@ -251,27 +251,6 @@ std::string findAndReadTitle(const std::filesystem::path& folderPath)
 
 } // end of namespace
 
-FileReadResult openExperimentBr(const std::filesystem::path& fidPath)
-{
-    FileReadResult r{.type = FileType::Br};
-    FidInfo fidInfo;
-    { // reading acqus ant title
-        String string;
-        if (not readFileTo(string, fidPath.parent_path() / "acqus")) {r.status = ReadStatus::invalidAcqus; return r;}
-        if (auto i = parseAcqus(string); i) std::tie(r.info, fidInfo) = *i;
-        else {r.status = ReadStatus::invalidAcqus; return r;}
-        r.info.samplename = findAndReadTitle(fidPath.parent_path());
-    }
-    { // reading fid
-        Buffer buffer;
-        if (not readFileTo(buffer, fidPath)) {r.status = ReadStatus::invalid_fid; return r;}
-        r.fids = readFid(buffer, fidInfo);
-        if (r.fids.empty()){ r.status = ReadStatus::invalid_fid; return r;}
-    }
-    r.status = ReadStatus::success_1D;
-    return r;
-}
-
 ReadResult openExperimentBr_(const std::filesystem::path& fidPath)
 {
     NMRExperiment result;

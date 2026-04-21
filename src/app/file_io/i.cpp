@@ -637,41 +637,6 @@ QDebug operator<< (QDebug os, ParamsDict const& m)
 
 } // end of namespace
 
-FileReadResult openExperimentI(const std::filesystem::path& filePath)
-{
-    FileReadResult r{.type = FileType::I};
-    Buffer buffer;
-    if (not readFileTo(buffer, filePath)) {r.status = ReadStatus::invalidJDF; return r;}
-
-    auto header = readFullFileHeader(buffer, 0);
-    if (not header) {r.status = ReadStatus::invalidJDF; return r;}
-
-
-    bool bigEndian = !header->endian;
-    u32 paramSize = bytesTo<u32>(buffer, header->paramStart, bigEndian);
-    if (paramSize != 64) {r.status = ReadStatus::invalidJDF; return r;}
-    u32 lowIndex = bytesTo<u32>(buffer, header->paramStart + 4, bigEndian);
-    if (lowIndex != 0) {r.status = ReadStatus::invalidJDF; return r;}
-    u32 highIndex = bytesTo<u32>(buffer, header->paramStart + 8, bigEndian);
-    [[maybe_unused]] u32 paramTotalSize = bytesTo<u32>(buffer, header->paramStart + 12, bigEndian);
-
-    auto params = readParams(buffer, highIndex, header->paramStart + 16, bigEndian);
-    if (not params) {r.status = ReadStatus::invalidJDF; return r;}
-
-    auto info = paramsToInfo(header.value(), params.value());
-    if (not info) {r.status = ReadStatus::invalidJDF; return r;}
-
-    auto fid = readFid(buffer, header.value());
-    if (not fid.size()) {r.status = ReadStatus::invalidJDF; return r;}
-
-    r.status = ReadStatus::success_1D;
-    r.fids = {fid};
-    r.info = info.value();
-    r.type = FileType::I;
-    return r;
-
-}
-
 ReadResult openExperimentI_(const std::filesystem::path& filePath)
 {
     NMRExperiment result;

@@ -22,7 +22,8 @@ class QFrame;
 class QDockWidget;
 
 enum ButtonNames{openFileB, zoomB, zoomResetB, integrateB, integralsResetB, ActiveButton, NumberOfButtons};
-enum ActionNames{openFileA, closeAppA, phaseCorrectionA, zeroFillingA, NumberofActions};
+enum ActionNames{openFileA, zoomA, zoomResetA, integrateA, integralsResetA,
+                 closeAppA, phaseCorrectionA, zeroFillingA, NumberofActions};
 
 class MainWindow final : public QMainWindow
 {
@@ -35,6 +36,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    static const QString actionToName(ActionNames);
+
+    std::array<QPushButton*, NumberOfButtons> buttons = {};
+    std::array<QAction*, NumberofActions> actions = {};
 
 signals:
 
@@ -64,8 +69,7 @@ private:
     QStackedWidget* mainStackedWidget;
 
 
-    std::array<QPushButton*, NumberOfButtons> buttons = {};
-    std::array<QAction*, NumberofActions> actions = {};
+
 
     // QPushButton* openFileButton;
     // QPushButton* zoomButton;
@@ -101,9 +105,9 @@ private:
 private slots:
     void openFileSlot();
     void zoomSlot();
-    void resetZoomSlot();
+    void zoomResetSlot();
     void integrateSlot();
-    void resetIntegralsSlot();
+    void integralsResetSlot();
     void spectrumChangedSlot(int i);
     void phaseCorrectionSlot();
     void zeroFillingSlot();

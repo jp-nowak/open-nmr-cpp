@@ -366,28 +366,6 @@ std::optional<SpectrumInfo> paramsToInfo(const Dict& params)
 
 } // end of namespace
 
-FileReadResult openExperimentAg(const std::filesystem::path& fidPath)
-{
-    FileReadResult result{.type = FileType::Ag};
-    {
-        Buffer buffer{};
-        if (readFileTo(buffer, fidPath)) {
-            result.fids = readFidFile(buffer);
-        }
-        if (result.fids.empty()) return FileReadResult{.status = ReadStatus::invalid_fid};
-    }
-    {
-        String buffer{};
-        auto procparPath = fidPath.parent_path() / "procpar";
-        if (not std::filesystem::exists(procparPath)) return FileReadResult{.status = ReadStatus::invalid_procpar};
-        if (not readFileTo(buffer, procparPath)) return FileReadResult{.status = ReadStatus::invalid_procpar};
-        Dict params = readSelectProcpar(buffer);
-        if (auto info = paramsToInfo(params); info) result.info = *info;
-        else return FileReadResult{.status = ReadStatus::invalid_procpar};
-    }
-    result.status = (result.fids.size() > 1) ? ReadStatus::success_2D : ReadStatus::success_1D;
-    return result;
-}
 
 ReadResult openExperimentAg_(const std::filesystem::path& fidPath)
 {
