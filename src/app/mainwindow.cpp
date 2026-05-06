@@ -28,6 +28,10 @@
 #include <QDockWidget>
 #include <QShortcut>
 #include <QMessageBox>
+#include <QDropEvent>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QMimeData>
 
 #include <filesystem>
 #include <type_traits>
@@ -84,6 +88,9 @@ MainWindow::MainWindow(QWidget *parent)
     createTopMenuBar();
     createActionsFrame();
     createKeyShortcuts();
+
+    // support for opening files by dragging into application window
+    setAcceptDrops(true);
 
     QWidget* mainWidget = new QWidget(this);
     QHBoxLayout* mainLayout = new QHBoxLayout();
@@ -230,11 +237,21 @@ void MainWindow::openFileSlot()
     {
         return;
     }
-    QString selectedFile = fileDialog.selectedFiles().at(0);
-    std::filesystem::path inputPath{selectedFile.toStdString()};
+
+    for (auto s : fileDialog.selectedFiles()) {
+        openFile(s);
+    }
+
+}
+
+void MainWindow::openFile(QString s)
+{
+    if (not s.size()) return;
+
+
+    std::filesystem::path inputPath{s.toStdString()};
     ReadResult fileReadResult = open_experiment_(inputPath);
 
-    // displaying errror message when fileReadResult indicates error
     if (not fileReadResult) {
         QMessageBox msg{};
         msg.setWindowTitle(QStringLiteral("Error"));
@@ -243,15 +260,13 @@ void MainWindow::openFileSlot()
         return;
     }
 
-
     std::unique_ptr<Spectrum_1D> experiment = Spectrum_1D::uPtrFromReadResult(fileReadResult);
-
     SpectrumDisplayer_1D* spectrumDisplayer = new SpectrumDisplayer_1D(std::move(experiment), this);
-
 
     size_t i = mainStackedWidget->addWidget(spectrumDisplayer);
     mainStackedWidget->setCurrentIndex(i);
     tabWidget->addTab(spectrumDisplayer);
+
 
 }
 
@@ -356,6 +371,32 @@ void MainWindow::showProcessingWidget()
     }
     emit closeDynamicElements();
 }
+
+void MainWindow::dragEnterEvent(QDragEnterEvent* e)
+{
+    if (e->mimeData()->hasUrls()) e->acceptProposedAction();
+    else e->ignore();
+}
+
+void MainWindow::dragMoveEvent(QDragMoveEvent* e)
+{
+    if (e->mimeData()->hasUrls()) e->acceptProposedAction();
+    else e->ignore();
+}
+
+void MainWindow::dropEvent(QDropEvent* e)
+{
+    if (e->mimeData()->hasUrls()) {
+        const auto urls = e->mimeData()->urls();
+        for (const auto& u : urls) {
+            if (not u.isEmpty() and u.isLocalFile()) {
+                openFile(u.toLocalFile());
+            }
+        }
+    }
+    else e->ignore();
+}
+
 
 void MainWindow::phaseCorrectionSlot()
 {

@@ -88,6 +88,16 @@ private:
     template<typename T>
     void showProcessingWidget();
 
+    //! support for opening files by dragging
+    void dragEnterEvent(QDragEnterEvent* e) override;
+    //! support for opening files by dragging
+    void dragMoveEvent(QDragMoveEvent* e) override;
+    //! support for opening files by dragging
+    void dropEvent(QDropEvent* e) override;
+
+    //! opens nmr file specified by string s
+    void openFile(QString s);
+
  public:
     DisplayerAction const& currentAction;
 

@@ -210,8 +210,7 @@ void resetIntegrals(std::vector<IntegralRecord>& integrals)
 
 void deleteIntegral(std::vector<IntegralRecord>& integrals, IntegralRecord* delIntegral)
 {
-    assert(delIntegral);
-    if (not delIntegral) return;
+    assert(delIntegral); if (not delIntegral) return;
     auto found = std::find(integrals.cbegin(), integrals.cend(), *delIntegral);
     if (found == integrals.end()) return;
     integrals.erase(found);
