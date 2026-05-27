@@ -103,6 +103,16 @@ bool SpectrumPainter::zoom(QPointF startPos, QPointF endPos)
     return true;
 }
 
+void SpectrumPainter::setZoom(size_t start, size_t end)
+{
+    assert(start < end);
+    assert(start + 5 > end);
+    startPoint_ = start;
+    endPoint_ = end;
+    update();
+}
+
+
 void SpectrumPainter::resetZoom()
 {
     startPoint_ = 0;
@@ -140,6 +150,11 @@ std::pair<size_t, size_t> SpectrumPainter::selectionRangeToDataPointsOfSpectrum(
     size_t left = startPoint_ + std::ceil(start / width() * (size - 1));
 
     return{left, right};
+}
+
+std::pair<size_t, size_t> SpectrumPainter::currentSelection() const
+{
+    return{startPoint_, endPoint_};
 }
 
 void SpectrumPainter::paintEvent(QPaintEvent* e)

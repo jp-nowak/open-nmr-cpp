@@ -239,6 +239,21 @@ std::pair<double, double> UniversalAxis::getRange()
     return {p.maximum, p.minimum};
 }
 
+void UniversalAxis::change(const AxisProperties& newProperties)
+{
+    assert(p.dynamic && "properties can be changed only in dynamic axis");
+    assert((p.vertical == newProperties.vertical) && "orientation cannot be changed");
+    assert(newProperties.dynamic != false);
+    p = newProperties;
+    initialize();
+    update();
+}
+
+const AxisProperties& UniversalAxis::properties() const
+{
+    return p;
+}
+
 void UniversalAxis::paintEvent(QPaintEvent* e)
 {
     assert(not positions.empty());

@@ -23,6 +23,7 @@ public:
     void wheelEvent(QWheelEvent* e) override;
 
     bool zoom(QPointF startPos, QPointF endPos);
+    void setZoom(size_t start, size_t end);
 
     void changeSelectionWidth(QPointF x, QPointF origin);
     void setSelectionStart(QPointF x, const QColor& selectionColor = QColor(255, 0, 0, 100));
@@ -31,8 +32,11 @@ public:
     void resetZoom();
     void recalculateDisplayRange();
 
-    // returns data point numbers in spectrum which correspond to current selection
+    //! returns data point numbers in spectrum which correspond to current selection
     std::pair<size_t, size_t> selectionRangeToDataPointsOfSpectrum(QPointF startPos, QPointF endPos) const;
+
+    //! returns range of points currently displayed [startPoint, endPoint]
+    std::pair<size_t, size_t> currentSelection() const;
 
 signals:
     void wheelTurned(double);

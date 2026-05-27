@@ -1,6 +1,7 @@
 #include "spectrumdisplayer.h"
 
 #include "../mainwindow.h"
+#include "gui_utilities.h"
 #include "spectrumpainter.h"
 #include "xaxis.h"
 #include "integralsdisplayer.h"
@@ -14,6 +15,7 @@
 #include <QGridLayout>
 #include <QDoubleSpinBox>
 #include <QMenu>
+#include <QActionGroup>
 
 namespace
 {
@@ -35,6 +37,24 @@ QColor mapDisplayerActionToColor(DisplayerAction action)
 constexpr double idisplayerPos = 0.85;
 constexpr double idisplayerHeight = 0.2;
 
+constexpr double kHz_to_Hz = 1000;
+
+constexpr std::array ALLOWED_X_UNITS_SPECTRUM_1D{XU_ppm, XU_Points, XU_Hz, XU_kHz};
+constexpr std::array ALLOWED_X_UNITS_FID_1D{XU_Seconds, XU_Points};
+
+}
+
+QString UnitsToString(XAxisUnits x)
+{
+    switch (x) {
+    case XU_ppm:     return QStringLiteral("ppm");     break;
+    case XU_Points:  return QStringLiteral("Points");  break;
+    case XU_Hz:      return QStringLiteral("Hz");      break;
+    case XU_kHz:     return QStringLiteral("kHz");     break;
+    case XU_Seconds: return QStringLiteral("Seconds"); break;
+    default:
+        assert(false);
+    }
 }
 
 ASpectrumDisplayer::ASpectrumDisplayer(const SpectrumInfo& info, const FidSizeInfo& fidInfo, QWidget* parent)
@@ -52,8 +72,11 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
 : ASpectrumDisplayer{new_experiment->info, new_experiment->getFidSizeInfo(), parent}
 , experiment{std::move(new_experiment)}
 , spainter{new SpectrumPainter{experiment.get(), this}}
+, xAxisUnit{XU_ppm}
 , idisplayer{new IntegralsDisplayer{experiment.get(), this}}
+, displayedElement{DisplayedElement::Spectrum1}
 , mouseMoveStartPoint{0, 0}
+, currentZoom{}
 , mainWindow{MainWindow::findFrom(this)}
 {
     assert(mainWindow && "nullptr to main window");
@@ -111,7 +134,7 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
 
     connect(mainWindow, &MainWindow::closeDynamicElements, this, [this](){spainter->resetSelection(); updateAll();});
 
-    QLabel* rightBottomEdge = new QLabel(tr("ppm"), this);
+    rightBottomEdge = new QLabel(UnitsToString(xAxisUnit), this);
     rightBottomEdge->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
 
     auto* layout = new QGridLayout();
@@ -141,10 +164,6 @@ SpectrumDisplayer_1D::SpectrumDisplayer_1D(std::unique_ptr<Spectrum_1D>&& new_ex
     // spectrumAndXAxis->setStretchFactor(spainter, 12);
     // spectrumAndXAxis->setStretchFactor(idisplayer, 1);
     // spectrumAndXAxis->setStretchFactor(xAxis, 1);
-
-
-
-
 
     // QHBoxLayout* spectrumWithXAxisAndYAxis = new QHBoxLayout();
     // spectrumWithXAxisAndYAxis->addLayout(spectrumAndXAxis);
@@ -196,6 +215,7 @@ void SpectrumDisplayer_1D::mouseReleaseEvent(QMouseEvent* e)
         if (spainter->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint))) {
             xAxis->setRangePoints(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
             idisplayer->zoom(mapToGlobal(mouseMoveStartPoint), mapToGlobal(mouseMoveEndPoint));
+            currentZoom = {mouseMoveStartPoint, mouseMoveEndPoint};
         }
         mainWindow->finishAction();
         break;
@@ -231,7 +251,8 @@ void SpectrumDisplayer_1D::resetZoom()
 {
     idisplayer->resetZoom();
     spainter->resetZoom();
-    xAxis->setRange(experiment->info.plot_left_ppm, experiment->info.plot_right_ppm);
+    currentZoom = {{spainter->geometry().topLeft()}, {spainter->geometry().bottomRight()}};
+    changeXAxisUnit(xAxisUnit);
 }
 
 void SpectrumDisplayer_1D::updateAll()
@@ -244,7 +265,7 @@ void SpectrumDisplayer_1D::updateAll()
 void SpectrumDisplayer_1D::showContextMenu(const QPoint &pos)
 {
     QMenu contextMenu(this);
-
+    qDebug() << pos;
     MainWindow* mainWindow = MainWindow::findFrom(this);
 
     assert(mainWindow && "nullptr to main window");
@@ -254,6 +275,110 @@ void SpectrumDisplayer_1D::showContextMenu(const QPoint &pos)
     contextMenu.addAction(mainWindow->actions[zoomResetA]);
     contextMenu.addAction(mainWindow->actions[integrateA]);
     contextMenu.addAction(mainWindow->actions[integralsResetA]);
+    qDebug() << childAt(pos);
+    if ((childAt(pos) == xAxis) or (childAt(pos) == rightBottomEdge)) {
+        qDebug() << "aa";
+        QActionGroup units(this);
+        units.setExclusionPolicy(QActionGroup::ExclusionPolicy::Exclusive);
+        QMenu* unitsMenu = contextMenu.addMenu(QStringLiteral("Units"));
+
+        switch (displayedElement) {
+        case DisplayedElement::Fid1:
+
+            for (auto i : ALLOWED_X_UNITS_FID_1D) {
+                QAction* a = new QAction(UnitsToString(i), this);
+                connect(a, &QAction::triggered, this, [this, i](){this->changeXAxisUnit(i);});
+                units.addAction(a);
+                unitsMenu->addAction(a);
+            }
+            break;
+
+        case DisplayedElement::Spectrum1:
+
+            for (auto i : ALLOWED_X_UNITS_SPECTRUM_1D) {
+                QAction* a = new QAction(UnitsToString(i), this);
+                a->setCheckable(true);
+                connect(a, &QAction::triggered, this, [this, i](){this->changeXAxisUnit(i);});
+                if (i == xAxisUnit) a->setChecked(true);
+                units.addAction(a);
+                unitsMenu->addAction(a);
+            }
+            break;
+
+        default: assert(false);
+        }
+
+    }
+
     contextMenu.exec(mapToGlobal(pos));
+
+}
+
+void SpectrumDisplayer_1D::changeXAxisUnit(XAxisUnits unit)
+{
+    switch (displayedElement) {
+
+    case DisplayedElement::Fid1:
+        assert(false);
+        if (auto i = std::find(std::begin(ALLOWED_X_UNITS_FID_1D),
+                std::end(ALLOWED_X_UNITS_FID_1D),
+                unit); i == std::end(ALLOWED_X_UNITS_FID_1D)) return;
+        break;
+
+    case DisplayedElement::Spectrum1:
+        if (auto i = std::find(std::begin(ALLOWED_X_UNITS_SPECTRUM_1D),
+                std::end(ALLOWED_X_UNITS_SPECTRUM_1D),
+                unit); i == std::end(ALLOWED_X_UNITS_SPECTRUM_1D)) return;
+        break;
+
+    }
+
+    AxisProperties p = xAxis->properties();
+
+    switch (unit) {
+
+    case XU_ppm:
+        p.minimum = info.plot_right_ppm;
+        p.maximum = info.plot_left_ppm;
+        p.descending = true;
+        break;
+
+    case XU_Points:
+        p.minimum = 0;
+        p.maximum = experiment->get_spectrum().size();
+        p.descending = false;
+        break;
+
+    case XU_Hz:
+        p.minimum = info.plot_right_Hz;
+        p.maximum = info.plot_left_Hz;
+        p.descending = true;
+        break;
+
+    case XU_kHz:
+        p.minimum = info.plot_right_Hz / kHz_to_Hz;
+        p.maximum = info.plot_left_Hz / kHz_to_Hz;
+        p.descending = true;
+        break;
+
+    case XU_Seconds:
+        assert(false);
+
+    default: assert(false);
+
+    }
+
+    xAxis->change(p);
+
+
+
+    rightBottomEdge->setText(UnitsToString(unit));
+    xAxisUnit = unit;
+
+    if (not (currentZoom.first.isNull() and currentZoom.second.isNull())) {
+        xAxis->setRangePoints(mapToGlobal(currentZoom.first), mapToGlobal(currentZoom.second));
+    }
+
+    updateAll();
 
 }

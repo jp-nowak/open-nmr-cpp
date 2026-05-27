@@ -12,11 +12,20 @@ class SpectrumPainter;
 class XAxis;
 class IntegralsDisplayer;
 class UniversalAxis;
+class QLabel;
 struct SpectrumInfo;
 struct FidSizeInfo;
 struct Phase;
 
 enum class DisplayerAction{None, Zoom, Integrate};
+
+enum XAxisUnits{XU_ppm, XU_Points, XU_Hz, XU_kHz, XU_Seconds};
+QString UnitsToString(XAxisUnits x);
+bool isAxisDescending(XAxisUnits x);
+
+// unused yet
+enum class DisplayedElement{Spectrum1, Fid1};
+
 
 //! interface for spectrum displayers
 class ASpectrumDisplayer : public QWidget
@@ -70,17 +79,27 @@ public:
     //! correct order of updating children widgets, solves problems with blinking when idisplayer is updated
     void updateAll() override;
 
+    void changeXAxisUnit(XAxisUnits unit);
+
 
 private:
     SpectrumPainter* spainter;
     UniversalAxis* xAxis;
+    XAxisUnits xAxisUnit;
     UniversalAxis* yAxis;
     IntegralsDisplayer* idisplayer;
+    QLabel* rightBottomEdge;
+
+    DisplayedElement displayedElement;
 
     QPointF mouseMoveStartPoint;
     QPointF mouseMoveEndPoint;
 
+    std::pair<QPointF, QPointF> currentZoom;
+
     MainWindow* const mainWindow;
+
+
 
 private slots:
     //! function responsible for right click context menu

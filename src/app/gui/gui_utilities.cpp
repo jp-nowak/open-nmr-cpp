@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <QDebug>
 #include <QRectF>
+#include <QWidget>
 
 // https://github.com/KubaO/stackoverflown/tree/master/questions/alignments-24831484
 void drawText(QPainter & painter, double x, double y, Qt::Alignment flags,
@@ -141,8 +142,6 @@ int fitFontPixelSize(QPainter& painter, const QPointF& point, Qt::Alignment flag
     painter.restore();
     return size;
 }
-
-
 
 
 

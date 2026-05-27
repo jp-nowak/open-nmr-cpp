@@ -58,6 +58,11 @@ public:
 
     QStringList labels;
 
+    //! Changes widget settings. Orientation cannot be changed (p.vertical)
+    void change(const AxisProperties& newProperties);
+    const AxisProperties& properties() const;
+
+
 private:
     void initialize();
 
