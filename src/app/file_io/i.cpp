@@ -18,6 +18,7 @@
 #include <string>
 #include <array>
 #include <cstddef>
+#include <numbers>
 
 using namespace IO;
 
@@ -128,7 +129,7 @@ struct Date
     int year;
 };
 
-std::optional<Date> readDate(Array<Byte, 4>& bytes)
+[[maybe_unused]] std::optional<Date> readDate(Array<Byte, 4>& bytes)
 {
     int day = bytes[2] & 0b00011111;
     int month = ((bytes[0] << 3) & 0b00001000) + (bytes[1] >> 5);
@@ -199,7 +200,7 @@ enum Prefix : i8 {
     Yotta = -8,
     Zetta = -7,
     Exa   = -6,
-    Pecta = -5,
+    Peta = -5,
     Tera  = -4,
     Giga  = -3,
     Mega  = -2,
@@ -242,11 +243,6 @@ struct Units
 
 FullUnit getUnit(const Buffer& buffer, size_t start)
 {
-    auto a = FullUnit{
-        .prefix = ToPrefix(std::bit_cast<i8>(buffer[start]) >> 4),
-        .unit = ToUnit(leTo<i8>(buffer, start + 1)),
-        .power = static_cast<i8>(std::bit_cast<i8>(buffer[start]) & 0b00001111)
-    };
     return FullUnit{
         .prefix = ToPrefix(std::bit_cast<i8>(buffer[start]) >> 4),
         .unit = ToUnit(leTo<i8>(buffer, start + 1)),
@@ -296,58 +292,161 @@ struct SHash2
 
 using ParamsDict = std::unordered_map<String, Param, SHash2, std::equal_to<>>;
 
-[[maybe_unused]] std::optional<FullHeader> readFullFileHeader(const Buffer& buffer, size_t begin)
+#ifndef NDEBUG // printing support
+
+[[maybe_unused]] constexpr QStringView ToString(Prefix prefix)
 {
-    if (buffer.size() < begin + FILE_HEADER_SIZE) return {};
-    return FullHeader{
-                      beTo<FixedString<8>>(buffer, begin + fileIdentifier),
-                      beTo<i8>(buffer, begin + endian),
-                      beTo<u8>(buffer, begin + majorVersion),
-                      beTo<u16>(buffer, begin + minorVersion),
-                      beTo<u8>(buffer, begin + dataDimensionNumber),
-                      beTo<u8>(buffer, begin + dataDimensionExist),
-                      beTo<u8>(buffer, begin + controlByte),
-                      beTo<i8>(buffer, begin + dataInstrument),
-                      beTo<Array<u8, 8>>(buffer, begin + translate),
-                      beTo<Array<u8, 8>>(buffer, begin + dataAxisType),
-                      beTo<Array<Byte, 16>>(buffer, begin + axisUnits),
-                      beTo<FixedString<124>>(buffer, begin + title),
-                      beTo<Array<Byte, 4>>(buffer, begin + xAxisType),
-                      beTo<Array<u32, 8>>(buffer, begin + elementNumber),
-                      beTo<Array<u32, 8>>(buffer, begin + offsetStart),
-                      beTo<Array<u32, 8>>(buffer, begin + offsetEnd),
-                      beTo<Array<f64, 8>>(buffer, begin + axisStart),
-                      beTo<Array<f64, 8>>(buffer, begin + axisEnd),
-                      beTo<Array<Byte, 4>>(buffer, begin + experimentDate),
-                      beTo<Array<Byte, 4>>(buffer, begin + revisionDate),
-                      beTo<FixedString<16>>(buffer, begin + nodeName),
-                      beTo<FixedString<128>>(buffer, begin + site),
-                      beTo<FixedString<128>>(buffer, begin + author),
-                      beTo<FixedString<128>>(buffer, begin + comment),
-                      beTo<FixedString<256>>(buffer, begin + axisTitles),
-                      beTo<Array<f64, 8>>(buffer, begin + baseFreqs),
-                      beTo<Array<f64, 8>>(buffer, begin + zeroPoints),
-                      beTo<Array<Byte, 8>>(buffer, begin + reversed),
-                      beTo<Array<Byte, 3>>(buffer, begin + SKIP),
-                      beTo<u32>(buffer, begin + annotationOk),
-                      beTo<u32>(buffer, begin + historyUsed),
-                      beTo<u32>(buffer, begin + historyLength),
-                      beTo<u32>(buffer, begin + paramStart),
-                      beTo<u32>(buffer, begin + paramLength),
-                      beTo<Array<u32, 8>>(buffer, begin + listStart),
-                      beTo<Array<u32, 8>>(buffer, begin + listLength),
-                      beTo<u32>(buffer, begin + dataStart),
-                      beTo<u64>(buffer, begin + dataLength),
-                      beTo<u64>(buffer, begin + contextStart),
-                      beTo<u32>(buffer, begin + contextLength),
-                      beTo<u64>(buffer, begin + annoteStart),
-                      beTo<u32>(buffer, begin + annoteLength),
-                      beTo<u64>(buffer, begin + totalSize),
-                      beTo<u32>(buffer, begin + unitLocation)
-    };
+    switch (prefix)
+    {
+        case Yotta:  return QStringLiteral("Y");
+        case Zetta:  return QStringLiteral("Z");
+        case Exa:    return QStringLiteral("E");
+        case Peta:   return QStringLiteral("P");
+        case Tera:   return QStringLiteral("T");
+        case Giga:   return QStringLiteral("G");
+        case Mega:   return QStringLiteral("M");
+        case Kilo:   return QStringLiteral("k");
+        case P_None: return QString();
+        case Milli:  return QStringLiteral("m");
+        case Micro:  return QStringLiteral("u");
+        case Nano:   return QStringLiteral("n");
+        case Pico:   return QStringLiteral("p");
+        case Femto:  return QStringLiteral("f");
+        case Atto:   return QStringLiteral("a");
+        case Zepto:  return QStringLiteral("z");
+
+        case P_COUNT: [[fallthrough]];
+        case P_ERROR: [[fallthrough]];
+        default:
+            assert(false);
+            return QStringLiteral("???");
+    }
 }
 
+[[maybe_unused]] constexpr QStringView ToString(Unit unit)
+{
+    switch (unit)
+    {
+        case U_None:        return QString();
+        case Abundance:     return QString();
+        case Ampere:        return QStringLiteral("A");
+        case Candela:       return QStringLiteral("cd");
+        case Celsius:       return QStringLiteral("'C");
+        case Coulomb:       return QStringLiteral("C");
+        case Degree:        return QStringLiteral("°");
+        case Electronvolt:  return QStringLiteral("eV");
+        case Farad:         return QStringLiteral("F");
+        case Sievert:       return QStringLiteral("Sv");
+        case Gram:          return QStringLiteral("g");
+        case Gray:          return QStringLiteral("Gy");
+        case Henry:         return QStringLiteral("H");
+        case Hertz:         return QStringLiteral("Hz");
+        case Kelvin:        return QStringLiteral("K");
+        case Joule:         return QStringLiteral("J");
+        case Liter:         return QStringLiteral("L");
+        case Lumen:         return QStringLiteral("lm");
+        case Lux:           return QStringLiteral("lx");
+        case Meter:         return QStringLiteral("m");
+        case Mole:          return QStringLiteral("mol");
+        case Newton:        return QStringLiteral("N");
+        case Ohm:           return QStringLiteral("Ω");
+        case Pascal:        return QStringLiteral("Pa");
+        case Percent:       return QStringLiteral("%");
+        case Point:         return QStringLiteral("pt");
+        case Ppm:           return QStringLiteral("ppm");
+        case Radian:        return QStringLiteral("rad");
+        case Second:        return QStringLiteral("s");
+        case Siemens:       return QStringLiteral("S");
+        case Steradian:     return QStringLiteral("sr");
+        case Tesla:         return QStringLiteral("T");
+        case Volt:          return QStringLiteral("V");
+        case Watt:          return QStringLiteral("W");
+        case Weber:         return QStringLiteral("Wb");
+        case Decibel:       return QStringLiteral("dB");
+        case Dalton:        return QStringLiteral("Da");
+        case Thompson:      return QStringLiteral("Th");
+        case Ugeneric:      return QString();
+        case LPercent:      return QStringLiteral("%");
+        case PPT:           return QStringLiteral("ppt");
+        case PPB:           return QStringLiteral("ppb");
+        case Index:         return QString();
 
+        case U_COUNT:
+        case U_ERROR:
+        default:
+            assert(false);
+            return QStringLiteral("?");
+    }
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const Prefix& h)
+{
+    if (auto s = ToString(h); not s.empty()) {
+        os << ToString(h);
+    }
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const Unit& h)
+{
+    if (auto s = ToString(h); not s.empty()) {
+        os << ToString(h);
+    }
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const FullUnit& h)
+{
+    os << h.prefix << h.unit;
+    if (h.power == 0) return os;
+    if (h.power == 1) return os;
+    os << "^" << h.power;
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const Units& h)
+{
+    os << h.u0 << h.u1 << h.u2 << h.u3 << h.u4;
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const ParamValue& h)
+{
+    std::visit([&os](auto&& arg){
+        os << arg;
+    }, h);
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<<(QDebug os, const Param& h)
+{
+    os << h.value << h.units;
+    if (h.scaler == 0) return os;
+    os << "scaler:" << h.scaler;
+    return os;
+}
+
+[[maybe_unused]] QDebug operator<< (QDebug os, Complex const& m)
+{
+    return os << real(m) << imag(m);
+}
+
+[[maybe_unused]] QDebug operator<< (QDebug os, Date const& m)
+{
+    return os << "date: " << m.day << "." << m.month << "." << m.year;
+}
+
+[[maybe_unused]] QDebug operator<< (QDebug os, ParamsDict const& m)
+{
+    for (auto& i : m) {
+        os << "\n" << "Param:" << i.first << "Value:";
+        os << i.second;
+        os << "\n";
+    }
+    return os;
+}
+
+#define TO_STRING(x) strip(StringView{x.data(), x.size()})
 
 template <typename T, size_t N>
 static QDebug printArray(QDebug os, const std::array<T, N>& arr) {
@@ -364,9 +463,7 @@ static QDebug printArray(QDebug os, const std::array<T, N>& arr) {
     return os;
 }
 
-#define TO_STRING(x) strip(StringView{x.data(), x.size()})
-
-QDebug operator<<(QDebug os, const FullHeader& h)
+[[maybe_unused]] QDebug operator<<(QDebug os, const FullHeader& h)
 {
     os << "FullHeader {\n";
 
@@ -432,6 +529,59 @@ QDebug operator<<(QDebug os, const FullHeader& h)
     os << "}\n";
 
     return os;
+}
+
+#endif
+
+[[maybe_unused]] std::optional<FullHeader> readFullFileHeader(const Buffer& buffer, size_t begin)
+{
+    if (buffer.size() < begin + FILE_HEADER_SIZE) return {};
+    return FullHeader{
+                      beTo<FixedString<8>>(buffer, begin + fileIdentifier),
+                      beTo<i8>(buffer, begin + endian),
+                      beTo<u8>(buffer, begin + majorVersion),
+                      beTo<u16>(buffer, begin + minorVersion),
+                      beTo<u8>(buffer, begin + dataDimensionNumber),
+                      beTo<u8>(buffer, begin + dataDimensionExist),
+                      beTo<u8>(buffer, begin + controlByte),
+                      beTo<i8>(buffer, begin + dataInstrument),
+                      beTo<Array<u8, 8>>(buffer, begin + translate),
+                      beTo<Array<u8, 8>>(buffer, begin + dataAxisType),
+                      beTo<Array<Byte, 16>>(buffer, begin + axisUnits),
+                      beTo<FixedString<124>>(buffer, begin + title),
+                      beTo<Array<Byte, 4>>(buffer, begin + xAxisType),
+                      beTo<Array<u32, 8>>(buffer, begin + elementNumber),
+                      beTo<Array<u32, 8>>(buffer, begin + offsetStart),
+                      beTo<Array<u32, 8>>(buffer, begin + offsetEnd),
+                      beTo<Array<f64, 8>>(buffer, begin + axisStart),
+                      beTo<Array<f64, 8>>(buffer, begin + axisEnd),
+                      beTo<Array<Byte, 4>>(buffer, begin + experimentDate),
+                      beTo<Array<Byte, 4>>(buffer, begin + revisionDate),
+                      beTo<FixedString<16>>(buffer, begin + nodeName),
+                      beTo<FixedString<128>>(buffer, begin + site),
+                      beTo<FixedString<128>>(buffer, begin + author),
+                      beTo<FixedString<128>>(buffer, begin + comment),
+                      beTo<FixedString<256>>(buffer, begin + axisTitles),
+                      beTo<Array<f64, 8>>(buffer, begin + baseFreqs),
+                      beTo<Array<f64, 8>>(buffer, begin + zeroPoints),
+                      beTo<Array<Byte, 8>>(buffer, begin + reversed),
+                      beTo<Array<Byte, 3>>(buffer, begin + SKIP),
+                      beTo<u32>(buffer, begin + annotationOk),
+                      beTo<u32>(buffer, begin + historyUsed),
+                      beTo<u32>(buffer, begin + historyLength),
+                      beTo<u32>(buffer, begin + paramStart),
+                      beTo<u32>(buffer, begin + paramLength),
+                      beTo<Array<u32, 8>>(buffer, begin + listStart),
+                      beTo<Array<u32, 8>>(buffer, begin + listLength),
+                      beTo<u32>(buffer, begin + dataStart),
+                      beTo<u64>(buffer, begin + dataLength),
+                      beTo<u64>(buffer, begin + contextStart),
+                      beTo<u32>(buffer, begin + contextLength),
+                      beTo<u64>(buffer, begin + annoteStart),
+                      beTo<u32>(buffer, begin + annoteLength),
+                      beTo<u64>(buffer, begin + totalSize),
+                      beTo<u32>(buffer, begin + unitLocation)
+    };
 }
 
 enum Positions
@@ -515,11 +665,72 @@ std::optional<ParamsDict> readParams(const Buffer& buffer, size_t paramNumber, s
 
 #define PPM 1000000
 
+std::optional<double> checkGroupDelay(const FullHeader& header, const ParamsDict& params)
+{
+    auto findCaseInsensitive = [&params](StringView x) {
+        if (auto p = params.find(x); p != params.end()) return p;
+        if (auto p = params.find(ASCItoLower(x)); p != params.end()) return p;
+        if (auto p = params.find(ASCItoUpper(x)); p != params.end()) return p;
+        throw std::out_of_range("NO_PARAM");
+    };
+
+    Vector<int> factors;
+    Vector<int> orders;
+
+    try {
+        auto factorsP = findCaseInsensitive("factors");
+        auto ordersP = findCaseInsensitive("orders");
+
+        auto factorsS = std::get<String>(factorsP->second.value);
+        auto ordersS = std::get<String>(ordersP->second.value);
+
+        auto factorsSplit = splitCopy(factorsS, " ");
+        auto ordersSplit = splitCopy(ordersS, " ");
+
+        for (auto& s : factorsSplit) {
+        if (s.empty()) continue;
+            factors.push_back(std::stoi(s));
+        }
+        for (auto& s : ordersSplit) {
+        if (s.empty()) continue;
+            orders.push_back(std::stoi(s));
+        }
+
+    } catch(...) {
+        return {};
+    }
+
+    if (factors.size() < 2 or orders.size() - 1 < factors.size()) return {};
+
+    Vector<int> cumProd(factors.size());
+    double cumProd_ = 1.0;
+    for (auto i = factors.size(), j = 0zu; i --> 0; j++) {
+            cumProd_ *= factors.at(i);
+            cumProd.at(j) = cumProd_;
+    }
+    std::reverse(cumProd.begin(), cumProd.end());
+
+    std::erase(orders, orders[0]);
+
+    assert(orders.size() == factors.size());
+
+    Vector<double> orders3(orders.size());
+
+    for (auto i = 0zu; i < orders.size(); i++) {
+        orders[i] -= 1;
+        orders3[i] = static_cast<double>(orders[i]) / static_cast<double>(cumProd[i]);
+    }
+
+    double sum__ = std::reduce(orders3.begin(), orders3.end());
+
+    return sum__ / 2;
+}
+
 std::optional<SpectrumInfo> paramsToInfo(const FullHeader& header, const ParamsDict& params)
 {
     if (header.majorVersion != 1) return {};
 
-    auto findCaseInsensitive = [&params](auto x) {
+    auto findCaseInsensitive = [&params](StringView x) {
         if (auto p = params.find(x); p != params.end()) return p;
         if (auto p = params.find(ASCItoLower(x)); p != params.end()) return p;
         if (auto p = params.find(ASCItoUpper(x)); p != params.end()) return p;
@@ -565,7 +776,13 @@ std::optional<SpectrumInfo> paramsToInfo(const FullHeader& header, const ParamsD
             if (header.axisStart[0] != 0) return {};
             else info.acquisition_time = header.axisEnd[0];
             info.dwell_time = info.acquisition_time / header.elementNumber[0];
-            info.group_delay = 20.0;
+
+            if (auto groupDelay = checkGroupDelay(header, params); groupDelay) {
+                info.group_delay = *groupDelay;
+            } else {
+                qDebug() << "ERROR Group delay not found";
+                info.group_delay = 20;
+            }
         } else return {};
 
         info.solvent = strip(std::get<String>(params.at("solvent").value));
@@ -616,24 +833,6 @@ ComplexVector readFid(const Buffer& buffer, FullHeader header)
     } else return {};
 }
 
-QDebug operator<< (QDebug os, Complex const& m)
-{
-    return os << real(m) << imag(m);
-}
-
-QDebug operator<< (QDebug os, Date const& m)
-{
-    return os << "date: " << m.day << "." << m.month << "." << m.year;
-}
-
-QDebug operator<< (QDebug os, ParamsDict const& m)
-{
-    for (auto& i : m) {
-        qDebug() << i.first;
-        std::visit([](auto&& arg){qDebug() << arg;}, i.second.value);
-        qDebug() << "\n";
-    }
-}
 
 } // end of namespace
 
@@ -665,6 +864,7 @@ ReadResult openExperimentI_(const std::filesystem::path& filePath)
 
     result.fids = {fid};
     result.info = info.value();
+
     if (result.info.samplename.empty()) {
         result.info.samplename = result.info.nucleus + " experiment";
     }

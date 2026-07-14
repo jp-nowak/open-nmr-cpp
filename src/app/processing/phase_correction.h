@@ -8,7 +8,7 @@
 namespace Processing
 {
 
-// phase correction are stated using radians
+// phase correction are stated using pi radians
 
 struct Ph0
 {
@@ -35,7 +35,7 @@ struct Phase
  */
 void operator*= (ComplexVector& lhs, Ph0 rhs);
 
-// applies in place 1st order phase correction
+//! applies in place 1st order phase correction
 void operator*= (ComplexVector& lhs, Ph1 rhs);
 } // Processing
 

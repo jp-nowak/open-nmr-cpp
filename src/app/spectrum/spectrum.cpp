@@ -23,6 +23,7 @@ Spectrum_1D::Spectrum_1D(const SpectrumInfo& info, const std::vector<std::comple
 {
     using namespace Processing;
     generateSpectrum();
+    qDebug() << info.group_delay;
     if (!(info.group_delay == 0.0)) {
         double decimalDelay = info.group_delay - static_cast<size_t>(info.group_delay);
         setPh1(Ph1{.ph1 = -decimalDelay, .pivot = 75});  // correcting phase distortion caused by group delay

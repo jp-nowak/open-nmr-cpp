@@ -72,7 +72,7 @@ struct SpectrumInfo
     double acquisition_time; // [s] time of acquisition, x axis of fid starts at 0 and ends at this value
     double obs_nucleus_freq; // [MHz] Larmor frequency of measured nucleus, that is frequency of 0 ppm
     double dwell_time; // [s] time between two data points of fid
-    double group_delay;
+    double group_delay; // integral part is amount of data points affected and decimal is 1st order correction needed
     double trimmed;
     std::string samplename;
     std::string nucleus; // measured nucleus of format XXNN X-nucleus symbol NN-mass
